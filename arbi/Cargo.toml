@@ -1,0 +1,22 @@
+[package]
+authors = ["Owain Davies"]
+categories = [
+    "algorithms",
+    "data-structures",
+    "mathematics",
+]
+description = "Arbitrary precision integer."
+edition = "2021"
+keywords = [
+    "arbitrary-precision",
+    "bigint",
+    "bignum",
+    "integer",
+]
+license = "Apache-2.0 OR MIT"
+name = "arbi"
+readme = "README.md"
+repository = "https://github.com/OTheDev/arbi"
+version = "0.1.0"
+
+[dependencies]
