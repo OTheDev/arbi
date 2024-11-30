@@ -166,23 +166,23 @@ In what follows, `base` must be an integer in `[2, 36]`. Moreover, the
 `*_radix()` functions panic on an invalid base and `*_base()` functions cannot
 panic due to an invalid base.
 
-Convert any [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) integer to a [`String`] containing the base-`base`
+Convert any [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) integer to a [`String`](https://doc.rust-lang.org/nightly/alloc/string/struct.String.html) containing the base-`base`
 representation of the integer.
- - [`Arbi::to_string_radix()`]
- - [`Arbi::to_string_base()`]
+ - [`Arbi::to_string_radix()`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#method.to_string_radix)
+ - [`Arbi::to_string_base()`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#method.to_string_base)
  - `Arbi::to_string()` (uses `Arbi::to_string_base()`, assuming base `10`).
 
 Convert any string containing the base-`base` representation of an integer to
 an [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html).
- - [`Arbi::from_str_radix()`]
- - [`Arbi::from_str_base()`]
+ - [`Arbi::from_str_radix()`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#method.from_str_radix)
+ - [`Arbi::from_str_base()`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#method.from_str_base)
  - `Arbi::from_str()` (same as `from_str_base()` but assumes base `10` and
    needs `core::str::FromStr` in scope).
 
 Assign any string containing the base-`base` representation of an integer to
 an [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html).
- - [`Arbi::assign_str_radix()`]
- - [`Arbi::assign_str_base()`]
+ - [`Arbi::assign_str_radix()`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#method.assign_str_radix)
+ - [`Arbi::assign_str_base()`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#method.assign_str_base)
 
 ```rust
 use arbi::{base::OCT, Arbi};
