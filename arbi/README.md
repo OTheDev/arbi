@@ -1,6 +1,6 @@
 # arbi
 
-`arbi` implements an Arbitrary Precision Integer type: [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html).
+`arbi` implements an Arbitrary Precision Integer type: [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html).
 
 This crate has:
 
@@ -16,12 +16,12 @@ This crate has:
 
 ### Construct an `Arbi` integer
 
-The following are all equivalent and return an [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) object representing the
+The following are all equivalent and return an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) object representing the
 integer `0` (no memory allocation occurs):
 
-- [`Arbi::new()`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#method.new)
-- [`Arbi::default()`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#method.default)
-- [`Arbi::zero()`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#method.zero)
+- [`Arbi::new()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.new)
+- [`Arbi::default()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.default)
+- [`Arbi::zero()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.zero)
 
 ```rust
 use arbi::Arbi;
@@ -35,7 +35,7 @@ assert_eq!(a, b);
 assert_eq!(b, c);
 ```
 
-Construct an [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) integer from any primitive integer type value,
+Construct an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer from any primitive integer type value,
 any [`f64`](https://doc.rust-lang.org/nightly/core/primitive.f64.html) (except for infinities and NaNs), or any string containing a
 base-`base` representation of an integer, where `base` must be in [2, 36].
 
@@ -65,7 +65,7 @@ let f = "123456789".parse::<Arbi>().unwrap();
 assert_eq!(f, 123456789);
 ```
 
-Use [`Arbi::with_capacity_bits()`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#method.with_capacity_bits) or [`Arbi::with_capacity()`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#method.with_capacity) to construct an
+Use [`Arbi::with_capacity_bits()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.with_capacity_bits) or [`Arbi::with_capacity()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.with_capacity) to construct an
 integer representing zero with at least a specified capacity:
 ```rust
 use arbi::{Arbi, Assign};
@@ -84,8 +84,8 @@ assert_eq!(a, u128::MAX);
 
 ## Assign to an `Arbi` integer
 
-[`Assign`](https://docs.rs/arbi/latest/arbi/trait.Assign.html) to an [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) any primitive integer type value, a floating-point
-value, a string, or another [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) integer.
+[`Assign`](https://docs.rs/arbi/latest/arbi/trait.Assign.html) to an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) any primitive integer type value, a floating-point
+value, a string, or another [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer.
 
 The main benefit of assigning is that if there is already enough capacity,
 memory allocation need not occur. In contrast, `from` methods typically involve
@@ -124,15 +124,15 @@ assert_eq!(a.capacity(), capacity); // no memory allocation occurred
 
 ## Comparisons
 
-Compare an [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) to another [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html), a primitive integer type value, or a
+Compare an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) to another [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html), a primitive integer type value, or a
 floating-point value.
 
 All equality and comparison operators are supported `==`, `!=`, `<`, `<=`, `>`,
 `>=`.
 
 Comparisons with floating-point values are designed to be consistent with IEEE
-754. See[`PartialOrd<f64> for Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#impl-PartialOrd%3Cf64%3E-for-Arbi) for a description of the semantics of
-comparing an [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) to a floating-point value.
+754. See[`PartialOrd<f64> for Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#impl-PartialOrd%3Cf64%3E-for-Arbi) for a description of the semantics of
+comparing an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) to a floating-point value.
 
 ```rust
 use arbi::{Arbi, Assign};
@@ -166,23 +166,23 @@ In what follows, `base` must be an integer in `[2, 36]`. Moreover, the
 `*_radix()` functions panic on an invalid base and `*_base()` functions cannot
 panic due to an invalid base.
 
-Convert any [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) integer to a [`String`](https://doc.rust-lang.org/nightly/alloc/string/struct.String.html) containing the base-`base`
+Convert any [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer to a [`String`](https://doc.rust-lang.org/nightly/alloc/string/struct.String.html) containing the base-`base`
 representation of the integer.
- - [`Arbi::to_string_radix()`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#method.to_string_radix)
- - [`Arbi::to_string_base()`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#method.to_string_base)
+ - [`Arbi::to_string_radix()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.to_string_radix)
+ - [`Arbi::to_string_base()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.to_string_base)
  - `Arbi::to_string()` (uses `Arbi::to_string_base()`, assuming base `10`).
 
 Convert any string containing the base-`base` representation of an integer to
-an [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html).
- - [`Arbi::from_str_radix()`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#method.from_str_radix)
- - [`Arbi::from_str_base()`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#method.from_str_base)
+an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html).
+ - [`Arbi::from_str_radix()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.from_str_radix)
+ - [`Arbi::from_str_base()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.from_str_base)
  - `Arbi::from_str()` (same as `from_str_base()` but assumes base `10` and
    needs `core::str::FromStr` in scope).
 
 Assign any string containing the base-`base` representation of an integer to
-an [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html).
- - [`Arbi::assign_str_radix()`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#method.assign_str_radix)
- - [`Arbi::assign_str_base()`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html#method.assign_str_base)
+an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html).
+ - [`Arbi::assign_str_radix()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.assign_str_radix)
+ - [`Arbi::assign_str_base()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.assign_str_base)
 
 ```rust
 use arbi::{base::OCT, Arbi};
@@ -237,11 +237,11 @@ extension).
 - Bitwise AND, OR, and XOR: `&`, `|`, `^`, `&=`, `|=`, `^=`.
 
 Test or set a bit at a specified index (zero-based) on the absolute value of an
-[`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) integer:
+[`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer:
 - [`Arbi::test_bit()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.test_bit)
 - [`Arbi::set_bit()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.set_bit)
 
-Obtain the number of bits needed to represent the absolute value of an [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html)
+Obtain the number of bits needed to represent the absolute value of an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html)
 integer using [`Arbi::bit_length()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.bit_length):
 
 ```rust
@@ -264,25 +264,25 @@ In what follows, let `*` denote any primitive integer type name:
 `i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize`.
 
 Methods
-- `to_*()`: convert this [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) integer to a primitive integer type value.
+- `to_*()`: convert this [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer to a primitive integer type value.
   This is “wrapping”.
   
   See [`Arbi::to_i32()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.to_i32).
 
-- `to_*_checked()`: try to convert this [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) integer to a primitive integer
-  type value. If this [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) integer does not fit in the target primitive
+- `to_*_checked()`: try to convert this [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer to a primitive integer
+  type value. If this [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer does not fit in the target primitive
   integer type, returns `None`. 
   
   See [`Arbi::to_i32_checked()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.to_i32_checked).
 
-- `fits_*()`: test if this [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) integer fits in a primitive integer type.
+- `fits_*()`: test if this [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer fits in a primitive integer type.
   The [`Fits`](https://docs.rs/arbi/latest/arbi/trait.Fits.html) trait can also be used to do the same thing.
   
   See [`Arbi::fits_i32()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.fits_i32) and also the [`Fits`](https://docs.rs/arbi/latest/arbi/trait.Fits.html) trait.
 
 ## To Floating-Point Value
 
-Convert an [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) integer to a floating-point value using the [`Arbi::to_f64()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.to_f64)
+Convert an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer to a floating-point value using the [`Arbi::to_f64()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.to_f64)
 method:
 
 ```rust
@@ -298,7 +298,7 @@ assert_eq!((&b).pow(32_usize).to_f64(), f64::INFINITY);
 
 ## Increment/Decrement
 
-Increment or decrement an [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) integer in-place by one using the
+Increment or decrement an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer in-place by one using the
 [`Arbi::incr()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.incr) and [`Arbi::decr()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.decr) methods (`+=` and `-=` can also be used).
 
 ```rust
@@ -318,8 +318,8 @@ assert_eq!(a, -1);
 
 ## Exponentiation
 
-Raise an [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) integer to the power of a [`usize`](https://doc.rust-lang.org/nightly/core/primitive.usize.html), [`u128`](https://doc.rust-lang.org/nightly/core/primitive.u128.html), or another
-[`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) integer using the [`Pow`](https://docs.rs/arbi/latest/arbi/trait.Pow.html) trait.
+Raise an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer to the power of a [`usize`](https://doc.rust-lang.org/nightly/core/primitive.usize.html), [`u128`](https://doc.rust-lang.org/nightly/core/primitive.u128.html), or another
+[`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer using the [`Pow`](https://docs.rs/arbi/latest/arbi/trait.Pow.html) trait.
 
 ```rust
 use arbi::{Arbi, Pow};
@@ -335,7 +335,7 @@ assert_eq!(
 ## Display
 
 The [`core::fmt::Display`](https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html) implementation uses the base-10 representation of the
-[`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) integer and by extension, so does `Arbi::to_string()`.
+[`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer and by extension, so does `Arbi::to_string()`.
 
 ```rust
 use arbi::Arbi;
