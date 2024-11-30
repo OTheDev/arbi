@@ -36,7 +36,7 @@ assert_eq!(b, c);
 ```
 
 Construct an [`Arbi`](https://docs.rs/arbi/0.1.1/arbi/struct.Arbi.html) integer from any primitive integer type value,
-any [`f64`] (except for infinities and NaNs), or any string containing a
+any [`f64`](https://doc.rust-lang.org/nightly/core/primitive.f64.html) (except for infinities and NaNs), or any string containing a
 base-`base` representation of an integer, where `base` must be in [2, 36].
 
 ```rust
