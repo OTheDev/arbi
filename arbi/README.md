@@ -82,7 +82,7 @@ assert_eq!(a.capacity_bits(), initial_capacity); // no memory allocation needed
 assert_eq!(a, u128::MAX);
 ```
 
-## Assign to an `Arbi` integer
+### Assign to an `Arbi` integer
 
 [`Assign`](https://docs.rs/arbi/latest/arbi/trait.Assign.html) to an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) any primitive integer type value, a floating-point
 value, a string, or another [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer.
@@ -122,7 +122,7 @@ a.assign(&b);
 assert_eq!(a.capacity(), capacity); // no memory allocation occurred
 ```
 
-## Comparisons
+### Comparisons
 
 Compare an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) to another [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html), a primitive integer type value, or a
 floating-point value.
@@ -159,7 +159,7 @@ assert!(a > b);
 assert!(b < a);
 ```
 
-## To and From a String
+### To and From a String
 
 In what follows, `base` must be an integer in `[2, 36]`. Moreover, the
 `*_radix()` and `*_base()` string-related functions are equivalent, except that
@@ -221,13 +221,13 @@ a.assign_str_base("1772555052337322416757226463207030", OCT);
 assert_eq!(a, 0o1772555052337322416757226463207030_u128);
 ```
 
-## Arithmetic
+### Arithmetic
 
 All standard arithmetic operations are implemented:
 - Binary operators: `+`, `-`, `*`, `/`, `%`, `+=`, `-=`, `*=`, `/=`, `%=`
 - Unary operators: `-`.
 
-## Bitwise Operations
+### Bitwise Operations
 
 All standard bitwise operations are implemented. These operators perform bitwise
 operations on integers using two's complement representation (with sign
@@ -258,7 +258,7 @@ a.incr(); // 11
 assert_eq!(a.bit_length(), 2);
 ```
 
-## To Built-In Integer
+### To Built-In Integer
 
 In what follows, let `*` denote any primitive integer type name:
 `i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize`.
@@ -280,7 +280,7 @@ Methods
   
   See [`Arbi::fits_i32()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.fits_i32) and also the [`Fits`](https://docs.rs/arbi/latest/arbi/trait.Fits.html) trait.
 
-## To Floating-Point Value
+### To Floating-Point Value
 
 Convert an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer to a floating-point value using the [`Arbi::to_f64()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.to_f64)
 method:
@@ -296,7 +296,7 @@ assert_ne!((&b).pow(31_usize).to_f64(), f64::INFINITY);
 assert_eq!((&b).pow(32_usize).to_f64(), f64::INFINITY);
 ```
 
-## Increment/Decrement
+### Increment/Decrement
 
 Increment or decrement an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer in-place by one using the
 [`Arbi::incr()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.incr) and [`Arbi::decr()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.decr) methods (`+=` and `-=` can also be used).
@@ -316,7 +316,7 @@ a.decr();
 assert_eq!(a, -1);
 ```
 
-## Exponentiation
+### Exponentiation
 
 Raise an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer to the power of a [`usize`](https://doc.rust-lang.org/nightly/core/primitive.usize.html), [`u128`](https://doc.rust-lang.org/nightly/core/primitive.u128.html), or another
 [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer using the [`Pow`](https://docs.rs/arbi/latest/arbi/trait.Pow.html) trait.
@@ -332,7 +332,7 @@ assert_eq!(
 );
 ```
 
-## Display
+### Display
 
 The [`core::fmt::Display`](https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html) implementation uses the base-10 representation of the
 [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer and by extension, so does `Arbi::to_string()`.
@@ -344,3 +344,15 @@ let a = Arbi::from(12345);
 assert_eq!(format!("{}", a), "12345");
 assert_eq!(a.to_string(), "12345");
 ```
+
+## License
+
+This project is dual-licensed under either the [Apache License, Version 2.0](https://github.com/OTheDev/arbi/blob/main/LICENSE-APACHE)
+or the [MIT License](https://github.com/OTheDev/arbi/blob/main/LICENSE-MIT),
+at your option.
+
+## Contributing
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in this project by you shall be dual-licensed as above, without
+any additional terms or conditions.
