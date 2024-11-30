@@ -1,0 +1,44 @@
+name: Static Analysis
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'arbi/**'
+      - 'examples/**'
+
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'arbi/**'
+      - 'examples/**'
+
+  workflow_dispatch:
+
+jobs:
+  lint-and-audit:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Rust Environment
+      run: |
+        # Install rustup
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        . "$HOME/.cargo/env"
+
+        # Install clippy and rustfmt
+        rustup component add clippy rustfmt
+
+        # Install cargo-audit
+        cargo install cargo-audit
+
+    - name: clippy
+      run: cargo clippy -- -D warnings
+
+    - name: rustfmt
+      run: cargo fmt -- --check
+
+    - name: cargo-audit
+      run: cargo audit

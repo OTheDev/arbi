@@ -4,6 +4,7 @@ categories = [
     "algorithms",
     "data-structures",
     "mathematics",
+    "no-std",
 ]
 description = "Arbitrary precision integer."
 edition = "2021"
@@ -17,6 +18,12 @@ license = "Apache-2.0 OR MIT"
 name = "arbi"
 readme = "README.md"
 repository = "https://github.com/OTheDev/arbi"
-version = "0.1.0"
+version = "0.1.1"
 
 [dependencies]
+
+[dev-dependencies]
+rand = { version = "0.8.5", features = ["std_rng"] }
+
+[package.metadata.docs.rs]
+rustdoc-args = ["--html-in-header", "./doc/header.html"]
