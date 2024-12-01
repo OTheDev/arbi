@@ -3,7 +3,7 @@ Copyright 2024 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-use crate::{uints::UnsignedUtilities, Arbi, DDigit, Digit};
+use crate::{Arbi, DDigit, Digit};
 use core::ops::{Mul, MulAssign};
 
 impl Arbi {
@@ -57,36 +57,59 @@ impl Arbi {
     }
 
     fn mul_algo_square(w: &mut Self, a: &Self, t: usize) {
+        use crate::{uints::UnsignedUtilities, QDigit};
+
         w.vec.fill(0);
 
+        let mut c: DDigit;
         for i in 0..t {
-            let uv: DDigit = w.vec[2 * i] as DDigit
-                + a.vec[i] as DDigit * a.vec[i] as DDigit;
-            w.vec[2 * i] = uv as Digit; // set w[2 * i] <- v
-            let mut c: DDigit = uv >> Digit::BITS; // set c <- u
+            if Digit::BITS == 32 {
+                let uv: QDigit = w.vec[2 * i] as QDigit
+                    + a.vec[i] as QDigit * a.vec[i] as QDigit;
+                w.vec[2 * i] = uv as Digit; // set w[2 * i] <- v
+                c = (uv >> Digit::BITS) as DDigit; // set c <- u
 
-            for j in (i + 1)..t {
-                // (hi, lo) represents a quadruple digit
-                let mut lo: DDigit = a.vec[j] as DDigit * a.vec[i] as DDigit;
+                for j in (i + 1)..t {
+                    let uv: QDigit =
+                        2 * a.vec[j] as QDigit * a.vec[i] as QDigit
+                            + w.vec[i + j] as QDigit
+                            + c as QDigit;
+                    w.vec[i + j] = uv as Digit; // set w[i + j] <- v
+                    c = (uv >> Digit::BITS) as DDigit; // set c <- u
+                }
+            } else if Digit::BITS == 64 {
+                // This works for the 32-bit case as well.
+                let uv: DDigit = w.vec[2 * i] as DDigit
+                    + a.vec[i] as DDigit * a.vec[i] as DDigit;
+                w.vec[2 * i] = uv as Digit; // set w[2 * i] <- v
+                c = uv >> Digit::BITS; // set c <- u
 
-                // Multiply product by two
-                let mut hi = lo >> (DDigit::BITS - 1);
-                lo <<= 1;
+                for j in (i + 1)..t {
+                    // (hi, lo) represents a quadruple digit
+                    let mut lo: DDigit =
+                        a.vec[j] as DDigit * a.vec[i] as DDigit;
 
-                // Now add w[i + j] and c to (hi, lo)
-                let mut lo_clone = lo;
-                let overflow = DDigit::uadd_overflow(
-                    &mut lo,
-                    lo_clone,
-                    w.vec[i + j] as DDigit,
-                );
-                hi += if overflow { 1 } else { 0 };
-                lo_clone = lo;
-                let overflow = DDigit::uadd_overflow(&mut lo, lo_clone, c);
-                hi += if overflow { 1 } else { 0 };
+                    // Multiply product by two
+                    let mut hi = lo >> (DDigit::BITS - 1);
+                    lo <<= 1;
 
-                w.vec[i + j] = lo as Digit; // set w[i + j] <- v
-                c = (hi << Digit::BITS) | (lo >> Digit::BITS); // set c <- u
+                    // Now add w[i + j] and c to (hi, lo)
+                    let mut lo_clone = lo;
+                    let overflow = DDigit::uadd_overflow(
+                        &mut lo,
+                        lo_clone,
+                        w.vec[i + j] as DDigit,
+                    );
+                    hi += if overflow { 1 } else { 0 };
+                    lo_clone = lo;
+                    let overflow = DDigit::uadd_overflow(&mut lo, lo_clone, c);
+                    hi += if overflow { 1 } else { 0 };
+
+                    w.vec[i + j] = lo as Digit; // set w[i + j] <- v
+                    c = (hi << Digit::BITS) | (lo >> Digit::BITS); // set c <- u
+                }
+            } else {
+                unreachable!("Digit::BITS must be 32 or 64.");
             }
 
             let mut k = i + t;
