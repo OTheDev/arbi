@@ -125,38 +125,21 @@ impl Arbi {
     // Performs `result = |a| * |b|`.
     fn mul_standard(result: &mut Self, a: &Self, b: &Self) {
         if a.size() == 0 || b.size() == 0 {
-            result.vec.clear();
-            result.neg = false;
+            result.make_zero();
             return;
         }
 
         let m = a.size();
         let n = b.size();
+        result.vec.resize(m + n, 0);
 
-        let overlap = core::ptr::eq(result, a) || core::ptr::eq(result, b);
-
-        if overlap {
-            let mut temp = Arbi::default();
-            temp.vec.resize(m + n, 0);
-
-            if core::ptr::eq(a, b) {
-                Self::mul_algo_square(&mut temp, a, m);
-            } else {
-                Self::mul_algo_knuth(&mut temp, a, b, m, n);
-            }
-
-            temp.trim();
-            *result = temp;
+        if core::ptr::eq(a, b) {
+            Self::mul_algo_square(result, a, m);
         } else {
-            result.vec.resize(m + n, 0);
-            if core::ptr::eq(a, b) {
-                Self::mul_algo_square(result, a, m);
-            } else {
-                Self::mul_algo_knuth(result, a, b, m, n);
-            }
-
-            result.trim();
+            Self::mul_algo_knuth(result, a, b, m, n);
         }
+
+        result.trim();
     }
 
     fn mul_(w: &mut Self, u: &Self, v: &Self) {
