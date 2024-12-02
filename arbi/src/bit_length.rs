@@ -3,7 +3,7 @@ Copyright 2024 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-use crate::{uints::UnsignedUtilities, Arbi, Digit};
+use crate::{uints::UnsignedUtilities, Arbi, BitCount, Digit};
 
 impl Arbi {
     /// If nonzero, return the number of bits required to represent its absolute
@@ -22,12 +22,12 @@ impl Arbi {
     ///
     /// ## Complexity
     /// \\( O(1) \\)
-    pub fn bit_length(&self) -> usize {
+    pub fn bit_length(&self) -> BitCount {
         if self.size() == 0 {
             0
         } else {
-            (self.size() - 1) * (Digit::BITS as usize)
-                + Digit::bit_length(*self.vec.last().unwrap()) as usize
+            (self.size() as BitCount - 1) * (Digit::BITS as BitCount)
+                + Digit::bit_length(*self.vec.last().unwrap()) as BitCount
         }
     }
 }
@@ -43,7 +43,7 @@ mod tests {
         assert_eq!(Arbi::zero().bit_length(), 0);
         assert_eq!(
             Arbi::zero().bit_length(),
-            (u32::BITS - (0 as u32).leading_zeros()) as usize
+            (u32::BITS - (0 as u32).leading_zeros()) as BitCount
         );
     }
 
@@ -58,7 +58,7 @@ mod tests {
         for i in 1..u16::MAX {
             assert_eq!(
                 Arbi::from(i).bit_length(),
-                (u16::BITS - i.leading_zeros()) as usize
+                (u16::BITS - i.leading_zeros()) as BitCount
             );
 
             let rs = die_s.sample(&mut rng);
@@ -67,15 +67,15 @@ mod tests {
 
             assert_eq!(
                 Arbi::from(rs).bit_length(),
-                (Digit::BITS - rs.leading_zeros()) as usize
+                (Digit::BITS - rs.leading_zeros()) as BitCount
             );
             assert_eq!(
                 Arbi::from(rl).bit_length(),
-                (DDigit::BITS - rl.leading_zeros()) as usize
+                (DDigit::BITS - rl.leading_zeros()) as BitCount
             );
             assert_eq!(
                 Arbi::from(re).bit_length(),
-                (QDigit::BITS - re.leading_zeros()) as usize
+                (QDigit::BITS - re.leading_zeros()) as BitCount
             );
         }
     }

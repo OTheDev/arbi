@@ -3,7 +3,7 @@ Copyright 2024 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-use crate::{Arbi, Digit};
+use crate::{Arbi, BitCount, Digit};
 
 impl Arbi {
     /// Test bit `i` (zero-based indexing), acting as if the integer is
@@ -22,13 +22,13 @@ impl Arbi {
     ///
     /// ## Complexity
     /// \\( O(1) \\)
-    pub fn test_bit(&self, i: usize) -> bool {
-        let digit_idx: usize = i / Digit::BITS as usize;
+    pub fn test_bit(&self, i: BitCount) -> bool {
+        let digit_idx: usize = (i / Digit::BITS as BitCount) as usize;
 
         if self.size() <= digit_idx {
             false
         } else {
-            ((self.vec[digit_idx] >> (i % Digit::BITS as usize)) & 1) != 0
+            ((self.vec[digit_idx] >> (i % Digit::BITS as BitCount)) & 1) != 0
         }
     }
 
@@ -55,16 +55,17 @@ impl Arbi {
     /// - \\( O(1) \\) when setting an existing bit.
     /// - \\( O(n) \\) when setting a bit outside the current bit width, as
     ///     this requires resizing.
-    pub fn set_bit(&mut self, i: usize) -> &mut Self {
+    pub fn set_bit(&mut self, i: BitCount) -> &mut Self {
         let n: usize = self.size();
-        let digit_idx: usize = i / Digit::BITS as usize;
+        let digit_idx: usize = (i / Digit::BITS as BitCount) as usize;
 
         if digit_idx < n {
-            self.vec[digit_idx] |= (1 as Digit) << (i % Digit::BITS as usize);
+            self.vec[digit_idx] |=
+                (1 as Digit) << (i % Digit::BITS as BitCount);
         } else {
             self.vec.resize(digit_idx + 1, 0);
             self.vec[n..digit_idx].fill(0);
-            self.vec[digit_idx] = (1 as Digit) << (i % Digit::BITS as usize);
+            self.vec[digit_idx] = (1 as Digit) << (i % Digit::BITS as BitCount);
         }
         self
     }
@@ -81,7 +82,7 @@ mod tests {
 
         for i in 0..(Digit::BITS) {
             assert_eq!(
-                Arbi::zero().set_bit(i as usize),
+                Arbi::zero().set_bit(i as BitCount),
                 (2.0_f64.powi(i as i32)) as Digit
             );
         }
