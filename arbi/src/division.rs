@@ -3,7 +3,7 @@ Copyright 2024 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-use crate::{Arbi, DDigit, Digit, SDDigit};
+use crate::{Arbi, BitCount, DDigit, Digit, SDDigit};
 
 impl Arbi {
     fn div_algo_single(q: &mut Self, r: &mut Self, u: &Self, v: &Self) {
@@ -62,13 +62,13 @@ impl Arbi {
         r.make_zero();
 
         // (3)
-        for i in (0_usize..u.bit_length()).rev() {
+        for i in ((0 as BitCount)..u.bit_length()).rev() {
             // (3)(I)
             *r <<= 1_usize;
 
             // (3)(II)
             if u.test_bit(i) {
-                r.set_bit(0_usize);
+                r.set_bit(0 as BitCount);
             }
 
             // (3)(III)

@@ -5,6 +5,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use crate::from_string::configs::BASE_MBS;
 use crate::Base;
+use crate::BitCount;
 use crate::{Arbi, Digit, DBL_MAX_INT};
 use alloc::string::String;
 use core::convert::TryInto;
@@ -69,18 +70,15 @@ impl Arbi {
     /// unmanageable or impractical size for the corresponding base-`base`
     /// string.
     fn base_length(x: &Self, base: usize) -> usize {
-        let bitlen: usize = x.bit_length();
-        if bitlen as u64 > DBL_MAX_INT {
+        // TODO: analyze
+        let bitlen: BitCount = x.bit_length();
+        if bitlen as BitCount > DBL_MAX_INT as BitCount {
             panic!("Digit estimation exceeds practical limit.");
         }
 
         let r: usize =
             crate::floor::floor(bitlen as f64 * LOG_BASE_2[base] + 1.0)
                 as usize;
-
-        if r as usize > usize::MAX - 2 {
-            panic!("Digit estimation exceeds practical limit.");
-        }
 
         r as usize
     }

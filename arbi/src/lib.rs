@@ -58,6 +58,18 @@ pub use from_string::ParseError;
 
 /// Unsigned integer type representing a base-[`Arbi::BASE`] digit.
 pub type Digit = u32;
+
+/// Unsigned integer type used for counts of bits.
+///
+/// # Note
+/// A [`Vec`] has maximum capacity of `isize::MAX` in bytes. The unsigned
+/// integer type used to count bits must have width greater than `usize` in
+/// order to represent the theoretical number of bits that can be used at
+/// maximum capacity. Currently, a `u128` is used, which should accomodate most
+/// systems today. A custom unsigned integer type might be created in the future
+/// for future-proofing.
+pub type BitCount = u128;
+
 #[allow(dead_code)]
 type SDigit = i32;
 
@@ -151,7 +163,8 @@ impl Arbi {
     /// maximum capacity.
     ///
     /// This is `Arbi::MAX_CAPACITY * Digit::BITS`.
-    pub const MAX_BITS: u128 = Self::MAX_CAPACITY as u128 * Digit::BITS as u128;
+    pub const MAX_BITS: BitCount =
+        Self::MAX_CAPACITY as BitCount * Digit::BITS as BitCount;
 
     /// Default constructor. The integer is initialized to zero and no memory
     /// allocation occurs.
@@ -231,16 +244,16 @@ impl Arbi {
     ///
     /// # Examples
     /// ```
-    /// use arbi::{Arbi, Digit};
+    /// use arbi::{Arbi, BitCount, Digit};
     ///
-    /// let a = Arbi::with_capacity_bits(Digit::BITS as u128 - 1);
+    /// let a = Arbi::with_capacity_bits(Digit::BITS as BitCount - 1);
     /// assert_eq!(a.capacity(), 1);
     /// assert_eq!(a, 0);
     ///
-    /// let a = Arbi::with_capacity_bits(Digit::BITS as u128);
+    /// let a = Arbi::with_capacity_bits(Digit::BITS as BitCount);
     /// assert_eq!(a.capacity(), 1);
     ///
-    /// let a = Arbi::with_capacity_bits(Digit::BITS as u128 + 1);
+    /// let a = Arbi::with_capacity_bits(Digit::BITS as BitCount + 1);
     /// assert_eq!(a.capacity(), 2);
     /// ```
     ///
@@ -261,9 +274,9 @@ impl Arbi {
     /// `Arbi::MAX_BITS` digits) or if the allocator reports an allocation
     /// failure.
     #[inline(always)]
-    pub fn with_capacity_bits(capacity: u128) -> Self {
-        let cap = u128::div_ceil(capacity, Digit::BITS as u128);
-        if cap > Arbi::MAX_CAPACITY as u128 {
+    pub fn with_capacity_bits(capacity: BitCount) -> Self {
+        let cap = BitCount::div_ceil(capacity, Digit::BITS as BitCount);
+        if cap > Arbi::MAX_CAPACITY as BitCount {
             panic!("New capacity exceeds `isize::MAX` bytes");
         }
 
@@ -302,30 +315,74 @@ impl Arbi {
     ///
     /// # Examples
     /// ```
-    /// use arbi::{Arbi, Digit};
+    /// use arbi::{Arbi, BitCount, Digit};
     ///
     /// let zero = Arbi::zero();
     /// assert_eq!(zero.capacity_bits(), 0);
     ///
-    /// let a = Arbi::with_capacity_bits(Digit::BITS as u128);
-    /// assert!(a.capacity_bits() >= Digit::BITS as u128);
+    /// let a = Arbi::with_capacity_bits(Digit::BITS as BitCount);
+    /// assert!(a.capacity_bits() >= Digit::BITS as BitCount);
     /// ```
     ///
     /// ## Complexitys
     /// \\( O(1) \\)
     #[inline(always)]
-    pub fn capacity_bits(&self) -> u128 {
-        self.vec.capacity() as u128 * Digit::BITS as u128
+    pub fn capacity_bits(&self) -> BitCount {
+        self.vec.capacity() as BitCount * Digit::BITS as BitCount
     }
 
-    /// Return the number of digits used to represent the absolute value of this
-    /// integer. Instance represents `0` iff `size() == 0`.
+    /// Return the number of [`Digit`]s used to represent the absolute value of
+    /// this integer.
+    ///
+    /// Instance represents `0` if and only if `size() == 0`.
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::{Arbi, Digit};
+    ///
+    /// let zero = Arbi::zero();
+    /// assert_eq!(zero.size(), 0);
+    ///
+    /// let mut a = Arbi::from(Digit::MAX);
+    /// assert_eq!(a.size(), 1);
+    ///
+    /// a.incr();
+    /// assert_eq!(a.size(), 2);
+    /// ```
     ///
     /// ## Complexity
     /// \\( O(1) \\)
     #[inline(always)]
-    fn size(&self) -> usize {
+    pub fn size(&self) -> usize {
         self.vec.len()
+    }
+
+    /// Return the number of bits used to represent the absolute value of this
+    /// integer.
+    ///
+    /// Instance represents `0` if and only if `size_bits() == 0`.
+    ///
+    /// This is equivalent to [`Arbi::bit_length()`].
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::{Arbi, BitCount, Digit};
+    ///
+    /// let zero = Arbi::zero();
+    /// assert_eq!(zero.size_bits(), 0);
+    ///
+    /// let mut a = Arbi::from(Digit::MAX);
+    /// assert_eq!(a.size_bits(), Digit::BITS as BitCount);
+    ///
+    /// a.incr();
+    /// assert_eq!(a.size_bits(), Digit::BITS as BitCount + 1);
+    /// ```
+    ///
+    /// ## Complexity
+    /// \\( O(1) \\)
+    #[inline(always)]
+    pub fn size_bits(&self) -> BitCount {
+        self.bit_length()
     }
 
     /// See [`Arbi::is_negative()`].
