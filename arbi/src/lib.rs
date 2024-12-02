@@ -4,6 +4,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
 #![doc = include_str!("../README.md")]
+#![forbid(unsafe_code)]
 #![no_std]
 extern crate alloc;
 

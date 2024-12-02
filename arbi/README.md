@@ -2,15 +2,21 @@
 
 `arbi` implements an Arbitrary Precision Integer type: [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html).
 
-This crate has:
+## Features
 
-- *No dependencies*.
+- **No dependencies**.
 
   Empty dependencies section in `Cargo.toml`.
 
-- *`no_std` support*.
+- **`no_std`**.
 
   This crate is `no_std` and utilizes the [`alloc`](https://doc.rust-lang.org/1.82.0/alloc/index.html) crate for dynamic memory allocation.
+
+- **`forbid(unsafe_code)`**.
+
+  Statically guarantees that crate code does not use `unsafe` Rust.
+
+- **Pure Rust** implementation.
 
 ## Usage
 
