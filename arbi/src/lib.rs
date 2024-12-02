@@ -21,6 +21,7 @@ pub mod base;
 mod bit_length;
 mod bits;
 mod bitwise;
+mod builtin_int_methods;
 mod comparisons;
 mod comparisons_double;
 mod comparisons_integral;
