@@ -1,3 +1,7 @@
+[<img alt="github" src="https://img.shields.io/badge/github-othedev/arbi-76e8b5?style=for-the-badge&labelColor=24292e&logo=github" height="20">](https://github.com/OTheDev/arbi)
+[![Test](https://github.com/OTheDev/arbi/actions/workflows/test.yml/badge.svg)](https://github.com/OTheDev/arbi/actions/workflows/test.yml)
+[![Static Analysis](https://github.com/OTheDev/arbi/actions/workflows/static.yml/badge.svg)](https://github.com/OTheDev/arbi/actions/workflows/static.yml)
+
 # arbi
 
 `arbi` implements an Arbitrary Precision Integer type: [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html).
