@@ -3,7 +3,7 @@ Copyright 2024 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-use crate::Arbi;
+use crate::{Arbi, BitCount};
 
 impl Arbi {
     /// Returns `true` if and only if `|self| == 2^k` for some `k`.
@@ -40,15 +40,14 @@ impl Arbi {
         }
         // Integer `k > 0` is a power of two if and only if `k & (k - 1) == 0`.
         // Only one bit should be set in its binary representation.
-        let mut count = 0;
-        for digit in &self.vec {
-            count += digit.count_ones();
+        let mut count: BitCount = 0;
+        for digit in self.vec.iter().rev() {
+            count += (*digit).count_ones() as BitCount;
             if count > 1 {
                 // > one bit
                 return false;
             }
         }
-
         count == 1
     }
 }
