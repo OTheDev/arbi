@@ -63,24 +63,19 @@ impl Arbi {
     /// \\[
     ///     n = \left\lceil m * \log_{10}(2) \right\rceil
     /// \\]
-    ///
-    /// ## Panic
-    /// Panics when the estimated number of base-`base` digits is beyond the
-    /// theoretical or practical limit for representation, indicating an
-    /// unmanageable or impractical size for the corresponding base-`base`
-    /// string.
-    fn base_length(x: &Self, base: usize) -> usize {
+    fn base_length(x: &Self, base: usize) -> BitCount {
         // TODO: analyze
         let bitlen: BitCount = x.bit_length();
         if bitlen as BitCount > DBL_MAX_INT as BitCount {
-            panic!("Digit estimation exceeds practical limit.");
-        }
-
-        let r: usize =
+            if x == 0 {
+                return 1;
+            }
+            let ilog2_base = base.ilog2();
+            (x.bit_length() - 1) / (ilog2_base as BitCount) + (1 as BitCount)
+        } else {
             crate::floor::floor(bitlen as f64 * LOG_BASE_2[base] + 1.0)
-                as usize;
-
-        r as usize
+                as BitCount
+        }
     }
 
     /// Return a [`String`] containing the base-`base` representation of the
@@ -108,7 +103,13 @@ impl Arbi {
 
         let mut copy = self.clone();
         let mut result = String::new();
-        let estimate: usize = Self::base_length(self, base);
+        let true_estimate: BitCount = Self::base_length(self, base);
+        let estimate: usize = if true_estimate > usize::MAX as BitCount {
+            panic!("Digit estimation exceeds isize::MAX bytes in capacity");
+        } else {
+            true_estimate as usize
+        };
+
         result.reserve(estimate + if self.neg { 1 } else { 0 });
 
         let basembs = BASE_MBS[base];
