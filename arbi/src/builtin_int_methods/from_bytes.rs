@@ -185,12 +185,12 @@ impl Arbi {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::{thread_rng, Rng};
     extern crate std;
+    use crate::util::test::{get_seedable_rng, Rng};
 
     #[test]
     fn test_random_from_le_bytes_signed() {
-        let mut rng = thread_rng();
+        let (mut rng, _) = get_seedable_rng();
 
         // i64
         for _ in 0..i16::MAX {
@@ -221,7 +221,7 @@ mod tests {
 
     #[test]
     fn test_random_from_be_bytes_signed() {
-        let mut rng = thread_rng();
+        let (mut rng, _) = get_seedable_rng();
 
         // i64
         for _ in 0..i16::MAX {
