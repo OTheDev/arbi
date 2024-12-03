@@ -155,7 +155,7 @@ impl Arbi {
     /// // Negative
     /// let bytes = [0xb5, 0xb4, 0xb3, 0xb2, 0xb5, 0xb4, 0xb3, 0xb3];
     /// let value = Arbi::from_be_bytes_signed(&bytes);
-    /// assert_eq!(value, i64::from_be_bytes(bytes), "{}", value);
+    /// assert_eq!(value, i64::from_be_bytes(bytes));
     ///
     /// // Zero
     /// let bytes = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
@@ -200,8 +200,8 @@ mod tests {
             let arbi_value = Arbi::from_le_bytes_signed(&bytes);
             assert_eq!(
                 arbi_value, expected_value,
-                "Test failed for bytes: {:?}",
-                bytes
+                "Test failed for bytes: {:?}, arbi: {}",
+                bytes, arbi_value
             );
         }
 
@@ -213,8 +213,8 @@ mod tests {
             let arbi_value = Arbi::from_le_bytes_signed(&bytes);
             assert_eq!(
                 arbi_value, expected_value,
-                "Test failed for bytes: {:?}",
-                bytes
+                "Test failed for bytes: {:?}, arbi: {}",
+                bytes, arbi_value
             );
         }
     }
@@ -244,8 +244,8 @@ mod tests {
             let expected_value = i128::from_be_bytes(bytes);
             assert_eq!(
                 arbi_value, expected_value,
-                "Test failed for bytes: {:?}",
-                bytes
+                "Test failed for bytes: {:?}, arbi: {}",
+                bytes, arbi_value
             );
         }
     }
