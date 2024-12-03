@@ -30,18 +30,21 @@ impl Arbi {
         if bytes.is_empty() {
             return Arbi::zero();
         }
-        let mut num =
-            Arbi::with_capacity(usize::div_ceil(bytes.len(), DIGIT_BYTES));
-        let mut digit = 0;
-        for (i, &byte) in bytes.iter().enumerate() {
-            digit |= (byte as Digit) << ((i % DIGIT_BYTES) * 8);
-            if i % DIGIT_BYTES == DIGIT_BYTES - 1 {
-                num.vec.push(digit);
-                digit = 0;
-            }
-        }
-        if bytes.len() % DIGIT_BYTES != 0 {
+        let full_chunks = bytes.len() / DIGIT_BYTES;
+        let remainder = bytes.len() % DIGIT_BYTES;
+        let mut num = Arbi::with_capacity(
+            full_chunks + if remainder > 0 { 1 } else { 0 },
+        );
+        for chunk in bytes.chunks_exact(DIGIT_BYTES) {
+            let digit = Digit::from_le_bytes(chunk.try_into().unwrap());
             num.vec.push(digit);
+        }
+        if remainder > 0 {
+            let mut last_bytes = [0u8; DIGIT_BYTES];
+            last_bytes[..remainder]
+                .copy_from_slice(&bytes[full_chunks * DIGIT_BYTES..]);
+            let last_digit = Digit::from_le_bytes(last_bytes);
+            num.vec.push(last_digit);
         }
         num.trim();
         num
@@ -66,28 +69,25 @@ impl Arbi {
     /// assert_eq!(zero, 0);
     /// ```
     pub fn from_be_bytes(bytes: &[u8]) -> Self {
-        Self::from_be_bytes_reverse(bytes, true)
-    }
-
-    fn from_be_bytes_reverse(bytes: &[u8], reverse: bool) -> Self {
         if bytes.is_empty() {
             return Arbi::zero();
         }
-        let mut num =
-            Arbi::with_capacity(usize::div_ceil(bytes.len(), DIGIT_BYTES));
-        let mut digit = 0;
-        for (i, &byte) in bytes.iter().rev().enumerate() {
-            digit |= (byte as Digit) << ((i % DIGIT_BYTES) * 8);
-            if i % DIGIT_BYTES == DIGIT_BYTES - 1 {
-                num.vec.push(digit);
-                digit = 0;
-            }
-        }
-        if bytes.len() % DIGIT_BYTES != 0 {
+        let full_chunks = bytes.len() / DIGIT_BYTES;
+        let remainder = bytes.len() % DIGIT_BYTES;
+        let mut num = Arbi::with_capacity(
+            full_chunks + if remainder > 0 { 1 } else { 0 },
+        );
+        let full_chunks_iter = bytes.chunks_exact(DIGIT_BYTES);
+        for chunk in full_chunks_iter.rev() {
+            let digit = Digit::from_be_bytes(chunk.try_into().unwrap());
             num.vec.push(digit);
         }
-        if reverse {
-            num.vec.reverse();
+        if remainder > 0 {
+            let mut last_bytes = [0u8; DIGIT_BYTES];
+            last_bytes[DIGIT_BYTES - remainder..]
+                .copy_from_slice(&bytes[0..remainder]);
+            let last_digit = Digit::from_be_bytes(last_bytes);
+            num.vec.push(last_digit);
         }
         num.trim();
         num
@@ -172,7 +172,7 @@ impl Arbi {
         }
         let is_negative = bytes[0] & 0x80 != 0;
         // TODO: one pass?
-        let mut num = Self::from_be_bytes_reverse(bytes, false);
+        let mut num = Self::from_be_bytes(bytes);
         if is_negative {
             Arbi::to_twos_complement_inplace(&mut num.vec);
             num.neg = true;
