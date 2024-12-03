@@ -157,6 +157,16 @@ impl UnsignedUtilities for $t {
         }
     }
 
+    /// Calculates the quotient of `self` and `rhs`, rounding the result towards
+    /// positive infinity.
+    ///
+    /// # Panics
+    /// This function will panic if `rhs` is zero.
+    ///
+    /// # Examples
+    /// ```
+    /// assert_eq!(u64::div_ceil(9, 5), 2);
+    /// ```
     fn div_ceil_(x: Self, y: Self) -> Self {
         if x == 0 {
             0

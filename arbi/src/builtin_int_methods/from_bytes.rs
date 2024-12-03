@@ -31,7 +31,7 @@ impl Arbi {
             return Arbi::zero();
         }
         let mut num =
-            Arbi::with_capacity((bytes.len() + DIGIT_BYTES - 1) / DIGIT_BYTES);
+            Arbi::with_capacity(usize::div_ceil(bytes.len(), DIGIT_BYTES));
         let mut digit = 0;
         for (i, &byte) in bytes.iter().enumerate() {
             digit |= (byte as Digit) << ((i % DIGIT_BYTES) * 8);
@@ -74,7 +74,7 @@ impl Arbi {
             return Arbi::zero();
         }
         let mut num =
-            Arbi::with_capacity((bytes.len() + DIGIT_BYTES - 1) / DIGIT_BYTES);
+            Arbi::with_capacity(usize::div_ceil(bytes.len(), DIGIT_BYTES));
         let mut digit = 0;
         for (i, &byte) in bytes.iter().rev().enumerate() {
             digit |= (byte as Digit) << ((i % DIGIT_BYTES) * 8);
