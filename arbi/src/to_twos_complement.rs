@@ -3,33 +3,50 @@ Copyright 2024 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-use crate::{Arbi, Digit};
-use alloc::vec;
-use alloc::vec::Vec;
+pub(crate) enum ByteOrder {
+    Be,
+    Le,
+}
 
-impl Arbi {
-    pub(crate) fn to_twos_complement(vec: &[Digit]) -> Vec<Digit> {
-        let vec_size: usize = vec.len();
-        let mut result: Vec<Digit> = vec![0; vec_size];
+/// Perform two's complement on a slice of unsigned integers in-place.
+pub(crate) trait TwosComplement {
+    fn to_twos_complement(&mut self, order: ByteOrder);
+}
+
+/* !impl_twos_complement */
+macro_rules! impl_twos_complement {
+    ($($t:ty),*) => {
+        $(
+
+impl TwosComplement for [$t] {
+    fn to_twos_complement(&mut self, order: ByteOrder) {
+        let size: usize = self.len();
         let mut carry: bool = true;
 
-        for i in 0..vec_size {
-            let sum: Digit = (!vec[i]).wrapping_add(if carry { 1 } else { 0 });
-            carry = sum < (carry as Digit);
-            result[i] = sum;
-        }
-
-        result
-    }
-
-    pub(crate) fn to_twos_complement_inplace(vec: &mut [Digit]) {
-        let vec_size: usize = vec.len();
-        let mut carry: bool = true;
-
-        for item in vec.iter_mut().take(vec_size) {
-            let sum: Digit = (!(*item)).wrapping_add(if carry { 1 } else { 0 });
-            carry = sum < (carry as Digit);
-            *item = sum;
+        match order {
+            ByteOrder::Le => {
+                for item in self.iter_mut().take(size) {
+                    let sum: $t =
+                        (!(*item)).wrapping_add(if carry { 1 } else { 0 });
+                    carry = sum < (carry as $t);
+                    *item = sum;
+                }
+            }
+            ByteOrder::Be => {
+                for item in self.iter_mut().rev().take(size) {
+                    let sum: $t =
+                        (!(*item)).wrapping_add(if carry { 1 } else { 0 });
+                    carry = sum < (carry as $t);
+                    *item = sum;
+                }
+            }
         }
     }
 }
+
+        )*
+    }
+}
+/* impl_twos_complement! */
+
+impl_twos_complement!(u8, u16, u32, u64, u128, usize);
