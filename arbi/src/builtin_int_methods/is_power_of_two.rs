@@ -35,9 +35,6 @@ impl Arbi {
     /// assert!(base.is_power_of_two());
     /// ```
     pub fn is_power_of_two(&self) -> bool {
-        if self.is_zero() {
-            return false;
-        }
         // Integer `k > 0` is a power of two if and only if `k & (k - 1) == 0`.
         // Only one bit should be set in its binary representation.
         let mut count: BitCount = 0;
