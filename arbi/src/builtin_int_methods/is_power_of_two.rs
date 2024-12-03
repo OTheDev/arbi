@@ -6,7 +6,10 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 use crate::Arbi;
 
 impl Arbi {
-    /// Returns `true` if and only if `self == 2^k` for some `k`.
+    /// Returns `true` if and only if `|self| == 2^k` for some `k`.
+    ///
+    /// That is, return `true` iff the absolute value of this integer is a power
+    /// of 2.
     ///
     /// # Examples
     /// ```
@@ -32,7 +35,7 @@ impl Arbi {
     /// assert!(base.is_power_of_two());
     /// ```
     pub fn is_power_of_two(&self) -> bool {
-        if self.is_negative() || self.is_zero() {
+        if self.is_zero() {
             return false;
         }
         // Integer `k > 0` is a power of two if and only if `k & (k - 1) == 0`.
@@ -53,20 +56,28 @@ impl Arbi {
 #[cfg(test)]
 mod tests {
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{Arbi, DDigit, Digit, QDigit};
+    use crate::{Arbi, DDigit, Digit, QDigit, SDDigit, SQDigit};
 
     #[test]
     fn test_is_power_of_two_digit_boundaries() {
         let a = Arbi::from(Digit::MAX);
         assert!(!a.is_power_of_two());
-
         let a = Arbi::from(Digit::MAX as DDigit + 1);
+        assert!(a.is_power_of_two());
+
+        let a = Arbi::from(-(Digit::MAX as SDDigit));
+        assert!(!a.is_power_of_two());
+        let a = Arbi::from(-(Digit::MAX as SDDigit + 1));
         assert!(a.is_power_of_two());
 
         let a = Arbi::from(DDigit::MAX);
         assert!(!a.is_power_of_two());
-
         let a = Arbi::from(DDigit::MAX as QDigit + 1);
+        assert!(a.is_power_of_two());
+
+        let a = Arbi::from(-(DDigit::MAX as SQDigit));
+        assert!(!a.is_power_of_two());
+        let a = Arbi::from(-(DDigit::MAX as SQDigit + 1));
         assert!(a.is_power_of_two());
     }
 
@@ -79,7 +90,7 @@ mod tests {
     #[test]
     fn test_is_power_of_two_negative() {
         let a = Arbi::from(-4);
-        assert!(!a.is_power_of_two());
+        assert!(a.is_power_of_two());
     }
 
     #[test]
@@ -89,6 +100,7 @@ mod tests {
         let die_ddigit = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
         let die_qdigit =
             get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+        let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
 
         for _ in 0..i16::MAX {
             let r = die_digit.sample(&mut rng);
@@ -102,6 +114,10 @@ mod tests {
             let r = die_qdigit.sample(&mut rng);
             let a = Arbi::from(r);
             assert_eq!(a.is_power_of_two(), r.is_power_of_two());
+
+            let r = die_sddigit.sample(&mut rng);
+            let a = Arbi::from(r);
+            assert_eq!(a.is_power_of_two(), r.unsigned_abs().is_power_of_two());
         }
     }
 }
