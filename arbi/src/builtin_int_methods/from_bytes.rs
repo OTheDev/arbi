@@ -3,6 +3,7 @@ Copyright 2024 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
+use crate::to_twos_complement::{ByteOrder, TwosComplement};
 use crate::{Arbi, Digit};
 
 const DIGIT_BYTES: usize = core::mem::size_of::<Digit>();
@@ -130,7 +131,7 @@ impl Arbi {
         // TODO: one pass?
         let mut num = Self::from_le_bytes(bytes);
         if is_negative {
-            Arbi::to_twos_complement_inplace(&mut num.vec);
+            num.vec.to_twos_complement(ByteOrder::Le);
             num.negate();
         }
         num.trim();
@@ -174,7 +175,7 @@ impl Arbi {
         // TODO: one pass?
         let mut num = Self::from_be_bytes(bytes);
         if is_negative {
-            Arbi::to_twos_complement_inplace(&mut num.vec);
+            num.vec.to_twos_complement(ByteOrder::Le);
             num.neg = true;
         }
         num.trim();

@@ -8,4 +8,5 @@ mod from_bytes;
 mod leading_ones;
 mod reverse_bits;
 mod swap_bytes;
+mod to_bytes;
 mod trailing_ones;

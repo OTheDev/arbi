@@ -13,6 +13,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 // 2. Document under what situations cloning is needed.
 // 3. Ideally, there should only be one implementation.
 
+use crate::to_twos_complement::{ByteOrder, TwosComplement};
 use crate::{Arbi, Digit};
 use core::ops::{
     BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not,
@@ -38,11 +39,13 @@ impl Arbi {
         let mut max_size = x.size().max(y.size());
 
         if x_negative {
-            Self::to_twos_complement_inplace(&mut x.vec);
+            x.vec.to_twos_complement(ByteOrder::Le);
         }
 
         let y_temp_complement = if y_negative {
-            Some(Self::to_twos_complement(&y.vec))
+            let mut y_clone = y.vec.clone();
+            y_clone.to_twos_complement(ByteOrder::Le);
+            Some(y_clone)
         } else {
             None
         };
@@ -90,7 +93,7 @@ impl Arbi {
         }
 
         if result_negative {
-            Self::to_twos_complement_inplace(&mut x.vec);
+            x.vec.to_twos_complement(ByteOrder::Le);
         }
 
         x.neg = result_negative;
@@ -108,11 +111,11 @@ impl Arbi {
         let mut max_size = x.size().max(y.size());
 
         if x_negative {
-            Self::to_twos_complement_inplace(&mut x.vec);
+            x.vec.to_twos_complement(ByteOrder::Le);
         }
 
         if y_negative {
-            Self::to_twos_complement_inplace(&mut y.vec);
+            y.vec.to_twos_complement(ByteOrder::Le);
         }
 
         let result_negative = match op {
@@ -152,7 +155,7 @@ impl Arbi {
         }
 
         if result_negative {
-            Self::to_twos_complement_inplace(&mut x.vec);
+            x.vec.to_twos_complement(ByteOrder::Le);
         }
 
         x.neg = result_negative;
