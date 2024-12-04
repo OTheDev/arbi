@@ -6,10 +6,11 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 use crate::{Arbi, BitCount};
 
 impl Arbi {
-    /// Returns the base 10 logarithm of the number, rounded down.
+    /// Returns the base-`base` logarithm of the number, rounded down.
     ///
     /// # Panics
-    /// This function will panic if `self` is less than or equal to zero.
+    /// This function will panic if `self` is less than or equal to zero, or if
+    /// `base` is less than 2.
     ///
     /// # Examples
     /// ```
