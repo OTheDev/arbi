@@ -8,6 +8,7 @@ mod from_bytes;
 mod ilog;
 mod ilog10;
 mod ilog2;
+mod is_positive_is_negative;
 mod is_power_of_two;
 mod leading_ones;
 mod reverse_bits;

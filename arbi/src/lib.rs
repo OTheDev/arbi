@@ -392,29 +392,6 @@ impl Arbi {
         self.neg
     }
 
-    /// Return `true` if this `Arbi` integer is (strictly) negative, `false`
-    /// otherwise.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    ///
-    /// let neg = Arbi::from(-1234);
-    /// let pos = Arbi::from(1234);
-    /// let zer = Arbi::zero();
-    ///
-    /// assert!(neg.is_negative());
-    /// assert!(!pos.is_negative());
-    /// assert!(!zer.is_negative());
-    /// ```
-    ///
-    /// ## Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn is_negative(&self) -> bool {
-        self.neg
-    }
-
     /// Take away trailing zeros in the internal digit vector until we find the
     /// most significant digit. If the vector is empty after this process, make
     /// this integer have value `0`.
