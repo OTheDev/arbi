@@ -181,6 +181,56 @@ impl Arbi {
         num.trim();
         num
     }
+
+    /// Creates an integer value from its memory representation as a byte array
+    /// in native endianness, interpreted as a nonnegative integer.
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
+    ///
+    /// let bytes = if cfg!(target_endian = "big") {
+    ///     [0x12, 0x34, 0x56, 0x78, 0x90, 0x12, 0x34, 0x56]
+    /// } else {
+    ///     [0x56, 0x34, 0x12, 0x90, 0x78, 0x56, 0x34, 0x12]
+    /// };
+    ///
+    /// let a = Arbi::from_ne_bytes(&bytes);
+    /// assert_eq!(a, 0x1234567890123456_i64);
+    /// assert_eq!(a, i64::from_ne_bytes(bytes));
+    /// ```
+    pub fn from_ne_bytes(bytes: &[u8]) -> Self {
+        if cfg!(target_endian = "big") {
+            Self::from_be_bytes(bytes)
+        } else {
+            Self::from_le_bytes(bytes)
+        }
+    }
+
+    /// Creates an integer value from its memory representation as a byte array
+    /// in native endianness, interpreted as a signed integer.
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
+    ///
+    /// let bytes = if cfg!(target_endian = "big") {
+    ///     [0x12, 0x34, 0x56, 0x78, 0x90, 0x12, 0x34, 0x56]
+    /// } else {
+    ///     [0x56, 0x34, 0x12, 0x90, 0x78, 0x56, 0x34, 0x12]
+    /// };
+    ///
+    /// let a = Arbi::from_ne_bytes_signed(&bytes);
+    /// assert_eq!(a, 0x1234567890123456_i64);
+    /// assert_eq!(a, i64::from_ne_bytes(bytes));
+    /// ```
+    pub fn from_ne_bytes_signed(bytes: &[u8]) -> Self {
+        if cfg!(target_endian = "big") {
+            Self::from_be_bytes_signed(bytes)
+        } else {
+            Self::from_le_bytes_signed(bytes)
+        }
+    }
 }
 
 #[cfg(test)]
@@ -197,6 +247,7 @@ mod tests {
         for _ in 0..i16::MAX {
             let mut bytes = [0u8; 8];
             rng.fill(&mut bytes);
+
             let expected_value = i64::from_le_bytes(bytes);
             let arbi_value = Arbi::from_le_bytes_signed(&bytes);
             assert_eq!(
@@ -204,12 +255,29 @@ mod tests {
                 "Test failed for bytes: {:?}, arbi: {}",
                 bytes, arbi_value
             );
+
+            let expected_value = i64::from_be_bytes(bytes);
+            let arbi_value = Arbi::from_be_bytes_signed(&bytes);
+            assert_eq!(
+                arbi_value, expected_value,
+                "Test failed for bytes: {:?}, arbi: {}",
+                bytes, arbi_value
+            );
+
+            let expected_value = i64::from_ne_bytes(bytes);
+            let arbi_value = Arbi::from_ne_bytes_signed(&bytes);
+            assert_eq!(
+                arbi_value, expected_value,
+                "Test failed for bytes: {:?}, arbi: {}",
+                bytes, arbi_value
+            );
         }
 
         // i128
         for _ in 0..i16::MAX {
             let mut bytes = [0u8; 16];
             rng.fill(&mut bytes);
+
             let expected_value = i128::from_le_bytes(bytes);
             let arbi_value = Arbi::from_le_bytes_signed(&bytes);
             assert_eq!(
@@ -217,32 +285,17 @@ mod tests {
                 "Test failed for bytes: {:?}, arbi: {}",
                 bytes, arbi_value
             );
-        }
-    }
 
-    #[test]
-    fn test_random_from_be_bytes_signed() {
-        let (mut rng, _) = get_seedable_rng();
-
-        // i64
-        for _ in 0..i16::MAX {
-            let mut bytes = [0u8; 8];
-            rng.fill(&mut bytes);
+            let expected_value = i128::from_be_bytes(bytes);
             let arbi_value = Arbi::from_be_bytes_signed(&bytes);
-            let expected_value = i64::from_be_bytes(bytes);
             assert_eq!(
                 arbi_value, expected_value,
                 "Test failed for bytes: {:?}, arbi: {}",
                 bytes, arbi_value
             );
-        }
 
-        // i128
-        for _ in 0..i16::MAX {
-            let mut bytes = [0u8; 16];
-            rng.fill(&mut bytes);
-            let arbi_value = Arbi::from_be_bytes_signed(&bytes);
-            let expected_value = i128::from_be_bytes(bytes);
+            let expected_value = i128::from_ne_bytes(bytes);
+            let arbi_value = Arbi::from_ne_bytes_signed(&bytes);
             assert_eq!(
                 arbi_value, expected_value,
                 "Test failed for bytes: {:?}, arbi: {}",
