@@ -7,8 +7,10 @@ use crate::uints::UnsignedUtilities;
 use crate::{Arbi, BitCount};
 
 impl Arbi {
-    /// If nonzero, return the number of digits in base `base > 1` needed to
-    /// represent the absolute value of this integer. Otherwise, return `0`.
+    /// Return the number of base-`base` digits needed to represent the absolute
+    /// value of this integer.
+    ///
+    /// Instance represents `0` if and only if `size_base() == 0`.
     ///
     /// # Panics
     /// This function will panic if `base` is less than or equal to 1.
@@ -25,6 +27,14 @@ impl Arbi {
     ///
     /// let a = Arbi::from_str_radix("123456789", 10).unwrap();
     /// assert_eq!(a.size_base(10), 9);
+    /// ```
+    ///
+    /// Panics on a base less than or equal to 1:
+    /// ```should_panic
+    /// use arbi::Arbi;
+    ///
+    /// let a = Arbi::from(1234);
+    /// a.size_base(1);
     /// ```
     pub fn size_base(&self, base: u32) -> BitCount {
         if base <= 1 {
