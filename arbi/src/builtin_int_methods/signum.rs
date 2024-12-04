@@ -28,6 +28,9 @@ impl Arbi {
     /// assert_eq!(minus_one.signum(), -1);
     /// assert_eq!((-1i32).signum(), -1);
     /// ```
+    ///
+    /// # Complexity
+    /// \\( O(1) \\)
     pub fn signum(&self) -> i32 {
         match self.sign() {
             Ordering::Equal => 0,
