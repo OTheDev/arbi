@@ -517,31 +517,6 @@ impl Arbi {
         }
     }
 
-    /// Return a new integer representing the absolute value of this integer.
-    ///
-    /// For in-place negation (\\( O(1) \\) operation), see [`Arbi::negate()`].
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    ///
-    /// let neg = Arbi::from(-123456789);
-    /// let pos = neg.abs();
-    ///
-    /// assert_eq!(pos, 123456789);
-    /// ```
-    ///
-    /// ## Complexity
-    /// \\( O(n) \\)
-    #[inline(always)]
-    pub fn abs(&self) -> Arbi {
-        let mut ret = self.clone();
-        if self.neg {
-            ret.negate();
-        }
-        ret
-    }
-
     /// Return an `Ordering` indicating the sign of the number: `Ordering::Less`
     /// for negative, `Ordering::Equal` for zero, `Ordering::Greater` for
     /// positive.
@@ -601,18 +576,6 @@ mod tests {
         arbi.decr();
         assert!(arbi.is_even());
         assert!(!arbi.is_odd());
-    }
-
-    #[test]
-    fn test_abs() {
-        let pos = Arbi::from(123);
-        assert_eq!(123, pos.abs());
-
-        let neg = Arbi::from(-123);
-        assert_eq!(123, neg.abs());
-
-        let zer = Arbi::from(0);
-        assert_eq!(0, zer.abs());
     }
 
     #[test]
