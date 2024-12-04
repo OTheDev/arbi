@@ -100,6 +100,45 @@ impl Arbi {
         }
         result
     }
+
+    /// Returns the memory representation of the absolute value of this integer
+    /// as a byte [`Vec`] in native byte order.
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
+    ///
+    /// let a = Arbi::from(0x1234567890123456_i64);
+    /// assert_eq!(a.to_ne_bytes(), 0x1234567890123456_i64.to_ne_bytes());
+    /// ```
+    pub fn to_ne_bytes(&self) -> Vec<u8> {
+        if cfg!(target_endian = "big") {
+            self.to_be_bytes()
+        } else {
+            self.to_le_bytes()
+        }
+    }
+
+    /// Returns the memory representation of this integer as a byte [`Vec`] in
+    /// native byte order.
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
+    ///
+    /// let a = Arbi::from(-0x1234567890123456_i64);
+    /// assert_eq!(
+    ///     a.to_ne_bytes_signed(),
+    ///     (-0x1234567890123456_i64).to_ne_bytes()
+    /// );
+    /// ```
+    pub fn to_ne_bytes_signed(&self) -> Vec<u8> {
+        if cfg!(target_endian = "big") {
+            self.to_be_bytes_signed()
+        } else {
+            self.to_le_bytes_signed()
+        }
+    }
 }
 
 #[cfg(test)]
@@ -124,16 +163,21 @@ mod tests {
                         r.to_be_bytes(),
                         a.to_be_bytes_signed().as_ref()
                     );
+                    assert_eq!(
+                        r.to_ne_bytes(),
+                        a.to_ne_bytes_signed().as_ref()
+                    );
                 } else {
                     assert_eq!(r.to_le_bytes(), a.to_le_bytes().as_ref());
                     assert_eq!(r.to_be_bytes(), a.to_be_bytes().as_ref());
+                    assert_eq!(r.to_ne_bytes(), a.to_ne_bytes().as_ref())
                 }
             }
         }};
     }
 
     #[test]
-    fn test_random_to_le_and_be_bytes_unsigned() {
+    fn test_random_to_le_and_be_bytes() {
         let (mut rng, _) = get_seedable_rng();
         let die_i64 = get_uniform_die(i64::MIN, i64::MAX);
         let die_i128 = get_uniform_die(i128::MIN, i128::MAX);
