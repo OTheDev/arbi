@@ -63,24 +63,26 @@ impl Arbi {
     /// \\[
     ///     n = \left\lceil m * \log_{10}(2) \right\rceil
     /// \\]
-    ///
-    /// ## Panic
-    /// Panics when the estimated number of base-`base` digits is beyond the
-    /// theoretical or practical limit for representation, indicating an
-    /// unmanageable or impractical size for the corresponding base-`base`
-    /// string.
-    fn base_length(x: &Self, base: usize) -> usize {
+    /// If `x` has bit length less than or equal to 2 ** 53, return an estimate
+    /// of the number of base-`base` digits needed to represent the absolute
+    /// value of this integer. Otherwise, return the exact number of base-`base`
+    /// digits.
+    fn base_length(x: &Self, base: usize) -> BitCount {
         // TODO: analyze
+        if x == 0 {
+            return 1;
+        }
         let bitlen: BitCount = x.bit_length();
         if bitlen as BitCount > DBL_MAX_INT as BitCount {
-            panic!("Digit estimation exceeds practical limit.");
-        }
-
-        let r: usize =
+            // TODO: find some quick upperbound.
+            // let ilog2_base = base.ilog2();
+            // (x.bit_length() - 1) / (ilog2_base as BitCount) + (1 as BitCount)
+            x.size_base(base as u32)
+        } else {
+            // This is much more efficient than using size_base()
             crate::floor::floor(bitlen as f64 * LOG_BASE_2[base] + 1.0)
-                as usize;
-
-        r as usize
+                as BitCount
+        }
     }
 
     /// Return a [`String`] containing the base-`base` representation of the
@@ -106,19 +108,40 @@ impl Arbi {
             return "0".into();
         }
 
-        let mut copy = self.clone();
         let mut result = String::new();
-        let estimate: usize = Self::base_length(self, base);
-        result.reserve(estimate + if self.neg { 1 } else { 0 });
+        let true_estimate: BitCount =
+            Self::base_length(self, base) + if self.neg { 1 } else { 0 };
+        let estimate: usize = if true_estimate > usize::MAX as BitCount {
+            let exact =
+                self.size_base(base as u32) + if self.neg { 1 } else { 0 };
+            assert!(exact > isize::MAX as BitCount);
+            panic!(
+                "Base-{} digit estimation exceeds isize::MAX bytes. Exact = {}",
+                base, exact
+            );
+        } else {
+            true_estimate.try_into().unwrap()
+        };
+        result.reserve(estimate);
+        // let exact_chars =
+        //     self.size_base(base as u32) + if self.neg { 1 } else { 0 };
+        // let exact_chars_usize = if exact_chars > usize::MAX as BitCount {
+        //     panic!(
+        //         "More than usize::MAX bytes needed. Arbi = {}, base = {}",
+        //         self, base
+        //     );
+        // } else {
+        //     exact_chars.try_into().unwrap()
+        // };
+        // result.reserve(exact_chars_usize);
 
         let basembs = BASE_MBS[base];
         let max_batch_size = basembs.mbs;
         let divisor = basembs.base_pow_mbs;
-
+        let mut copy = self.clone();
         while copy.size() != 0 {
             let mut remainder: Digit =
                 Self::div_algo_digit_inplace(&mut copy, divisor);
-
             for _ in 0..max_batch_size {
                 if remainder == 0 && copy.size() == 0 {
                     break;

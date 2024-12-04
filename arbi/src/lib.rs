@@ -42,6 +42,7 @@ mod left_shift;
 mod multiplication;
 mod print_internal;
 mod right_shift;
+mod size_base;
 mod to_double;
 mod to_integral;
 mod to_string;

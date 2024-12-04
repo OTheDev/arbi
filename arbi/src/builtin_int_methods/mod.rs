@@ -5,6 +5,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 
 mod count_ones;
 mod from_bytes;
+mod ilog10;
 mod ilog2;
 mod is_power_of_two;
 mod leading_ones;
