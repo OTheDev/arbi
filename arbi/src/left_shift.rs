@@ -92,12 +92,18 @@ impl ShlAssign<$bitcount> for Arbi {
 /// This is consistent with Rust's built-in behavior for left-shifting integers
 /// by an unsigned integer value.
 ///
-/// The right-hand-side (RHS) of a left shift operation can be a `BitCount`,
-/// `usize`, `u32`, or `i32`. While `i32` is supported, please note that
-/// negative RHS values will cause a panic.
+/// The right-hand-side (RHS) of a left shift operation can be a value of type:
+/// - `BitCount`
+/// - `usize`
+/// - `u32`
+/// - `i32`
+///
+/// While `i32` is supported, please note that negative RHS values cause a
+/// panic.
 ///
 /// # Panics
-/// Panics if `rhs` is an `i32` and its value is negative.
+/// - Panics if `rhs` is an `i32` and its value is negative.
+/// - Panics if the result of the operation exceeds `Vec`'s limits.
 ///
 /// # Examples
 /// ```
@@ -129,6 +135,12 @@ impl ShlAssign<$bitcount> for Arbi {
 /// ```should_panic
 /// use arbi::Arbi;
 /// let _ = Arbi::zero() << -1;
+/// ```
+///
+/// This panics because it would exceed `Vec`'s limits:
+/// ```should_panic
+/// use arbi::Arbi;
+/// let _ = Arbi::from(1) << Arbi::MAX_BITS;
 /// ```
 ///
 /// ## Complexity

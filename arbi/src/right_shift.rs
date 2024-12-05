@@ -85,9 +85,14 @@ impl Arbi {
 /// This is consistent with Rust's built-in behavior for right shifting
 /// primitive integer type values.
 ///
-/// The right-hand-side (RHS) of a right shift operation can be a `BitCount`,
-/// `usize`, `u32`, or `i32`. While `i32` is supported, please note that
-/// negative RHS values will cause a panic.
+/// The right-hand-side (RHS) of a right shift operation can be a value of type:
+/// - `BitCount`
+/// - `usize`
+/// - `u32`
+/// - `i32`
+///
+/// While `i32` is supported, please note that negative RHS values cause a
+/// panic.
 ///
 /// # Panics
 /// Panics if `rhs` is an `i32` and its value is negative.
