@@ -8,6 +8,11 @@ use crate::Arbi;
 impl Arbi {
     /// Calculates the quotient of Euclidean division of `self` by `rhs`.
     ///
+    /// # See also
+    /// - [`div_euclid()`](https://doc.rust-lang.org/std/primitive.i64.html#method.div_euclid)
+    ///     for built-in integer types.
+    /// - [`Arbi::divrem_euclid()`].
+    ///
     /// # Panics
     /// This function will panic if `rhs` is `0`.
     ///
@@ -47,7 +52,12 @@ impl Arbi {
         quot
     }
 
-    /// Calculates the least nonnegative remainder of self (mod rhs).
+    /// Calculates the least nonnegative remainder of `self (mod rhs)`.
+    ///
+    /// # See also
+    /// - [`rem_euclid()`](https://doc.rust-lang.org/std/primitive.i64.html#method.rem_euclid)
+    ///     for built-in integer types.
+    /// - [`Arbi::divrem_euclid()`].
     ///
     /// # Panics
     /// This function will panic if `rhs` is `0`.
