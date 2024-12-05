@@ -30,8 +30,11 @@ impl Arbi {
         if self.is_zero() || n_bits == 0 {
             return;
         }
-        let digit_shift: usize =
-            (n_bits / Digit::BITS as $ubitcount).try_into().unwrap();
+        let digit_shift: usize = (n_bits / Digit::BITS as $ubitcount)
+            .try_into()
+            .unwrap_or_else(|_| {
+                panic!("capacity overflow!");
+            });
         let bit_shift: usize =
             (n_bits % Digit::BITS as $ubitcount).try_into().unwrap();
         let compl_bit_shift = Digit::BITS as usize - bit_shift;
