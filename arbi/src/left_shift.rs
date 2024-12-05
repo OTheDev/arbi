@@ -27,16 +27,15 @@ impl Arbi {
             panic!("Only nonnegative shifts are supported");
         }
         let n_bits: $ubitcount = n_bits as $ubitcount;
+        if n_bits as BitCount > Arbi::MAX_BITS {
+            panic!("capacity overflow!");
+        }
         if self.is_zero() || n_bits == 0 {
             return;
         }
-        let digit_shift: usize = (n_bits / Digit::BITS as $ubitcount)
-            .try_into()
-            .unwrap_or_else(|_| {
-                panic!("capacity overflow!");
-            });
+        let digit_shift: usize = (n_bits / Digit::BITS as $ubitcount) as usize;
         let bit_shift: usize =
-            (n_bits % Digit::BITS as $ubitcount).try_into().unwrap();
+            (n_bits % Digit::BITS as $ubitcount) as usize;
         let compl_bit_shift = Digit::BITS as usize - bit_shift;
         let size_self = self.size();
         let size_result =
@@ -191,6 +190,20 @@ impl_shl_unsigned_integral!(
 mod tests {
     use super::*;
     use crate::{BitCount, DDigit};
+
+    #[test]
+    #[should_panic = "capacity overflow!"] // Internal guard
+    fn test_large_shift_panics_more_than_max_bits() {
+        let one = Arbi::from(1);
+        let _ = one << (Arbi::MAX_BITS + 1);
+    }
+
+    #[test]
+    #[should_panic = "capacity overflow"] // From `Vec`
+    fn test_large_shift_panics_max_bits() {
+        let one = Arbi::from(1);
+        let _ = one << Arbi::MAX_BITS;
+    }
 
     #[test]
     #[should_panic = "Only nonnegative shifts are supported"]

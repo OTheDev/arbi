@@ -26,10 +26,18 @@ impl Arbi {
             panic!("Only nonnegative shifts are supported");
         }
         let n_bits: $ubitcount = n_bits as $ubitcount;
+        if n_bits as BitCount > Arbi::MAX_BITS {
+            if self.negative() {
+                self.make_one(true);
+            } else {
+                self.make_zero();
+            }
+            return;
+        }
         let mut dig_shift: usize =
             (n_bits / (Digit::BITS as $ubitcount)).try_into().unwrap();
         let mut bit_shift: usize =
-            (n_bits % (Digit::BITS as $ubitcount)).try_into().unwrap();
+            (n_bits % (Digit::BITS as $ubitcount)) as usize;
         if self.negative() && bit_shift == 0 {
             if dig_shift == 0 {
                 return;
@@ -181,6 +189,24 @@ mod $test {
     use crate::{Arbi, DDigit, Digit, SDDigit};
     #[allow(unused_imports)]
     use crate::BitCount;
+
+    #[test]
+    fn test_right_shift_to_zero_more_than_max_bits() {
+        let a = Arbi::from(123456789) >> (Arbi::MAX_BITS + 1);
+        assert_eq!(a, 0);
+
+        let a = Arbi::from(-123456789) >> (Arbi::MAX_BITS + 1);
+        assert_eq!(a, -1);
+    }
+
+    #[test]
+    fn test_right_shift_to_zero_max_bits() {
+        let a = Arbi::from(123456789) >> Arbi::MAX_BITS;
+        assert_eq!(a, 0);
+
+        let a = Arbi::from(-123456789) >> Arbi::MAX_BITS;
+        assert_eq!(a, -1);
+    }
 
     #[test]
     #[should_panic = "Only nonnegative shifts are supported"]
