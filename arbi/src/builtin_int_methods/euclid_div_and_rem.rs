@@ -158,3 +158,56 @@ impl Arbi {
         (quot, rem)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
+    use crate::{Arbi, SDDigit, SDigit, SQDigit};
+
+    #[test]
+    fn smoke() {
+        let (mut rng, _) = get_seedable_rng();
+
+        let udist_sd =
+            get_uniform_die(SDigit::MIN as SQDigit, SDigit::MAX as SQDigit);
+        let udist_sdd =
+            get_uniform_die(SDDigit::MIN as SQDigit, SDDigit::MAX as SQDigit);
+        let udist_sqd = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+
+        for _ in 0..i16::MAX {
+            for (udist, mn) in &[
+                (udist_sd, SDigit::MIN as SQDigit),
+                (udist_sdd, SDDigit::MIN as SQDigit),
+                (udist_sqd, SQDigit::MIN),
+            ] {
+                let (a_in, b_in) =
+                    (udist.sample(&mut rng), udist.sample(&mut rng));
+                let (a, b) = (Arbi::from(a_in), Arbi::from(b_in));
+
+                if b == 0 {
+                    continue;
+                }
+                if a == *mn && b == -1 {
+                    continue;
+                }
+
+                let (quot, rem) = a.divrem_euclid(&b);
+
+                assert_eq!(
+                    quot,
+                    a_in.div_euclid(b_in),
+                    "Quot mismatch for a_in: {}, b_in: {}",
+                    a_in,
+                    b_in
+                );
+                assert_eq!(
+                    rem,
+                    a_in.rem_euclid(b_in),
+                    "Rem mismatch for a_in: {}, b_in: {}",
+                    a_in,
+                    b_in
+                );
+            }
+        }
+    }
+}
