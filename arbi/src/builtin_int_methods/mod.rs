@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 mod abs;
 mod abs_diff;
 mod count_ones;
+mod euclid_div_and_rem;
 mod from_bytes;
 mod ilog;
 mod ilog10;
