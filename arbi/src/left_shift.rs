@@ -17,18 +17,23 @@ use core::ops::{Shl, ShlAssign};
 /* !impl_shl_unsigned_integral */
 macro_rules! impl_shl_unsigned_integral {
     // NOTE: bitcount must be an unsigned type with width <= that of BitCount
-    ($($bitcount:ty => ($lshift_name:ident, $lshift_name_inplace:ident)),*) => {
+    ($($bitcount:ty => ($lshift_name:ident, $lshift_name_inplace:ident, $ubitcount:ty)),*) => {
         $(
 
 impl Arbi {
     fn $lshift_name_inplace(&mut self, n_bits: $bitcount) {
+        #[allow(unused_comparisons)]
+        if n_bits < 0 {
+            panic!("Only nonnegative shifts are supported");
+        }
+        let n_bits: $ubitcount = n_bits as $ubitcount;
         if self.is_zero() || n_bits == 0 {
             return;
         }
         let digit_shift: usize =
-            (n_bits / Digit::BITS as $bitcount).try_into().unwrap();
+            (n_bits / Digit::BITS as $ubitcount).try_into().unwrap();
         let bit_shift: usize =
-            (n_bits % Digit::BITS as $bitcount).try_into().unwrap();
+            (n_bits % Digit::BITS as $ubitcount).try_into().unwrap();
         let compl_bit_shift = Digit::BITS as usize - bit_shift;
         let size_self = self.size();
         let size_result =
@@ -58,7 +63,7 @@ impl Arbi {
     }
 }
 
-/// See [`Shl<BitCount> for &Arbi`](#impl-Shl<BitCount>-for-%26Arbi).
+/// See [`Shl<u128> for &Arbi`](#impl-Shl<u128>-for-%26Arbi).
 impl Shl<$bitcount> for Arbi {
     type Output = Arbi;
 
@@ -68,7 +73,7 @@ impl Shl<$bitcount> for Arbi {
     }
 }
 
-/// See [`Shl<BitCount> for &Arbi`](#impl-Shl<BitCount>-for-%26Arbi).
+/// See [`Shl<u128> for &Arbi`](#impl-Shl<u128>-for-%26Arbi).
 impl ShlAssign<$bitcount> for Arbi {
     fn shl_assign(&mut self, rhs: $bitcount) {
         self.$lshift_name_inplace(rhs);
@@ -87,30 +92,45 @@ impl ShlAssign<$bitcount> for Arbi {
 /// This is consistent with Rust's built-in behavior for left-shifting integers
 /// by an unsigned integer value.
 ///
+/// The right-hand-side (RHS) of a left shift operation can be a `BitCount`,
+/// `usize`, `u32`, or `i32`. While `i32` is supported, please note that
+/// negative RHS values will cause a panic.
+///
+/// # Panics
+/// Panics if `rhs` is an `i32` and its value is negative.
+///
 /// # Examples
 /// ```
 /// use arbi::Arbi;
 ///
-/// assert_eq!(Arbi::zero() << 1_usize, 0);
+/// assert_eq!(Arbi::zero() << 1, 0);
 /// assert_eq!(0 << 1, 0);
 ///
 /// let mut a = Arbi::from(-1);
 ///
-/// a <<= 0_usize;
+/// a <<= 0;
 /// assert_eq!(a, -1);
 /// assert_eq!(a, -1 << 0);
 ///
-/// a <<= 1_usize; // in-place
+/// a <<= 1; // in-place
 /// assert_eq!(a, -2);
 /// assert_eq!(a, -1 << 1);
 ///
-/// a = a << 1_usize; // in-place
+/// a = a << 1; // in-place
 /// assert_eq!(a, -4);
 /// assert_eq!(a, -1 << 2);
 ///
-/// a = &a << 1_usize; // clones (currently)
+/// a = &a << 1; // clones (currently)
 /// assert_eq!(a, -8);
 /// assert_eq!(a, -1 << 3);
+/// ```
+///
+/// Negative RHS values cause a panic:
+/// ```should_panic
+/// use arbi::Arbi;
+///
+/// let zero = Arbi::zero();
+/// zero << -1;
 /// ```
 ///
 /// ## Complexity
@@ -125,7 +145,7 @@ impl Shl<$bitcount> for &Arbi {
     }
 }
 
-/// See [`Shl<BitCount> for &Arbi`](#impl-Shl<BitCount>-for-%26Arbi).
+/// See [`Shl<u128> for &Arbi`](#impl-Shl<u128>-for-%26Arbi).
 impl<'a> Shl<&'a $bitcount> for Arbi {
     type Output = Arbi;
 
@@ -135,7 +155,7 @@ impl<'a> Shl<&'a $bitcount> for Arbi {
     }
 }
 
-/// See [`Shl<BitCount> for &Arbi`](#impl-Shl<BitCount>-for-%26Arbi).
+/// See [`Shl<u128> for &Arbi`](#impl-Shl<u128>-for-%26Arbi).
 impl<'a> ShlAssign<&'a $bitcount> for Arbi {
     fn shl_assign(&mut self, rhs: &'a $bitcount) {
         self.$lshift_name_inplace(*rhs)
@@ -148,15 +168,22 @@ impl<'a> ShlAssign<&'a $bitcount> for Arbi {
 /* impl_shl_unsigned_integral! */
 
 impl_shl_unsigned_integral!(
-    BitCount => (lshift_bitcount, lshift_bitcount_inplace),
-    usize => (lshift_usize, lshift_usize_inplace),
-    u32 => (lshift_u32, lshift_u32_inplace)
+    BitCount => (lshift_bitcount, lshift_bitcount_inplace, BitCount),
+    usize => (lshift_usize, lshift_usize_inplace, usize),
+    u32 => (lshift_u32, lshift_u32_inplace, u32),
+    i32 => (lshift_i32, lshift_i32_inplace, u32)
 );
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::{BitCount, DDigit};
+
+    #[test]
+    #[should_panic]
+    fn test_negative_shift_panics() {
+        let _ = Arbi::zero() << -1;
+    }
 
     #[test]
     fn test_left_shift_zero() {
