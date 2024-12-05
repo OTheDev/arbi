@@ -1,6 +1,6 @@
-[<img alt="github" src="https://img.shields.io/badge/github-othedev/arbi-4467C4?style=for-the-badge&labelColor=24292e&logo=github" height="20">](https://github.com/OTheDev/arbi)
 [![Test](https://github.com/OTheDev/arbi/actions/workflows/test.yml/badge.svg)](https://github.com/OTheDev/arbi/actions/workflows/test.yml)
 [![Static Analysis](https://github.com/OTheDev/arbi/actions/workflows/static.yml/badge.svg)](https://github.com/OTheDev/arbi/actions/workflows/static.yml)
+[![github](https://img.shields.io/badge/GitHub-OTheDev/arbi-4467C4?logo=github&labelColor=24292e)](https://github.com/OTheDev/arbi)
 [![docs.rs](https://img.shields.io/docsrs/arbi?color=4467C4&labelColor=24292e&label=Docs)](https://docs.rs/arbi/latest/arbi/)
 ![Crates.io License](https://img.shields.io/crates/l/arbi?color=4467C4&labelColor=24292e&label=License)
 [![crates.io](https://img.shields.io/crates/d/arbi?color=4467C4&labelColor=24292e&label=Downloads)](https://crates.io/crates/arbi)
