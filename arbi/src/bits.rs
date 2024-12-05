@@ -13,11 +13,16 @@ impl Arbi {
     /// ```
     /// use arbi::Arbi;
     ///
-    /// // 11000000111001
+    /// // 11000000111001 (bit indices [0, 13])
     /// let a = Arbi::from(12345);
     /// assert_eq!(a.test_bit(0), true);
     /// assert_eq!(a.test_bit(1), false);
     /// assert_eq!(a.test_bit(5), true);
+    /// assert_eq!(a.test_bit(13), true);
+    ///
+    /// // 14 is not in [0, size_bits()). Bits outside of this range are
+    /// // treated as false.
+    /// assert_eq!(a.test_bit(14), false);
     /// ```
     ///
     /// ## Complexity
@@ -81,12 +86,15 @@ impl Arbi {
     /// a.clear_bit(13);
     /// // 1000000111000
     /// assert_eq!(a, -4152);
+    ///
+    /// // Does nothing, as bits outside of the field defined by the indices
+    /// // [0, size_bits()) are treated as 0.
+    /// a.clear_bit(13);
+    /// assert_eq!(a, -4152);
     /// ```
     ///
     /// ## Complexity
-    /// - \\( O(1) \\) when clearing an existing bit.
-    /// - \\( O(n) \\) when clearing a bit outside the current bit width, as
-    ///     this requires resizing.
+    /// \\( O(1) \\)
     pub fn clear_bit(&mut self, i: BitCount) {
         let n: usize = self.size();
         let digit_idx: usize = (i / Digit::BITS as BitCount) as usize;
