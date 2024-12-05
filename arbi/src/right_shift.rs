@@ -10,14 +10,34 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 //!
 //! In Rust, >> is also an arithmetic right shift on signed integer types.
 
-use crate::{Arbi, DDigit, Digit};
+use crate::{Arbi, BitCount, DDigit, Digit};
 use core::ops::{Shr, ShrAssign};
 
-impl Arbi {
-    fn right_shift_inplace(&mut self, n_bits: usize) {
-        let mut dig_shift: usize = n_bits / (Digit::BITS as usize);
-        let mut bit_shift: usize = n_bits % (Digit::BITS as usize);
+/* !impl_shr_unsigned_integral */
+macro_rules! impl_shr_unsigned_integral {
+    // NOTE: bitcount must be an unsigned type with width <= that of BitCount
+    ($($bitcount:ty => ($rshift_name:ident, $rshift_name_inplace:ident, $ubitcount:ty, $test:ident)),*) => {
+        $(
 
+impl Arbi {
+    fn $rshift_name_inplace(&mut self, n_bits: $bitcount) {
+        #[allow(unused_comparisons)]
+        if n_bits < 0 {
+            panic!("Only nonnegative shifts are supported");
+        }
+        let n_bits: $ubitcount = n_bits as $ubitcount;
+        if n_bits as BitCount > Arbi::MAX_BITS {
+            if self.negative() {
+                self.make_one(true);
+            } else {
+                self.make_zero();
+            }
+            return;
+        }
+        let mut dig_shift: usize =
+            (n_bits / (Digit::BITS as $ubitcount)).try_into().unwrap();
+        let mut bit_shift: usize =
+            (n_bits % (Digit::BITS as $ubitcount)) as usize;
         if self.negative() && bit_shift == 0 {
             if dig_shift == 0 {
                 return;
@@ -26,9 +46,7 @@ impl Arbi {
                 dig_shift -= 1;
             }
         }
-
         let size_self = self.size();
-
         if size_self <= dig_shift {
             if self.negative() {
                 self.make_one(true);
@@ -37,16 +55,12 @@ impl Arbi {
             }
             return;
         }
-
         let size = size_self - dig_shift;
-
         self.vec.truncate(size + 1);
         let compl_bit_shift = (Digit::BITS as usize) - bit_shift;
-
         let mut s: DDigit = self.vec[dig_shift] as DDigit;
         if self.negative() {
             self.vec.truncate(size);
-
             let mut d: Digit = 0;
             for i in 0..dig_shift {
                 d |= self.vec[i];
@@ -54,14 +68,12 @@ impl Arbi {
             s += (if d != 0 { 1 as Digit } else { 0 as Digit }
                 + (Digit::MAX >> compl_bit_shift)) as DDigit;
         }
-
         s >>= bit_shift;
         for (i, j) in ((dig_shift + 1)..size_self).enumerate() {
             s += (self.vec[j] as DDigit) << compl_bit_shift;
             self.vec[i] = s as Digit;
             s >>= Digit::BITS;
         }
-
         self.vec[size - 1] = s as Digit;
         self.vec.truncate(size);
         self.trim();
@@ -80,6 +92,18 @@ impl Arbi {
 ///
 /// This is consistent with Rust's built-in behavior for right shifting
 /// primitive integer type values.
+///
+/// The right-hand-side (RHS) of a right shift operation can be a value of type:
+/// - `BitCount`
+/// - `usize`
+/// - `u32`
+/// - `i32`
+///
+/// While `i32` is supported, please note that negative RHS values cause a
+/// panic.
+///
+/// # Panics
+/// Panics if `rhs` is an `i32` and its value is negative.
 ///
 /// # Note
 /// Currently, when right-shifting a reference to an `Arbi` (`&Arbi`), the
@@ -106,57 +130,89 @@ impl Arbi {
 /// assert_eq!(a, -123456791);
 /// ```
 ///
+/// Negative shifts cause a panic:
+/// ```should_panic
+/// use arbi::Arbi;
+/// let _ = Arbi::zero() >> -1;
+/// ```
+///
 /// ## Complexity
 /// \\( O(n) \\)
-impl Shr<usize> for &Arbi {
+impl Shr<$bitcount> for &Arbi {
     type Output = Arbi;
 
-    fn shr(self, rhs: usize) -> Self::Output {
+    fn shr(self, rhs: $bitcount) -> Self::Output {
         let mut ret = self.clone();
-        Arbi::right_shift_inplace(&mut ret, rhs);
+        Arbi::$rshift_name_inplace(&mut ret, rhs);
         ret
     }
 }
 
-/// See [`impl Shr<usize> for &Arbi`](#impl-Shr<usize>-for-%26Arbi).
-impl Shr<usize> for Arbi {
+/// See [`impl Shr<u128> for &Arbi`](#impl-Shr<u128>-for-%26Arbi).
+impl Shr<$bitcount> for Arbi {
     type Output = Arbi;
 
-    fn shr(mut self, rhs: usize) -> Self::Output {
-        Self::right_shift_inplace(&mut self, rhs);
+    fn shr(mut self, rhs: $bitcount) -> Self::Output {
+        Self::$rshift_name_inplace(&mut self, rhs);
         self
     }
 }
 
-/// See [`impl Shr<usize> for &Arbi`](#impl-Shr<usize>-for-%26Arbi).
-impl ShrAssign<usize> for Arbi {
-    fn shr_assign(&mut self, rhs: usize) {
-        Self::right_shift_inplace(self, rhs);
+/// See [`impl Shr<u128> for &Arbi`](#impl-Shr<u128>-for-%26Arbi).
+impl ShrAssign<$bitcount> for Arbi {
+    fn shr_assign(&mut self, rhs: $bitcount) {
+        Self::$rshift_name_inplace(self, rhs);
     }
 }
 
-/// See [`impl Shr<usize> for &Arbi`](#impl-Shr<usize>-for-%26Arbi).
-impl ShrAssign<&usize> for Arbi {
-    fn shr_assign(&mut self, rhs: &usize) {
-        Self::right_shift_inplace(self, *rhs);
+/// See [`impl Shr<u128> for &Arbi`](#impl-Shr<u128>-for-%26Arbi).
+impl ShrAssign<&$bitcount> for Arbi {
+    fn shr_assign(&mut self, rhs: &$bitcount) {
+        Self::$rshift_name_inplace(self, *rhs);
     }
 }
 
-/// See [`impl Shr<usize> for &Arbi`](#impl-Shr<usize>-for-%26Arbi).
-impl<'a> Shr<&'a usize> for &Arbi {
+/// See [`impl Shr<u128> for &Arbi`](#impl-Shr<u128>-for-%26Arbi).
+impl<'a> Shr<&'a $bitcount> for &Arbi {
     type Output = Arbi;
 
-    fn shr(self, rhs: &'a usize) -> Self::Output {
+    fn shr(self, rhs: &'a $bitcount) -> Self::Output {
         let mut ret = self.clone();
-        Arbi::right_shift_inplace(&mut ret, *rhs);
+        Arbi::$rshift_name_inplace(&mut ret, *rhs);
         ret
     }
 }
 
 #[cfg(test)]
-mod tests {
+mod $test {
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
     use crate::{Arbi, DDigit, Digit, SDDigit};
+    #[allow(unused_imports)]
+    use crate::BitCount;
+
+    #[test]
+    fn test_right_shift_to_zero_more_than_max_bits() {
+        let a = Arbi::from(123456789) >> (Arbi::MAX_BITS + 1);
+        assert_eq!(a, 0);
+
+        let a = Arbi::from(-123456789) >> (Arbi::MAX_BITS + 1);
+        assert_eq!(a, -1);
+    }
+
+    #[test]
+    fn test_right_shift_to_zero_max_bits() {
+        let a = Arbi::from(123456789) >> Arbi::MAX_BITS;
+        assert_eq!(a, 0);
+
+        let a = Arbi::from(-123456789) >> Arbi::MAX_BITS;
+        assert_eq!(a, -1);
+    }
+
+    #[test]
+    #[should_panic = "Only nonnegative shifts are supported"]
+    fn negative_shift_panics() {
+        let _ = Arbi::zero() >> -1;
+    }
 
     #[test]
     fn right_shift_assign() {
@@ -165,7 +221,7 @@ mod tests {
         assert_eq!(zero, 0);
 
         let mut a = Arbi::from(Digit::MAX as DDigit * 2);
-        a >>= Digit::BITS as usize;
+        a >>= Digit::BITS as $bitcount;
         assert_eq!(a, 1);
 
         let mut a = Arbi::from(3619132862646584885328_u128);
@@ -189,7 +245,7 @@ mod tests {
     fn right_shift() {
         assert_eq!(Arbi::zero() >> 1, 0);
         assert_eq!(
-            Arbi::from(Digit::MAX as DDigit * 2) >> Digit::BITS as usize,
+            Arbi::from(Digit::MAX as DDigit * 2) >> Digit::BITS as $bitcount,
             1
         );
         assert_eq!(
@@ -209,17 +265,17 @@ mod tests {
         let pos = Arbi::from(16);
         assert_eq!(&pos >> 3, 2);
         assert_eq!(&pos >> 0, 16);
-        assert_eq!(&pos >> (Digit::BITS * 2) as usize, 0);
+        assert_eq!(&pos >> (Digit::BITS * 2) as $bitcount, 0);
 
         let neg = Arbi::from(-16);
         assert_eq!(&neg >> 2, -4);
         assert_eq!(&neg >> 0, -16);
-        assert_eq!(&neg >> (Digit::BITS * 2) as usize, -1);
+        assert_eq!(&neg >> (Digit::BITS * 2) as $bitcount, -1);
 
         let mon = Arbi::from(-1);
         assert_eq!(&mon >> 0, -1);
         assert_eq!((&mon) >> 1, -1);
-        assert_eq!(&mon >> (Digit::BITS + 1) as usize, -1);
+        assert_eq!(&mon >> (Digit::BITS + 1) as $bitcount, -1);
     }
 
     #[test]
@@ -230,7 +286,7 @@ mod tests {
         for i in i16::MIN..i16::MAX {
             let r: SDDigit = die.sample(&mut rng);
 
-            for shift in 0..=((2 * Digit::BITS as usize) - 1) {
+            for shift in 0..=((2 * Digit::BITS as $bitcount) - 1) {
                 assert_eq!(
                     Arbi::from(r) >> shift,
                     r >> shift,
@@ -244,3 +300,15 @@ mod tests {
         }
     }
 }
+
+        )*
+    };
+}
+/* impl_shr_unsigned_integral! */
+
+impl_shr_unsigned_integral!(
+    BitCount => (rshift_bitcount, rshift_bitcount_inplace, BitCount, test_bitcount),
+    usize => (rshift_usize, rshift_usize_inplace, usize, test_usize),
+    u32 => (rshift_u32, rshift_u32_inplace, u32, test_u32),
+    i32 => (rshift_i32, rshift_i32_inplace, u32, test_i32)
+);
