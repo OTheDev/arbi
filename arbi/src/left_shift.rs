@@ -11,27 +11,25 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 //! This is consistent with Rust's built-in behavior for left-shifting by an
 //! unsigned integer value.
 
-use crate::{Arbi, Digit};
+use crate::{Arbi, BitCount, Digit};
 use core::ops::{Shl, ShlAssign};
 
 /* !impl_shl_unsigned_integral */
 macro_rules! impl_shl_unsigned_integral {
-    // NOTE: bitcount must be an unsigned type with width <= that of usize
+    // NOTE: bitcount must be an unsigned type with width <= that of BitCount
     ($($bitcount:ty => ($lshift_name:ident, $lshift_name_inplace:ident)),*) => {
         $(
 
 impl Arbi {
     fn $lshift_name_inplace(&mut self, n_bits: $bitcount) {
-        let n_bits = n_bits as usize;
-
         if self.is_zero() || n_bits == 0 {
             return;
         }
-
-        let digit_shift: usize = n_bits / Digit::BITS as usize;
-        let bit_shift: usize = n_bits % Digit::BITS as usize;
+        let digit_shift: usize =
+            (n_bits / Digit::BITS as $bitcount).try_into().unwrap();
+        let bit_shift: usize =
+            (n_bits % Digit::BITS as $bitcount).try_into().unwrap();
         let compl_bit_shift = Digit::BITS as usize - bit_shift;
-
         let size_self = self.size();
         let size_result =
             size_self + digit_shift + if bit_shift > 0 { 1 } else { 0 };
@@ -39,7 +37,6 @@ impl Arbi {
             panic!("Result size exceeds SIZE_MAX");
         }
         self.vec.resize(size_result, 0);
-
         if digit_shift > 0 {
             for i in (0..size_self).rev() {
                 self.vec[i + digit_shift] = self.vec[i];
@@ -48,7 +45,6 @@ impl Arbi {
                 self.vec[i] = 0;
             }
         }
-
         if bit_shift > 0 {
             let mut carry = 0;
             for i in digit_shift..size_result {
@@ -58,12 +54,11 @@ impl Arbi {
             }
             assert!(carry == 0);
         }
-
         self.trim();
     }
 }
 
-/// See [`Shl<usize> for &Arbi`](#impl-Shl<usize>-for-%26Arbi).
+/// See [`Shl<BitCount> for &Arbi`](#impl-Shl<BitCount>-for-%26Arbi).
 impl Shl<$bitcount> for Arbi {
     type Output = Arbi;
 
@@ -73,7 +68,7 @@ impl Shl<$bitcount> for Arbi {
     }
 }
 
-/// See [`Shl<usize> for &Arbi`](#impl-Shl<usize>-for-%26Arbi).
+/// See [`Shl<BitCount> for &Arbi`](#impl-Shl<BitCount>-for-%26Arbi).
 impl ShlAssign<$bitcount> for Arbi {
     fn shl_assign(&mut self, rhs: $bitcount) {
         self.$lshift_name_inplace(rhs);
@@ -130,7 +125,7 @@ impl Shl<$bitcount> for &Arbi {
     }
 }
 
-/// See [`Shl<usize> for &Arbi`](#impl-Shl<usize>-for-%26Arbi).
+/// See [`Shl<BitCount> for &Arbi`](#impl-Shl<BitCount>-for-%26Arbi).
 impl<'a> Shl<&'a $bitcount> for Arbi {
     type Output = Arbi;
 
@@ -140,13 +135,12 @@ impl<'a> Shl<&'a $bitcount> for Arbi {
     }
 }
 
-/// See [`Shl<usize> for &Arbi`](#impl-Shl<usize>-for-%26Arbi).
+/// See [`Shl<BitCount> for &Arbi`](#impl-Shl<BitCount>-for-%26Arbi).
 impl<'a> ShlAssign<&'a $bitcount> for Arbi {
     fn shl_assign(&mut self, rhs: &'a $bitcount) {
         self.$lshift_name_inplace(*rhs)
     }
 }
-
 
         )*
     };
@@ -154,6 +148,7 @@ impl<'a> ShlAssign<&'a $bitcount> for Arbi {
 /* impl_shl_unsigned_integral! */
 
 impl_shl_unsigned_integral!(
+    BitCount => (lshift_bitcount, lshift_bitcount_inplace),
     usize => (lshift_usize, lshift_usize_inplace),
     u32 => (lshift_u32, lshift_u32_inplace)
 );
@@ -161,13 +156,13 @@ impl_shl_unsigned_integral!(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::DDigit;
+    use crate::{BitCount, DDigit};
 
     #[test]
     fn test_left_shift_zero() {
-        assert_eq!(Arbi::zero() << 1_usize, 0);
-        assert_eq!(Arbi::zero() << Digit::BITS as usize, 0);
-        assert_eq!(Arbi::zero() << 0_usize, 0);
+        assert_eq!(Arbi::zero() << 1 as BitCount, 0);
+        assert_eq!(Arbi::zero() << Digit::BITS as BitCount, 0);
+        assert_eq!(Arbi::zero() << 0 as BitCount, 0);
     }
 
     #[test]
@@ -175,24 +170,24 @@ mod tests {
         let mut zero: Arbi;
 
         zero = Arbi::zero();
-        zero <<= 1_usize;
+        zero <<= 1 as BitCount;
         assert_eq!(zero, 0);
 
         zero = Arbi::zero();
-        zero <<= Digit::BITS;
+        zero <<= Digit::BITS as BitCount;
         assert_eq!(zero, 0);
 
         zero = Arbi::zero();
-        zero <<= 0_usize;
+        zero <<= 0 as BitCount;
         assert_eq!(zero, 0);
     }
 
     #[test]
     fn test_left_shift_misc() {
-        assert_eq!(Arbi::from(4) << 2_usize, 16);
-        assert_eq!(Arbi::from(-4) << 2_usize, -16);
-        assert_eq!(Arbi::from(4) << 0_usize, 4);
-        assert_eq!(Arbi::from(-4) << 0_usize, -4);
+        assert_eq!(Arbi::from(4) << 2 as BitCount, 16);
+        assert_eq!(Arbi::from(-4) << 2 as BitCount, -16);
+        assert_eq!(Arbi::from(4) << 0 as BitCount, 4);
+        assert_eq!(Arbi::from(-4) << 0 as BitCount, -4);
     }
 
     #[test]
@@ -200,33 +195,33 @@ mod tests {
         let mut a: Arbi;
 
         a = Arbi::from(4);
-        a <<= 2_usize;
+        a <<= 2 as BitCount;
         assert_eq!(a, 16);
 
         a = Arbi::from(-4);
-        a <<= 2_usize;
+        a <<= 2 as BitCount;
         assert_eq!(a, -16);
 
         a = Arbi::from(4);
-        a <<= 0_usize;
+        a <<= 0 as BitCount;
         assert_eq!(a, 4);
 
         a = Arbi::from(-4);
-        a <<= 0_usize;
+        a <<= 0 as BitCount;
         assert_eq!(a, -4);
     }
 
     #[test]
     fn test_left_shift_powers_of_2_in_digit() {
         let one = Arbi::from(1);
-        for i in 0..(Digit::BITS as usize * 2) {
+        for i in 0..(Digit::BITS as BitCount * 2) {
             assert_eq!(&one << i, (1 as DDigit) << i);
         }
     }
 
     #[test]
     fn test_left_shift_assign_powers_of_2_in_digit() {
-        for i in 0..(Digit::BITS as usize * 2) {
+        for i in 0..(Digit::BITS as BitCount * 2) {
             let mut one = Arbi::from(1);
             one <<= i;
             assert_eq!(one, (1 as DDigit) << i);
@@ -237,11 +232,11 @@ mod tests {
     fn test_lshift() {
         let mut one = Arbi::from(1);
         let mut one_prim: u128 = 1;
-        for i in 1_usize..128_usize {
+        for i in (1 as BitCount)..(128 as BitCount) {
             assert_eq!(Arbi::from(1) << i, 1_u128 << i);
             assert_eq!(one, one_prim, "i = {}", i);
-            one <<= 1_usize;
-            one_prim <<= 1_usize;
+            one <<= 1 as BitCount;
+            one_prim <<= 1 as BitCount;
         }
     }
 }

@@ -10,14 +10,15 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 //!
 //! In Rust, >> is also an arithmetic right shift on signed integer types.
 
-use crate::{Arbi, DDigit, Digit};
+use crate::{Arbi, BitCount, DDigit, Digit};
 use core::ops::{Shr, ShrAssign};
 
 impl Arbi {
-    fn right_shift_inplace(&mut self, n_bits: usize) {
-        let mut dig_shift: usize = n_bits / (Digit::BITS as usize);
-        let mut bit_shift: usize = n_bits % (Digit::BITS as usize);
-
+    fn right_shift_inplace(&mut self, n_bits: BitCount) {
+        let mut dig_shift: usize =
+            (n_bits / (Digit::BITS as BitCount)).try_into().unwrap();
+        let mut bit_shift: usize =
+            (n_bits % (Digit::BITS as BitCount)).try_into().unwrap();
         if self.negative() && bit_shift == 0 {
             if dig_shift == 0 {
                 return;
@@ -26,9 +27,7 @@ impl Arbi {
                 dig_shift -= 1;
             }
         }
-
         let size_self = self.size();
-
         if size_self <= dig_shift {
             if self.negative() {
                 self.make_one(true);
@@ -37,16 +36,12 @@ impl Arbi {
             }
             return;
         }
-
         let size = size_self - dig_shift;
-
         self.vec.truncate(size + 1);
         let compl_bit_shift = (Digit::BITS as usize) - bit_shift;
-
         let mut s: DDigit = self.vec[dig_shift] as DDigit;
         if self.negative() {
             self.vec.truncate(size);
-
             let mut d: Digit = 0;
             for i in 0..dig_shift {
                 d |= self.vec[i];
@@ -54,14 +49,12 @@ impl Arbi {
             s += (if d != 0 { 1 as Digit } else { 0 as Digit }
                 + (Digit::MAX >> compl_bit_shift)) as DDigit;
         }
-
         s >>= bit_shift;
         for (i, j) in ((dig_shift + 1)..size_self).enumerate() {
             s += (self.vec[j] as DDigit) << compl_bit_shift;
             self.vec[i] = s as Digit;
             s >>= Digit::BITS;
         }
-
         self.vec[size - 1] = s as Digit;
         self.vec.truncate(size);
         self.trim();
@@ -108,45 +101,45 @@ impl Arbi {
 ///
 /// ## Complexity
 /// \\( O(n) \\)
-impl Shr<usize> for &Arbi {
+impl Shr<BitCount> for &Arbi {
     type Output = Arbi;
 
-    fn shr(self, rhs: usize) -> Self::Output {
+    fn shr(self, rhs: BitCount) -> Self::Output {
         let mut ret = self.clone();
         Arbi::right_shift_inplace(&mut ret, rhs);
         ret
     }
 }
 
-/// See [`impl Shr<usize> for &Arbi`](#impl-Shr<usize>-for-%26Arbi).
-impl Shr<usize> for Arbi {
+/// See [`impl Shr<BitCount> for &Arbi`](#impl-Shr<BitCount>-for-%26Arbi).
+impl Shr<BitCount> for Arbi {
     type Output = Arbi;
 
-    fn shr(mut self, rhs: usize) -> Self::Output {
+    fn shr(mut self, rhs: BitCount) -> Self::Output {
         Self::right_shift_inplace(&mut self, rhs);
         self
     }
 }
 
-/// See [`impl Shr<usize> for &Arbi`](#impl-Shr<usize>-for-%26Arbi).
-impl ShrAssign<usize> for Arbi {
-    fn shr_assign(&mut self, rhs: usize) {
+/// See [`impl Shr<BitCount> for &Arbi`](#impl-Shr<BitCount>-for-%26Arbi).
+impl ShrAssign<BitCount> for Arbi {
+    fn shr_assign(&mut self, rhs: BitCount) {
         Self::right_shift_inplace(self, rhs);
     }
 }
 
-/// See [`impl Shr<usize> for &Arbi`](#impl-Shr<usize>-for-%26Arbi).
-impl ShrAssign<&usize> for Arbi {
-    fn shr_assign(&mut self, rhs: &usize) {
+/// See [`impl Shr<BitCount> for &Arbi`](#impl-Shr<BitCount>-for-%26Arbi).
+impl ShrAssign<&BitCount> for Arbi {
+    fn shr_assign(&mut self, rhs: &BitCount) {
         Self::right_shift_inplace(self, *rhs);
     }
 }
 
-/// See [`impl Shr<usize> for &Arbi`](#impl-Shr<usize>-for-%26Arbi).
-impl<'a> Shr<&'a usize> for &Arbi {
+/// See [`impl Shr<BitCount> for &Arbi`](#impl-Shr<BitCount>-for-%26Arbi).
+impl<'a> Shr<&'a BitCount> for &Arbi {
     type Output = Arbi;
 
-    fn shr(self, rhs: &'a usize) -> Self::Output {
+    fn shr(self, rhs: &'a BitCount) -> Self::Output {
         let mut ret = self.clone();
         Arbi::right_shift_inplace(&mut ret, *rhs);
         ret
@@ -156,7 +149,7 @@ impl<'a> Shr<&'a usize> for &Arbi {
 #[cfg(test)]
 mod tests {
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{Arbi, DDigit, Digit, SDDigit};
+    use crate::{Arbi, BitCount, DDigit, Digit, SDDigit};
 
     #[test]
     fn right_shift_assign() {
@@ -165,7 +158,7 @@ mod tests {
         assert_eq!(zero, 0);
 
         let mut a = Arbi::from(Digit::MAX as DDigit * 2);
-        a >>= Digit::BITS as usize;
+        a >>= Digit::BITS as BitCount;
         assert_eq!(a, 1);
 
         let mut a = Arbi::from(3619132862646584885328_u128);
@@ -189,7 +182,7 @@ mod tests {
     fn right_shift() {
         assert_eq!(Arbi::zero() >> 1, 0);
         assert_eq!(
-            Arbi::from(Digit::MAX as DDigit * 2) >> Digit::BITS as usize,
+            Arbi::from(Digit::MAX as DDigit * 2) >> Digit::BITS as BitCount,
             1
         );
         assert_eq!(
@@ -209,17 +202,17 @@ mod tests {
         let pos = Arbi::from(16);
         assert_eq!(&pos >> 3, 2);
         assert_eq!(&pos >> 0, 16);
-        assert_eq!(&pos >> (Digit::BITS * 2) as usize, 0);
+        assert_eq!(&pos >> (Digit::BITS * 2) as BitCount, 0);
 
         let neg = Arbi::from(-16);
         assert_eq!(&neg >> 2, -4);
         assert_eq!(&neg >> 0, -16);
-        assert_eq!(&neg >> (Digit::BITS * 2) as usize, -1);
+        assert_eq!(&neg >> (Digit::BITS * 2) as BitCount, -1);
 
         let mon = Arbi::from(-1);
         assert_eq!(&mon >> 0, -1);
         assert_eq!((&mon) >> 1, -1);
-        assert_eq!(&mon >> (Digit::BITS + 1) as usize, -1);
+        assert_eq!(&mon >> (Digit::BITS + 1) as BitCount, -1);
     }
 
     #[test]
@@ -230,7 +223,7 @@ mod tests {
         for i in i16::MIN..i16::MAX {
             let r: SDDigit = die.sample(&mut rng);
 
-            for shift in 0..=((2 * Digit::BITS as usize) - 1) {
+            for shift in 0..=((2 * Digit::BITS as BitCount) - 1) {
                 assert_eq!(
                     Arbi::from(r) >> shift,
                     r >> shift,
