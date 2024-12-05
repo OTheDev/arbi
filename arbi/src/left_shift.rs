@@ -128,9 +128,7 @@ impl ShlAssign<$bitcount> for Arbi {
 /// Negative RHS values cause a panic:
 /// ```should_panic
 /// use arbi::Arbi;
-///
-/// let zero = Arbi::zero();
-/// zero << -1;
+/// let _ = Arbi::zero() << -1;
 /// ```
 ///
 /// ## Complexity
@@ -180,7 +178,7 @@ mod tests {
     use crate::{BitCount, DDigit};
 
     #[test]
-    #[should_panic]
+    #[should_panic = "Only nonnegative shifts are supported"]
     fn test_negative_shift_panics() {
         let _ = Arbi::zero() << -1;
     }
