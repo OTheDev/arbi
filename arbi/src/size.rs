@@ -8,6 +8,60 @@ use crate::Assign;
 use crate::{Arbi, BitCount, Digit};
 
 impl Arbi {
+    /// Return the number of [`Digit`]s used to represent the absolute value of
+    /// this integer.
+    ///
+    /// Instance represents `0` if and only if `size() == 0`.
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::{Arbi, Digit};
+    ///
+    /// let zero = Arbi::zero();
+    /// assert_eq!(zero.size(), 0);
+    ///
+    /// let mut a = Arbi::from(Digit::MAX);
+    /// assert_eq!(a.size(), 1);
+    ///
+    /// a.incr();
+    /// assert_eq!(a.size(), 2);
+    /// ```
+    ///
+    /// ## Complexity
+    /// \\( O(1) \\)
+    #[inline(always)]
+    pub fn size(&self) -> usize {
+        self.vec.len()
+    }
+
+    /// Return the number of bits used to represent the absolute value of this
+    /// integer.
+    ///
+    /// Instance represents `0` if and only if `size_bits() == 0`.
+    ///
+    /// This is equivalent to [`Arbi::bit_length()`].
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::{Arbi, BitCount, Digit};
+    ///
+    /// let zero = Arbi::zero();
+    /// assert_eq!(zero.size_bits(), 0);
+    ///
+    /// let mut a = Arbi::from(Digit::MAX);
+    /// assert_eq!(a.size_bits(), Digit::BITS as BitCount);
+    ///
+    /// a.incr();
+    /// assert_eq!(a.size_bits(), Digit::BITS as BitCount + 1);
+    /// ```
+    ///
+    /// ## Complexity
+    /// \\( O(1) \\)
+    #[inline(always)]
+    pub fn size_bits(&self) -> BitCount {
+        self.bit_length()
+    }
+
     /// Return the number of base-`base` digits needed to represent the absolute
     /// value of this integer.
     ///

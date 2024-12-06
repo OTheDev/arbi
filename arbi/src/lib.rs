@@ -42,7 +42,7 @@ mod left_shift;
 mod multiplication;
 mod print_internal;
 mod right_shift;
-mod size_base;
+mod size;
 mod to_double;
 mod to_integral;
 mod to_string;
@@ -317,60 +317,6 @@ impl Arbi {
     #[inline(always)]
     pub fn capacity_bits(&self) -> BitCount {
         self.vec.capacity() as BitCount * Digit::BITS as BitCount
-    }
-
-    /// Return the number of [`Digit`]s used to represent the absolute value of
-    /// this integer.
-    ///
-    /// Instance represents `0` if and only if `size() == 0`.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::{Arbi, Digit};
-    ///
-    /// let zero = Arbi::zero();
-    /// assert_eq!(zero.size(), 0);
-    ///
-    /// let mut a = Arbi::from(Digit::MAX);
-    /// assert_eq!(a.size(), 1);
-    ///
-    /// a.incr();
-    /// assert_eq!(a.size(), 2);
-    /// ```
-    ///
-    /// ## Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn size(&self) -> usize {
-        self.vec.len()
-    }
-
-    /// Return the number of bits used to represent the absolute value of this
-    /// integer.
-    ///
-    /// Instance represents `0` if and only if `size_bits() == 0`.
-    ///
-    /// This is equivalent to [`Arbi::bit_length()`].
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::{Arbi, BitCount, Digit};
-    ///
-    /// let zero = Arbi::zero();
-    /// assert_eq!(zero.size_bits(), 0);
-    ///
-    /// let mut a = Arbi::from(Digit::MAX);
-    /// assert_eq!(a.size_bits(), Digit::BITS as BitCount);
-    ///
-    /// a.incr();
-    /// assert_eq!(a.size_bits(), Digit::BITS as BitCount + 1);
-    /// ```
-    ///
-    /// ## Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn size_bits(&self) -> BitCount {
-        self.bit_length()
     }
 
     /// See [`Arbi::is_negative()`].
