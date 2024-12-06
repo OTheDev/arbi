@@ -8,17 +8,30 @@ use crate::Arbi;
 impl Arbi {
     /// Computes the absolute value of `self`.
     ///
-    /// For in-place absolute value (\\( O(1) \\) operation), see
-    /// [`Arbi::abs_mut()`]. [`Arbi::abs()`] is also \\( O(1) \\).
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
+    /// let neg = Arbi::from(-123456789);
+    /// assert_eq!(neg.abs(), 123456789);
+    /// ```
+    ///
+    /// # Complexity
+    /// \\( O(1) \\)
+    #[inline(always)]
+    pub fn abs(mut self) -> Arbi {
+        if self.neg {
+            self.negate();
+        }
+        self
+    }
+
+    /// Computes the absolute value of `self`.
     ///
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    ///
     /// let neg = Arbi::from(-123456789);
-    /// let pos = neg.abs_ref();
-    ///
-    /// assert_eq!(pos, 123456789);
+    /// assert_eq!(neg.abs_ref(), 123456789);
     /// ```
     ///
     /// # Complexity
@@ -32,15 +45,13 @@ impl Arbi {
         ret
     }
 
-    /// Computes the absolute value of `self`, in-place.
+    /// Computes the absolute value of `self`.
     ///
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    ///
     /// let mut neg = Arbi::from(-123456789);
     /// neg.abs_mut();
-    ///
     /// assert_eq!(neg, 123456789);
     /// ```
     ///
@@ -51,31 +62,6 @@ impl Arbi {
         if self.neg {
             self.neg = false;
         }
-    }
-
-    /// Computes the absolute value of `self`.
-    ///
-    /// For in-place absolute value (\\( O(1) \\) operation), see
-    /// [`Arbi::abs_mut()`].
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    ///
-    /// let neg = Arbi::from(-123456789);
-    /// let pos = neg.abs();
-    ///
-    /// assert_eq!(pos, 123456789);
-    /// ```
-    ///
-    /// # Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn abs(mut self) -> Arbi {
-        if self.neg {
-            self.negate();
-        }
-        self
     }
 }
 
@@ -108,5 +94,17 @@ mod tests {
         let mut zer = Arbi::zero();
         zer.abs_mut();
         assert_eq!(zer, 0);
+    }
+
+    #[test]
+    fn test_abs_ref() {
+        let pos = Arbi::from(123);
+        assert_eq!(pos.abs_ref(), 123);
+
+        let neg = Arbi::from(-123);
+        assert_eq!(neg.abs_ref(), 123);
+
+        let zer = Arbi::zero();
+        assert_eq!(zer.abs_ref(), 0);
     }
 }
