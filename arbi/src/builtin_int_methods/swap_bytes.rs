@@ -24,7 +24,9 @@ impl Arbi {
         self
     }
 
-    /// See [`Arbi::swap_bytes()`].
+    /// Reverses the byte order of the absolute value of the integer.
+    ///
+    /// The sign remains unchanged.
     ///
     /// # Examples
     /// ```
@@ -46,7 +48,9 @@ impl Arbi {
         self.trim();
     }
 
-    /// See [`Arbi::swap_bytes()`].
+    /// Reverses the byte order of the absolute value of the integer.
+    ///
+    /// The sign remains unchanged.
     ///
     /// # Examples
     /// ```
