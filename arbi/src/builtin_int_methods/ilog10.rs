@@ -34,9 +34,12 @@ impl Arbi {
         self.ilog(10)
     }
 
-    /// See [`Arbi::ilog10()`].
+    /// Returns the base 10 logarithm of the number, rounded down.
     ///
     /// The value of `self` will compare equal to the return value.
+    ///
+    /// # Panics
+    /// This function will panic if `self` is less than or equal to zero.
     ///
     /// # Examples
     /// ```
@@ -62,7 +65,10 @@ impl Arbi {
         self.ilog_mut(10)
     }
 
-    /// See [`Arbi::ilog10()`].
+    /// Returns the base 10 logarithm of the number, rounded down.
+    ///
+    /// # Panics
+    /// This function will panic if `self` is less than or equal to zero.
     ///
     /// # Examples
     /// ```
