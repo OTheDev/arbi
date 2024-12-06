@@ -9,7 +9,7 @@ impl Arbi {
     /// Calculates the quotient of Euclidean division of `self` by `rhs`.
     ///
     /// # See also
-    /// - [`div_euclid_ref()`](https://doc.rust-lang.org/std/primitive.i64.html#method.div_euclid_ref)
+    /// - [`div_euclid()`](https://doc.rust-lang.org/std/primitive.i64.html#method.div_euclid)
     ///     for built-in integer types.
     /// - [`Arbi::divrem_euclid_ref()`].
     ///
@@ -55,7 +55,7 @@ impl Arbi {
     /// Calculates the least nonnegative remainder of `self (mod rhs)`.
     ///
     /// # See also
-    /// - [`rem_euclid_ref()`](https://doc.rust-lang.org/std/primitive.i64.html#method.rem_euclid_ref)
+    /// - [`rem_euclid()`](https://doc.rust-lang.org/std/primitive.i64.html#method.rem_euclid)
     ///     for built-in integer types.
     /// - [`Arbi::divrem_euclid_ref()`].
     ///
@@ -102,7 +102,8 @@ impl Arbi {
     // allocations. Also, see if we can do all of this in the same pass as the
     // main algo.
 
-    /// Same as `(self.div_euclid_ref(rhs), self.rem_euclid_ref(rhs))`, but in one pass.
+    /// Same as `(self.div_euclid_ref(rhs), self.rem_euclid_ref(rhs))`, but in
+    /// one pass.
     ///
     /// # Panics
     /// This function will panic if `rhs` is `0`.
