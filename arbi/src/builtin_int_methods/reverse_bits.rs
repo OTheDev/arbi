@@ -27,7 +27,12 @@ impl Arbi {
         self
     }
 
-    /// See [`Arbi::reverse_bits()`].
+    /// Reverses the order of bits in the absolute value of the integer.
+    ///
+    /// The least significant bit becomes the most significant bit, second least
+    /// significant bit becomes second most-significant bit, etc.
+    ///
+    /// The sign remains unchanged.
     ///
     /// # Examples
     /// ```
@@ -49,7 +54,12 @@ impl Arbi {
         self.trim();
     }
 
-    /// See [`Arbi::reverse_bits()`].
+    /// Reverses the order of bits in the absolute value of the integer.
+    ///
+    /// The least significant bit becomes the most significant bit, second least
+    /// significant bit becomes second most-significant bit, etc.
+    ///
+    /// The sign remains unchanged.
     ///
     /// # Examples
     /// ```
