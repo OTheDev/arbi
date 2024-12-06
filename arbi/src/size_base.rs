@@ -30,7 +30,6 @@ impl Arbi {
     /// Panics on a base less than or equal to 1:
     /// ```should_panic
     /// use arbi::Arbi;
-    ///
     /// let a = Arbi::from(1234);
     /// a.size_base(1);
     /// ```
@@ -38,9 +37,15 @@ impl Arbi {
         self.size_base_mut(base)
     }
 
-    /// See [`Arbi::size_base()`].
+    /// Return the number of base-`base` digits needed to represent the absolute
+    /// value of this integer.
+    ///
+    /// Instance represents `0` if and only if `size_base_mut() == 0`.
     ///
     /// The value of `self` will compare equal to the return value.
+    ///
+    /// # Panics
+    /// This function will panic if `base` is less than or equal to 1.
     ///
     /// # Examples
     /// ```
@@ -58,6 +63,13 @@ impl Arbi {
     /// assert_eq!(a.size_base_mut(10), 9);
     /// assert_eq!(a, 9);
     /// ```
+    ///
+    /// Panics on a base less than or equal to 1:
+    /// ```should_panic
+    /// use arbi::Arbi;
+    /// let mut a = Arbi::from(1234);
+    /// a.size_base_mut(1);
+    /// ```
     pub fn size_base_mut(&mut self, base: u32) -> BitCount {
         if let Some(v) = Self::check_args_size_base(self, base) {
             self.assign(v);
@@ -69,7 +81,13 @@ impl Arbi {
         }
     }
 
-    /// See [`Arbi::size_base()`].
+    /// Return the number of base-`base` digits needed to represent the absolute
+    /// value of this integer.
+    ///
+    /// Instance represents `0` if and only if `size_base_ref() == 0`.
+    ///
+    /// # Panics
+    /// This function will panic if `base` is less than or equal to 1.
     ///
     /// # Examples
     /// ```
@@ -83,6 +101,13 @@ impl Arbi {
     ///
     /// let a = Arbi::from_str_radix("123456789", 10).unwrap();
     /// assert_eq!(a.size_base_ref(10), 9);
+    /// ```
+    ///
+    /// Panics on a base less than or equal to 1:
+    /// ```should_panic
+    /// use arbi::Arbi;
+    /// let a = Arbi::from(1234);
+    /// a.size_base_ref(1);
     /// ```
     pub fn size_base_ref(&self, base: u32) -> BitCount {
         if let Some(v) = Self::check_args_size_base(self, base) {
