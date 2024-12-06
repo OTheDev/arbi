@@ -77,7 +77,7 @@ impl Arbi {
             // TODO: find some quick upperbound.
             // let ilog2_base = base.ilog2();
             // (x.bit_length() - 1) / (ilog2_base as BitCount) + (1 as BitCount)
-            x.size_base(base as u32)
+            x.size_base_ref(base as u32)
         } else {
             // This is much more efficient than using size_base()
             crate::floor::floor(bitlen as f64 * LOG_BASE_2[base] + 1.0)
@@ -113,7 +113,7 @@ impl Arbi {
             Self::base_length(self, base) + if self.neg { 1 } else { 0 };
         let estimate: usize = if true_estimate > usize::MAX as BitCount {
             let exact =
-                self.size_base(base as u32) + if self.neg { 1 } else { 0 };
+                self.size_base_ref(base as u32) + if self.neg { 1 } else { 0 };
             assert!(exact > isize::MAX as BitCount);
             panic!(
                 "Base-{} digit estimation exceeds isize::MAX bytes. Exact = {}",

@@ -13,16 +13,27 @@ impl Arbi {
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    ///
     /// let a = Arbi::from(0x12345678_u32);
-    /// let b = a.swap_bytes();
-    ///
-    /// assert_eq!(b, 0x78563412);
+    /// assert_eq!(a.swap_bytes(), 0x78563412);
     /// ```
     ///
     /// ## Complexity
     /// \\( O(n) \\)
     pub fn swap_bytes(mut self) -> Self {
+        self.swap_bytes_mut();
+        self
+    }
+
+    /// See [`Arbi::swap_bytes()`].
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
+    /// let mut a = Arbi::from(0x12345678_u32);
+    /// a.swap_bytes_mut();
+    /// assert_eq!(a, 0x78563412);
+    /// ```
+    pub fn swap_bytes_mut(&mut self) {
         let len = self.vec.len();
         for i in 0..(len / 2) {
             self.vec[i] = self.vec[i].swap_bytes();
@@ -33,7 +44,19 @@ impl Arbi {
             self.vec[len / 2] = self.vec[len / 2].swap_bytes();
         }
         self.trim();
-        self
+    }
+
+    /// See [`Arbi::swap_bytes()`].
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
+    /// let a = Arbi::from(0x12345678_u32);
+    /// assert_eq!(a.swap_bytes_ref(), 0x78563412);
+    /// ```
+    pub fn swap_bytes_ref(&self) -> Self {
+        let ret = self.clone();
+        ret.swap_bytes()
     }
 }
 

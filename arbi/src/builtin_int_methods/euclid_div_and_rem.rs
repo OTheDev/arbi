@@ -9,9 +9,9 @@ impl Arbi {
     /// Calculates the quotient of Euclidean division of `self` by `rhs`.
     ///
     /// # See also
-    /// - [`div_euclid()`](https://doc.rust-lang.org/std/primitive.i64.html#method.div_euclid)
+    /// - [`div_euclid_ref()`](https://doc.rust-lang.org/std/primitive.i64.html#method.div_euclid_ref)
     ///     for built-in integer types.
-    /// - [`Arbi::divrem_euclid()`].
+    /// - [`Arbi::divrem_euclid_ref()`].
     ///
     /// # Panics
     /// This function will panic if `rhs` is `0`.
@@ -23,17 +23,17 @@ impl Arbi {
     /// let mut a = Arbi::from(9);
     /// let mut b = Arbi::from(5);
     ///
-    /// assert_eq!(a.div_euclid(&b), 1);
+    /// assert_eq!(a.div_euclid_ref(&b), 1);
     ///
     /// b.negate();
-    /// assert_eq!(a.div_euclid(&b), -1);
+    /// assert_eq!(a.div_euclid_ref(&b), -1);
     ///
     /// a.negate();
     /// b.negate();
-    /// assert_eq!(a.div_euclid(&b), -2);
+    /// assert_eq!(a.div_euclid_ref(&b), -2);
     ///
     /// b.negate();
-    /// assert_eq!(a.div_euclid(&b), 2);
+    /// assert_eq!(a.div_euclid_ref(&b), 2);
     /// ```
     ///
     /// Panics if `rhs` is zero:
@@ -42,22 +42,22 @@ impl Arbi {
     ///
     /// let num = Arbi::from(9);
     /// let den = Arbi::zero();
-    /// num.div_euclid(&den);
+    /// num.div_euclid_ref(&den);
     /// ```
     ///
     /// # Complexity
     /// \\( O(m \cdot n) \\)
-    pub fn div_euclid(&self, rhs: &Self) -> Arbi {
-        let (quot, _) = self.divrem_euclid(rhs);
+    pub fn div_euclid_ref(&self, rhs: &Self) -> Arbi {
+        let (quot, _) = self.divrem_euclid_ref(rhs);
         quot
     }
 
     /// Calculates the least nonnegative remainder of `self (mod rhs)`.
     ///
     /// # See also
-    /// - [`rem_euclid()`](https://doc.rust-lang.org/std/primitive.i64.html#method.rem_euclid)
+    /// - [`rem_euclid_ref()`](https://doc.rust-lang.org/std/primitive.i64.html#method.rem_euclid_ref)
     ///     for built-in integer types.
-    /// - [`Arbi::divrem_euclid()`].
+    /// - [`Arbi::divrem_euclid_ref()`].
     ///
     /// # Panics
     /// This function will panic if `rhs` is `0`.
@@ -69,17 +69,17 @@ impl Arbi {
     /// let mut a = Arbi::from(9);
     /// let mut b = Arbi::from(5);
     ///
-    /// assert_eq!(a.rem_euclid(&b), 4);
+    /// assert_eq!(a.rem_euclid_ref(&b), 4);
     ///
     /// b.negate();
-    /// assert_eq!(a.rem_euclid(&b), 4);
+    /// assert_eq!(a.rem_euclid_ref(&b), 4);
     ///
     /// a.negate();
     /// b.negate();
-    /// assert_eq!(a.rem_euclid(&b), 1);
+    /// assert_eq!(a.rem_euclid_ref(&b), 1);
     ///
     /// b.negate();
-    /// assert_eq!(a.rem_euclid(&b), 1);
+    /// assert_eq!(a.rem_euclid_ref(&b), 1);
     /// ```
     ///
     /// Panics if `rhs` is zero:
@@ -88,13 +88,13 @@ impl Arbi {
     ///
     /// let num = Arbi::from(9);
     /// let den = Arbi::zero();
-    /// num.rem_euclid(&den);
+    /// num.rem_euclid_ref(&den);
     /// ```
     ///
     /// # Complexity
     /// \\( O(m \cdot n) \\)
-    pub fn rem_euclid(&self, rhs: &Self) -> Arbi {
-        let (_, rem) = self.divrem_euclid(rhs);
+    pub fn rem_euclid_ref(&self, rhs: &Self) -> Arbi {
+        let (_, rem) = self.divrem_euclid_ref(rhs);
         rem
     }
 
@@ -102,7 +102,7 @@ impl Arbi {
     // allocations. Also, see if we can do all of this in the same pass as the
     // main algo.
 
-    /// Same as `(self.div_euclid(rhs), self.rem_euclid(rhs))`, but in one pass.
+    /// Same as `(self.div_euclid_ref(rhs), self.rem_euclid_ref(rhs))`, but in one pass.
     ///
     /// # Panics
     /// This function will panic if `rhs` is `0`.
@@ -114,20 +114,20 @@ impl Arbi {
     /// let mut a = Arbi::from(9);
     /// let mut b = Arbi::from(5);
     ///
-    /// let (quo, rem) = a.divrem_euclid(&b);
+    /// let (quo, rem) = a.divrem_euclid_ref(&b);
     /// assert!(quo == 1 && rem == 4);
     ///
     /// b.negate();
-    /// let (quo, rem) = a.divrem_euclid(&b);
+    /// let (quo, rem) = a.divrem_euclid_ref(&b);
     /// assert!(quo == -1 && rem == 4);
     ///
     /// a.negate();
     /// b.negate();
-    /// let (quo, rem) = a.divrem_euclid(&b);
+    /// let (quo, rem) = a.divrem_euclid_ref(&b);
     /// assert!(quo == -2 && rem == 1);
     ///
     /// b.negate();
-    /// let (quo, rem) = a.divrem_euclid(&b);
+    /// let (quo, rem) = a.divrem_euclid_ref(&b);
     /// assert!(quo == 2 && rem == 1);
     /// ```
     ///
@@ -137,12 +137,12 @@ impl Arbi {
     ///
     /// let num = Arbi::from(9);
     /// let den = Arbi::zero();
-    /// num.divrem_euclid(&den);
+    /// num.divrem_euclid_ref(&den);
     /// ```
     ///
     /// # Complexity
     /// \\( O(m \cdot n) \\)
-    pub fn divrem_euclid(&self, rhs: &Self) -> (Arbi, Arbi) {
+    pub fn divrem_euclid_ref(&self, rhs: &Self) -> (Arbi, Arbi) {
         let (mut quot, mut rem) = self.div(rhs);
         if rem.is_negative() {
             if rhs.is_negative() {
@@ -191,7 +191,7 @@ mod tests {
                     continue;
                 }
 
-                let (quot, rem) = a.divrem_euclid(&b);
+                let (quot, rem) = a.divrem_euclid_ref(&b);
 
                 assert_eq!(
                     quot,

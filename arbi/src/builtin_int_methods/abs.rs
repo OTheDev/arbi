@@ -9,14 +9,14 @@ impl Arbi {
     /// Computes the absolute value of `self`.
     ///
     /// For in-place absolute value (\\( O(1) \\) operation), see
-    /// [`Arbi::abs_mut()`].
+    /// [`Arbi::abs_mut()`]. [`Arbi::abs()`] is also \\( O(1) \\).
     ///
     /// # Examples
     /// ```
     /// use arbi::Arbi;
     ///
     /// let neg = Arbi::from(-123456789);
-    /// let pos = neg.abs();
+    /// let pos = neg.abs_ref();
     ///
     /// assert_eq!(pos, 123456789);
     /// ```
@@ -24,7 +24,7 @@ impl Arbi {
     /// # Complexity
     /// \\( O(n) \\)
     #[inline(always)]
-    pub fn abs(&self) -> Arbi {
+    pub fn abs_ref(&self) -> Arbi {
         let mut ret = self.clone();
         if self.neg {
             ret.negate();
@@ -51,6 +51,31 @@ impl Arbi {
         if self.neg {
             self.neg = false;
         }
+    }
+
+    /// Computes the absolute value of `self`.
+    ///
+    /// For in-place absolute value (\\( O(1) \\) operation), see
+    /// [`Arbi::abs_mut()`].
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
+    ///
+    /// let neg = Arbi::from(-123456789);
+    /// let pos = neg.abs();
+    ///
+    /// assert_eq!(pos, 123456789);
+    /// ```
+    ///
+    /// # Complexity
+    /// \\( O(1) \\)
+    #[inline(always)]
+    pub fn abs(mut self) -> Arbi {
+        if self.neg {
+            self.negate();
+        }
+        self
     }
 }
 

@@ -14,7 +14,6 @@ impl Arbi {
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    ///
     /// let a = Arbi::from(10);
     /// assert_eq!(a.ilog10(), 1);
     /// ```
@@ -22,22 +21,70 @@ impl Arbi {
     /// Nonpositive values panic:
     /// ```should_panic
     /// use arbi::Arbi;
-    ///
     /// let zero = Arbi::zero();
     /// zero.ilog10();
     /// ```
     ///
     /// ```should_panic
     /// use arbi::Arbi;
-    ///
     /// let minus_one = Arbi::from(-1);
     /// minus_one.ilog10();
     /// ```
-    pub fn ilog10(&self) -> BitCount {
-        if self <= 0 {
-            panic!("self must be positive: {}", self);
-        }
-        self.size_base(10) - 1
+    pub fn ilog10(self) -> BitCount {
+        self.ilog(10)
+    }
+
+    /// See [`Arbi::ilog10()`].
+    ///
+    /// The value of `self` will compare equal to the return value.
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
+    /// let mut a = Arbi::from(10);
+    /// assert_eq!(a.ilog10_mut(), 1);
+    /// assert_eq!(a, 1);
+    /// ```
+    ///
+    /// Nonpositive values panic:
+    /// ```should_panic
+    /// use arbi::Arbi;
+    /// let mut zero = Arbi::zero();
+    /// zero.ilog10_mut();
+    /// ```
+    ///
+    /// ```should_panic
+    /// use arbi::Arbi;
+    /// let mut minus_one = Arbi::from(-1);
+    /// minus_one.ilog10_mut();
+    /// ```
+    pub fn ilog10_mut(&mut self) -> BitCount {
+        self.ilog_mut(10)
+    }
+
+    /// See [`Arbi::ilog10()`].
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
+    /// let a = Arbi::from(10);
+    /// assert_eq!(a.ilog10_ref(), 1);
+    /// ```
+    ///
+    /// Nonpositive values panic:
+    /// ```should_panic
+    /// use arbi::Arbi;
+    /// let zero = Arbi::zero();
+    /// zero.ilog10_ref();
+    /// ```
+    ///
+    /// ```should_panic
+    /// use arbi::Arbi;
+    /// let minus_one = Arbi::from(-1);
+    /// minus_one.ilog10_ref();
+    /// ```
+    pub fn ilog10_ref(&self) -> BitCount {
+        self.ilog_ref(10)
     }
 }
 
