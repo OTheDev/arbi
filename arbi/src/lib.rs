@@ -50,6 +50,7 @@ mod to_twos_complement;
 mod uints;
 mod unary_ops;
 mod util;
+mod zero_and_one;
 
 pub use assign::Assign;
 pub use base::{Base, BaseError};
@@ -167,16 +168,16 @@ impl Arbi {
     pub const MAX_BITS: BitCount =
         Self::MAX_CAPACITY as BitCount * Digit::BITS as BitCount;
 
-    /// Default constructor. The integer is initialized to zero and no memory
-    /// allocation occurs.
+    /// Return an `Arbi` integer with value `0`.
     ///
-    /// Note that [`Arbi::new()`], [`Arbi::zero()`], and [`Arbi::default()`] are
-    /// all equivalent.
+    /// No memory allocation occurs.
+    ///
+    /// [`Arbi::new()`], [`Arbi::zero()`], and [`Arbi::default()`] are
+    /// equivalent, except that `Arbi::default()` is not `const`.
     ///
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    ///
     /// let zero = Arbi::new();
     /// assert_eq!(zero, 0);
     /// ```
@@ -184,25 +185,11 @@ impl Arbi {
     /// ## Complexity
     /// \\( O(1) \\)
     #[inline(always)]
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Equivalent to [`Arbi::new()`].
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    ///
-    /// let zero = Arbi::zero();
-    /// assert_eq!(zero, 0);
-    /// ```
-    ///
-    /// ## Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn zero() -> Self {
-        Self::default()
+    pub const fn new() -> Self {
+        Arbi {
+            vec: Vec::new(),
+            neg: false,
+        }
     }
 
     /// Construct a new `Arbi` integer with at least the specified capacity, in
