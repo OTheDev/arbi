@@ -16,16 +16,32 @@ impl Arbi {
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    ///
     /// let a = Arbi::from(0x12345678_u32);
-    /// let b = a.reverse_bits();
-    ///
-    /// assert_eq!(b, 0x12345678_u32.reverse_bits());
+    /// assert_eq!(a.reverse_bits(), 0x12345678_u32.reverse_bits());
     /// ```
     ///
-    /// ## Complexity
+    /// # Complexity
     /// \\( O(n) \\)
     pub fn reverse_bits(mut self) -> Self {
+        self.reverse_bits_mut();
+        self
+    }
+
+    /// Reverses the order of bits in the absolute value of the integer.
+    ///
+    /// The least significant bit becomes the most significant bit, second least
+    /// significant bit becomes second most-significant bit, etc.
+    ///
+    /// The sign remains unchanged.
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
+    /// let mut a = Arbi::from(0x12345678_u32);
+    /// a.reverse_bits_mut();
+    /// assert_eq!(a, 0x12345678_u32.reverse_bits());
+    /// ```
+    pub fn reverse_bits_mut(&mut self) {
         let len = self.vec.len();
         for i in 0..(len / 2) {
             self.vec[i] = self.vec[i].reverse_bits();
@@ -36,7 +52,25 @@ impl Arbi {
             self.vec[len / 2] = self.vec[len / 2].reverse_bits();
         }
         self.trim();
-        self
+    }
+
+    /// Reverses the order of bits in the absolute value of the integer.
+    ///
+    /// The least significant bit becomes the most significant bit, second least
+    /// significant bit becomes second most-significant bit, etc.
+    ///
+    /// The sign remains unchanged.
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
+    /// let a = Arbi::from(0x12345678_u32);
+    /// let b: Arbi = a.reverse_bits_ref();
+    /// assert_eq!(b, 0x12345678_u32.reverse_bits());
+    /// ```
+    pub fn reverse_bits_ref(&self) -> Self {
+        let ret = self.clone();
+        ret.reverse_bits()
     }
 }
 
