@@ -30,6 +30,25 @@ impl Arbi {
     /// # Examples
     /// ```
     /// use arbi::Arbi;
+    /// let mut neg = Arbi::from(-123456789);
+    /// neg.abs_mut();
+    /// assert_eq!(neg, 123456789);
+    /// ```
+    ///
+    /// # Complexity
+    /// \\( O(1) \\)
+    #[inline(always)]
+    pub fn abs_mut(&mut self) {
+        if self.neg {
+            self.neg = false;
+        }
+    }
+
+    /// Computes the absolute value of `self`.
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
     /// let neg = Arbi::from(-123456789);
     /// assert_eq!(neg.abs_ref(), 123456789);
     /// ```
@@ -43,25 +62,6 @@ impl Arbi {
             ret.negate();
         }
         ret
-    }
-
-    /// Computes the absolute value of `self`.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    /// let mut neg = Arbi::from(-123456789);
-    /// neg.abs_mut();
-    /// assert_eq!(neg, 123456789);
-    /// ```
-    ///
-    /// # Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn abs_mut(&mut self) {
-        if self.neg {
-            self.neg = false;
-        }
     }
 }
 

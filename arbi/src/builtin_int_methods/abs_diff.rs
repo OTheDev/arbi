@@ -6,33 +6,29 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 use crate::Arbi;
 
 impl Arbi {
-    /// Computes the absolute difference between `self` and other.
+    /// Computes the absolute difference between `self` and `other`.
     ///
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    /// assert_eq!(Arbi::from(8000).abs_diff_ref(&Arbi::from(10000)), 2000);
-    /// assert_eq!(Arbi::from(-10000).abs_diff_ref(&Arbi::from(8000)), 18000);
-    /// assert_eq!(Arbi::from(-10000).abs_diff_ref(&Arbi::from(-11000)), 1000);
+    /// assert_eq!(Arbi::from(8000).abs_diff(Arbi::from(10000)), 2000);
+    /// assert_eq!(Arbi::from(-10000).abs_diff(Arbi::from(8000)), 18000);
+    /// assert_eq!(Arbi::from(-10000).abs_diff(Arbi::from(-11000)), 1000);
     /// ```
     ///
     /// # Complexity
     /// \\( O(n) \\)
-    pub fn abs_diff_ref(&self, other: &Self) -> Self {
-        let clone: Arbi;
-        let mut ret: Arbi;
-        if self.size() > other.size() {
-            clone = self.clone();
-            ret = clone - other;
+    pub fn abs_diff(self, other: Self) -> Self {
+        let mut ret = if self.size() > other.size() {
+            self - other
         } else {
-            clone = other.clone();
-            ret = clone - self;
-        }
+            other - self
+        };
         ret.abs_mut();
         ret
     }
 
-    /// Computes the absolute difference between `self` and other.
+    /// Computes the absolute difference between `self` and `other`.
     ///
     /// # Examples
     /// ```
@@ -62,24 +58,28 @@ impl Arbi {
         self.abs_mut();
     }
 
-    /// Computes the absolute difference between `self` and other.
+    /// Computes the absolute difference between `self` and `other`.
     ///
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    /// assert_eq!(Arbi::from(8000).abs_diff(Arbi::from(10000)), 2000);
-    /// assert_eq!(Arbi::from(-10000).abs_diff(Arbi::from(8000)), 18000);
-    /// assert_eq!(Arbi::from(-10000).abs_diff(Arbi::from(-11000)), 1000);
+    /// assert_eq!(Arbi::from(8000).abs_diff_ref(&Arbi::from(10000)), 2000);
+    /// assert_eq!(Arbi::from(-10000).abs_diff_ref(&Arbi::from(8000)), 18000);
+    /// assert_eq!(Arbi::from(-10000).abs_diff_ref(&Arbi::from(-11000)), 1000);
     /// ```
     ///
     /// # Complexity
     /// \\( O(n) \\)
-    pub fn abs_diff(self, other: Self) -> Self {
-        let mut ret = if self.size() > other.size() {
-            self - other
+    pub fn abs_diff_ref(&self, other: &Self) -> Self {
+        let clone: Arbi;
+        let mut ret: Arbi;
+        if self.size() > other.size() {
+            clone = self.clone();
+            ret = clone - other;
         } else {
-            other - self
-        };
+            clone = other.clone();
+            ret = clone - self;
+        }
         ret.abs_mut();
         ret
     }
