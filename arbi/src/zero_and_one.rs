@@ -6,27 +6,28 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 use crate::Arbi;
 
 impl Arbi {
-    /// A constant `Arbi` integer representing `0`.
+    /// A constant [`Arbi`] integer representing `0`.
     pub const ZERO: Arbi = Arbi::new();
 
+    /// Return an [`Arbi`] integer with value `0`.
+    ///
     /// Equivalent to [`Arbi::new()`].
     ///
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    ///
     /// let zero = Arbi::zero();
     /// assert_eq!(zero, 0);
     /// ```
     ///
-    /// ## Complexity
+    /// # Complexity
     /// \\( O(1) \\)
     #[inline(always)]
     pub const fn zero() -> Self {
         Arbi::new()
     }
 
-    /// Return an `Arbi` integer representing `1`.
+    /// Return an [`Arbi`] integer with value `1`.
     ///
     /// # Examples
     /// ```
@@ -42,7 +43,7 @@ impl Arbi {
         Arbi::from(1)
     }
 
-    /// Return an `Arbi` integer representing `-1`.
+    /// Return an [`Arbi`] integer with value `-1`.
     ///
     /// # Examples
     /// ```
