@@ -168,10 +168,12 @@ impl Arbi {
     pub const MAX_BITS: BitCount =
         Self::MAX_CAPACITY as BitCount * Digit::BITS as BitCount;
 
-    /// The integer is initialized to zero and no memory allocation occurs.
+    /// Return an `Arbi` integer with value `0`.
     ///
-    /// Note that [`Arbi::new()`], [`Arbi::zero()`], and [`Arbi::default()`] are
-    /// all equivalent, except that `Arbi::default()` is not `const`.
+    /// No memory allocation occurs.
+    ///
+    /// [`Arbi::new()`], [`Arbi::zero()`], and [`Arbi::default()`] are
+    /// equivalent, except that `Arbi::default()` is not `const`.
     ///
     /// # Examples
     /// ```

@@ -29,12 +29,13 @@
 
 ### Construct an `Arbi` integer
 
-The following are all equivalent and return an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) object representing the
-integer `0` (no memory allocation occurs):
+The following are equivalent and return an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html)
+integer with value `0` (no memory allocation occurs):
 
 - [`Arbi::new()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.new)
-- [`Arbi::default()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.default)
 - [`Arbi::zero()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.zero)
+
+`Arbi::default()` also returns zero, but it is not `const`.
 
 ```rust
 use arbi::Arbi;
