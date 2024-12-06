@@ -43,18 +43,79 @@ impl Arbi {
         self.size_base(base) - 1
     }
 
-    /// See [`Arbi::ilog()`].
-    pub fn ilog_ref(&self, base: u32) -> BitCount {
-        Self::check_ilog_args(self, base);
-        self.size_base_ref(base) - 1
-    }
-
-    /// See [`Arbi::ilog_mut()`].
+    /// Returns the base-`base` logarithm of the number, rounded down.
+    ///
+    /// # Panics
+    /// This function will panic if `self` is less than or equal to zero, or if
+    /// `base` is less than 2.
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
+    /// let mut a = Arbi::from(10);
+    /// a.ilog_mut(8);
+    /// assert_eq!(a, 1);
+    /// ```
+    ///
+    /// Nonpositive values panic:
+    /// ```should_panic
+    /// use arbi::Arbi;
+    /// let mut zero = Arbi::zero();
+    /// zero.ilog_mut(8);
+    /// ```
+    /// ```should_panic
+    /// use arbi::Arbi;
+    /// let mut minus_one = Arbi::from(-1);
+    /// minus_one.ilog_mut(8);
+    /// ```
+    ///
+    /// A base less than 2 causes a panic
+    /// ```should_panic
+    /// use arbi::Arbi;
+    /// let mut a = Arbi::from(4);
+    /// a.ilog_mut(1);
+    /// ```
     pub fn ilog_mut(&mut self, base: u32) -> BitCount {
         Self::check_ilog_args(self, base);
         let ret = self.size_base_mut(base) - 1;
         self.decr();
         ret
+    }
+
+    /// Returns the base-`base` logarithm of the number, rounded down.
+    ///
+    /// # Panics
+    /// This function will panic if `self` is less than or equal to zero, or if
+    /// `base` is less than 2.
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
+    /// let a = Arbi::from(10);
+    /// assert_eq!(a.ilog_ref(8), 1);
+    /// ```
+    ///
+    /// Nonpositive values panic:
+    /// ```should_panic
+    /// use arbi::Arbi;
+    /// let zero = Arbi::zero();
+    /// zero.ilog_ref(8);
+    /// ```
+    /// ```should_panic
+    /// use arbi::Arbi;
+    /// let minus_one = Arbi::from(-1);
+    /// minus_one.ilog_ref(8);
+    /// ```
+    ///
+    /// A base less than 2 causes a panic
+    /// ```should_panic
+    /// use arbi::Arbi;
+    /// let a = Arbi::from(4);
+    /// a.ilog_ref(1);
+    /// ```
+    pub fn ilog_ref(&self, base: u32) -> BitCount {
+        Self::check_ilog_args(self, base);
+        self.size_base_ref(base) - 1
     }
 
     fn check_ilog_args(x: &Self, base: u32) {
