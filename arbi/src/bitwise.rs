@@ -402,7 +402,7 @@ impl Not for Arbi {
     type Output = Arbi;
 
     fn not(mut self) -> Self::Output {
-        self.negate();
+        self.negate_mut();
         self.decr();
         self
     }
@@ -435,7 +435,7 @@ impl Not for &Arbi {
 
     fn not(self) -> Self::Output {
         let mut ret = self.clone();
-        ret.negate();
+        ret.negate_mut();
         ret.decr();
         ret
     }

@@ -25,14 +25,14 @@ impl Arbi {
     ///
     /// assert_eq!(a.div_euclid_ref(&b), 1);
     ///
-    /// b.negate();
+    /// b.negate_mut();
     /// assert_eq!(a.div_euclid_ref(&b), -1);
     ///
-    /// a.negate();
-    /// b.negate();
+    /// a.negate_mut();
+    /// b.negate_mut();
     /// assert_eq!(a.div_euclid_ref(&b), -2);
     ///
-    /// b.negate();
+    /// b.negate_mut();
     /// assert_eq!(a.div_euclid_ref(&b), 2);
     /// ```
     ///
@@ -71,14 +71,14 @@ impl Arbi {
     ///
     /// assert_eq!(a.rem_euclid_ref(&b), 4);
     ///
-    /// b.negate();
+    /// b.negate_mut();
     /// assert_eq!(a.rem_euclid_ref(&b), 4);
     ///
-    /// a.negate();
-    /// b.negate();
+    /// a.negate_mut();
+    /// b.negate_mut();
     /// assert_eq!(a.rem_euclid_ref(&b), 1);
     ///
-    /// b.negate();
+    /// b.negate_mut();
     /// assert_eq!(a.rem_euclid_ref(&b), 1);
     /// ```
     ///
@@ -118,16 +118,16 @@ impl Arbi {
     /// let (quo, rem) = a.divrem_euclid_ref(&b);
     /// assert!(quo == 1 && rem == 4);
     ///
-    /// b.negate();
+    /// b.negate_mut();
     /// let (quo, rem) = a.divrem_euclid_ref(&b);
     /// assert!(quo == -1 && rem == 4);
     ///
-    /// a.negate();
-    /// b.negate();
+    /// a.negate_mut();
+    /// b.negate_mut();
     /// let (quo, rem) = a.divrem_euclid_ref(&b);
     /// assert!(quo == -2 && rem == 1);
     ///
-    /// b.negate();
+    /// b.negate_mut();
     /// let (quo, rem) = a.divrem_euclid_ref(&b);
     /// assert!(quo == 2 && rem == 1);
     /// ```

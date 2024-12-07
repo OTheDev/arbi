@@ -40,6 +40,7 @@ mod is_odd_is_even;
 mod is_signed;
 mod left_shift;
 mod multiplication;
+mod neg;
 mod print_internal;
 mod right_shift;
 mod size;
@@ -368,30 +369,6 @@ impl Arbi {
         self.neg = neg;
     }
 
-    /// Negates the integer in-place.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    ///
-    /// let mut pos = Arbi::from(123456789);
-    ///
-    /// pos.negate();
-    /// assert_eq!(pos, -123456789);
-    ///
-    /// pos.negate();
-    /// assert_eq!(pos, 123456789);
-    /// ```
-    ///
-    /// ## Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn negate(&mut self) {
-        if self.size() > 0 {
-            self.neg = !self.neg;
-        }
-    }
-
     /// Return an `Ordering` indicating the sign of the number: `Ordering::Less`
     /// for negative, `Ordering::Equal` for zero, `Ordering::Greater` for
     /// positive.
@@ -421,41 +398,5 @@ impl Arbi {
         } else {
             core::cmp::Ordering::Greater
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_negate() {
-        let mut a = Arbi::from(123);
-        let mut z = Arbi::zero();
-
-        // Zero
-        z.negate();
-        assert_eq!(z, 0);
-
-        // Positive
-        a.negate();
-        assert_eq!(a, -123);
-
-        // Negative
-        a.negate();
-        assert_eq!(a, 123);
-
-        a.negate();
-        a.negate();
-        assert_eq!(a, 123);
-    }
-
-    #[test]
-    fn test_default() {
-        let a = Arbi::default();
-        assert_eq!(a, 0);
-
-        assert_eq!(a.size(), 0);
-        assert_eq!(a.is_negative(), false);
     }
 }
