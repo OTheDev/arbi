@@ -15,7 +15,7 @@ impl Arbi {
     /// ```
     /// use arbi::Arbi;
     ///
-    /// let one = Arbi::from(1);
+    /// let one = Arbi::one();
     /// assert!(one.is_power_of_two());
     /// assert!(1u32.is_power_of_two());
     ///

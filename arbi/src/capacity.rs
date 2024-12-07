@@ -7,6 +7,24 @@ use crate::{Arbi, BitCount, Digit};
 use alloc::vec::Vec;
 
 impl Arbi {
+    /// Maximum capacity for the internal vector of digits.
+    ///
+    /// [`Vec`] is limited to `isize::MAX` bytes in capacity. A digit has size
+    /// in bytes `core::mem::size_of::<Digit>()`. The maximum capacity is
+    /// therefore `isize::MAX / core::mem::size_of::<Digit>()`.
+    pub const MAX_CAPACITY: usize =
+        (isize::MAX as usize) / core::mem::size_of::<Digit>();
+
+    /// Maximum capacity for the internal vector of digits, in terms of bits.
+    ///
+    /// This represents the number of bits that can be used to represent the
+    /// absolute value of the integer when the internal digit vector is at
+    /// maximum capacity.
+    ///
+    /// This is `Arbi::MAX_CAPACITY * Digit::BITS`.
+    pub const MAX_BITS: BitCount =
+        Self::MAX_CAPACITY as BitCount * Digit::BITS as BitCount;
+
     /// Returns the total number of elements the internal digit vector can hold
     /// without reallocating.
     ///

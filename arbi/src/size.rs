@@ -77,7 +77,7 @@ impl Arbi {
     /// use arbi::Arbi;
     /// let zero = Arbi::zero();
     /// assert_eq!(zero.size_base(10), 0);
-    /// let one = Arbi::from(1);
+    /// let one = Arbi::one();
     /// assert_eq!(one.size_base(10), 1);
     /// let a = Arbi::from_str_radix("123456789", 10).unwrap();
     /// assert_eq!(a.size_base(10), 9);
@@ -111,7 +111,7 @@ impl Arbi {
     /// assert_eq!(zero.size_base_mut(10), 0);
     /// assert_eq!(zero, 0);
     ///
-    /// let mut one = Arbi::from(1);
+    /// let mut one = Arbi::one();
     /// assert_eq!(one.size_base_mut(10), 1);
     /// assert_eq!(one, 1);
     ///
@@ -152,7 +152,7 @@ impl Arbi {
     /// let zero = Arbi::zero();
     /// assert_eq!(zero.size_base_ref(10), 0);
     ///
-    /// let one = Arbi::from(1);
+    /// let one = Arbi::one();
     /// assert_eq!(one.size_base_ref(10), 1);
     ///
     /// let a = Arbi::from_str_radix("123456789", 10).unwrap();
@@ -328,12 +328,8 @@ mod tests_size_bits {
 
     #[test]
     fn test_size_bits_spec() {
-        let (pos, neg, zer, one) = (
-            Arbi::from(16),
-            Arbi::from(-16),
-            Arbi::from(0),
-            Arbi::from(1),
-        );
+        let (pos, neg, zer, one) =
+            (Arbi::from(16), Arbi::from(-16), Arbi::zero(), Arbi::one());
 
         assert_eq!(pos.size_bits(), 5);
         assert_eq!(neg.size_bits(), 5);

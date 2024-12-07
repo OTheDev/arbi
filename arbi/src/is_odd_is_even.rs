@@ -60,7 +60,7 @@ mod tests {
     fn test_even_or_odd() {
         let mut arbi: Arbi;
 
-        arbi = Arbi::from(0);
+        arbi = Arbi::zero();
         assert!(arbi.is_even());
         assert!(!arbi.is_odd());
 

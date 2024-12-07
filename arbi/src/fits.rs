@@ -84,14 +84,14 @@ mod tests {
         assert!(x.fits::<Digit>());
         assert!(!x.fits::<SDigit>());
 
-        x += Arbi::from(1);
+        x += Arbi::one();
         assert!(!x.fits::<Digit>());
 
         x.assign(-(Digit::MAX as SDDigit));
         assert!(!x.fits::<Digit>());
         assert!(x.fits::<SDDigit>());
 
-        x -= Arbi::from(1);
+        x -= Arbi::one();
         assert!(x.fits::<SDDigit>());
 
         x.assign(DDigit::MAX);

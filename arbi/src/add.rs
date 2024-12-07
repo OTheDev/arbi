@@ -306,7 +306,7 @@ mod tests {
     fn test_sub() {
         let a = Arbi::from(10);
         let b = Arbi::from(-5);
-        let z = Arbi::from(0);
+        let z = Arbi::zero();
 
         assert_eq!(&a - &b, 15);
         assert_eq!(&b - &a, -15);

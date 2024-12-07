@@ -114,7 +114,7 @@ impl ShlAssign<$bitcount> for Arbi {
 /// assert_eq!(Arbi::zero() << 1, 0);
 /// assert_eq!(0 << 1, 0);
 ///
-/// let mut a = Arbi::from(-1);
+/// let mut a = Arbi::neg_one();
 ///
 /// a <<= 0;
 /// assert_eq!(a, -1);
@@ -142,7 +142,7 @@ impl ShlAssign<$bitcount> for Arbi {
 /// This panics because it would exceed `Vec`'s limits:
 /// ```should_panic
 /// use arbi::Arbi;
-/// let _ = Arbi::from(1) << Arbi::MAX_BITS;
+/// let _ = Arbi::one() << Arbi::MAX_BITS;
 /// ```
 ///
 /// ## Complexity
@@ -194,14 +194,14 @@ mod tests {
     #[test]
     #[should_panic = "capacity overflow!"] // Internal guard
     fn test_large_shift_panics_more_than_max_bits() {
-        let one = Arbi::from(1);
+        let one = Arbi::one();
         let _ = one << (Arbi::MAX_BITS + 1);
     }
 
     #[test]
     #[should_panic = "capacity overflow"] // From `Vec`
     fn test_large_shift_panics_max_bits() {
-        let one = Arbi::from(1);
+        let one = Arbi::one();
         let _ = one << Arbi::MAX_BITS;
     }
 
@@ -266,7 +266,7 @@ mod tests {
 
     #[test]
     fn test_left_shift_powers_of_2_in_digit() {
-        let one = Arbi::from(1);
+        let one = Arbi::one();
         for i in 0..(Digit::BITS as BitCount * 2) {
             assert_eq!(&one << i, (1 as DDigit) << i);
         }
@@ -275,7 +275,7 @@ mod tests {
     #[test]
     fn test_left_shift_assign_powers_of_2_in_digit() {
         for i in 0..(Digit::BITS as BitCount * 2) {
-            let mut one = Arbi::from(1);
+            let mut one = Arbi::one();
             one <<= i;
             assert_eq!(one, (1 as DDigit) << i);
         }
@@ -283,10 +283,10 @@ mod tests {
 
     #[test]
     fn test_lshift() {
-        let mut one = Arbi::from(1);
+        let mut one = Arbi::one();
         let mut one_prim: u128 = 1;
         for i in (1 as BitCount)..(128 as BitCount) {
-            assert_eq!(Arbi::from(1) << i, 1_u128 << i);
+            assert_eq!(Arbi::one() << i, 1_u128 << i);
             assert_eq!(one, one_prim, "i = {}", i);
             one <<= 1 as BitCount;
             one_prim <<= 1 as BitCount;

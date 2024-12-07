@@ -519,7 +519,7 @@ mod test_divrem {
         assert_eq!(quot, -5);
         assert_eq!(rem, 0);
 
-        let (quot, rem) = Arbi::from(SDDigit::MIN).div(&Arbi::from(-1));
+        let (quot, rem) = Arbi::from(SDDigit::MIN).div(&Arbi::neg_one());
         assert_eq!(quot, 1 as DDigit + SDDigit::MAX as DDigit);
         assert_eq!(rem, 0);
 

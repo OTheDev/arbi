@@ -272,7 +272,7 @@ mod $test {
         assert_eq!(&neg >> 0, -16);
         assert_eq!(&neg >> (Digit::BITS * 2) as $bitcount, -1);
 
-        let mon = Arbi::from(-1);
+        let mon = Arbi::neg_one();
         assert_eq!(&mon >> 0, -1);
         assert_eq!((&mon) >> 1, -1);
         assert_eq!(&mon >> (Digit::BITS + 1) as $bitcount, -1);

@@ -524,7 +524,7 @@ mod tests {
     }
 
     fn get_data() -> (Arbi, Arbi, Arbi) {
-        (Arbi::from(0), Arbi::from(12345), Arbi::from(-6789))
+        (Arbi::zero(), Arbi::from(12345), Arbi::from(-6789))
     }
 
     #[test]
@@ -649,8 +649,8 @@ mod tests {
 
     #[test]
     fn bitwise_not_digit_boundaries() {
-        assert_eq!(!Arbi::from(0), -1);
-        assert_eq!(!Arbi::from(1), -2);
+        assert_eq!(!Arbi::zero(), -1);
+        assert_eq!(!Arbi::one(), -2);
         assert_eq!(!Arbi::from(Digit::MAX), !(Digit::MAX as SDDigit));
         assert_eq!(!Arbi::from(Digit::MAX), -(Digit::MAX as SDDigit) - 1);
     }

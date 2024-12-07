@@ -248,7 +248,7 @@ mod test_compare_with_integral {
     use crate::{DDigit, SDDigit};
 
     fn setup() -> (Arbi, Arbi, Arbi, Arbi, Arbi) {
-        let zero = Arbi::from(0);
+        let zero = Arbi::zero();
         let positive = Arbi::from(123456789);
         let negative = Arbi::from(-987654321);
         let tdigit = Arbi::from(Digit::MAX as DDigit + 242092);

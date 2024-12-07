@@ -28,7 +28,7 @@ impl Arbi {
     ///
     /// ```should_panic
     /// use arbi::Arbi;
-    /// let minus_one = Arbi::from(-1);
+    /// let minus_one = Arbi::neg_one();
     /// minus_one.ilog(8);
     /// ```
     ///
@@ -65,7 +65,7 @@ impl Arbi {
     /// ```
     /// ```should_panic
     /// use arbi::Arbi;
-    /// let mut minus_one = Arbi::from(-1);
+    /// let mut minus_one = Arbi::neg_one();
     /// minus_one.ilog_mut(8);
     /// ```
     ///
@@ -103,7 +103,7 @@ impl Arbi {
     /// ```
     /// ```should_panic
     /// use arbi::Arbi;
-    /// let minus_one = Arbi::from(-1);
+    /// let minus_one = Arbi::neg_one();
     /// minus_one.ilog_ref(8);
     /// ```
     ///

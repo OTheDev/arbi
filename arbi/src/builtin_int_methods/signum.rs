@@ -20,12 +20,12 @@ impl Arbi {
     /// assert_eq!(zero.signum(), 0);
     /// assert_eq!(0i32.signum(), 0);
     ///
-    /// let one = Arbi::from(1);
+    /// let one = Arbi::one();
     /// assert_eq!(one.signum(), 1);
     /// assert_eq!(1i32.signum(), 1);
     ///
-    /// let minus_one = Arbi::from(-1);
-    /// assert_eq!(minus_one.signum(), -1);
+    /// let neg_one = Arbi::neg_one();
+    /// assert_eq!(neg_one.signum(), -1);
     /// assert_eq!((-1i32).signum(), -1);
     /// ```
     ///
