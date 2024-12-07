@@ -38,6 +38,7 @@ mod from_string;
 mod increment_decrement;
 mod is_odd_is_even;
 mod is_signed;
+mod is_zero;
 mod left_shift;
 mod multiplication;
 mod neg;
@@ -330,29 +331,6 @@ impl Arbi {
         if self.vec.is_empty() {
             self.neg = false;
         }
-    }
-
-    /// Return `true` if this integer is zero, `false` otherwise.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    ///
-    /// let a = Arbi::new();
-    /// assert!(a.is_zero());
-    ///
-    /// let b = Arbi::with_capacity(10);
-    /// assert!(a.is_zero());
-    ///
-    /// let c = Arbi::with_capacity_bits(100);
-    /// assert!(c.is_zero());
-    /// ```
-    ///
-    /// ## Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn is_zero(&self) -> bool {
-        self.vec.is_empty()
     }
 
     /// Make this `Arbi` integer have value `0`, in-place.
