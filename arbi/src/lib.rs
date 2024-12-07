@@ -42,7 +42,7 @@ mod is_signed;
 mod is_zero;
 mod left_shift;
 mod multiplication;
-mod neg;
+mod negate;
 mod new;
 mod print_internal;
 mod right_shift;
