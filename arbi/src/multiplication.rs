@@ -150,7 +150,7 @@ impl Arbi {
         } else {
             Self::mul_karatsuba(w, u, v);
         }
-        w.neg = u.negative() != v.negative();
+        w.neg = u.is_negative() != v.is_negative();
     }
 }
 
@@ -454,7 +454,7 @@ mod karatsuba {
                 r_2.negate();
             }
 
-            let is_result_negative = r_1.negative() != r_2.negative();
+            let is_result_negative = r_1.is_negative() != r_2.is_negative();
 
             let x_karatsuba = &r_1 * &r_2;
             let mut x_standard = Arbi::zero();

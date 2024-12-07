@@ -33,8 +33,8 @@ impl Arbi {
         y: &Self,
         op: BitwiseOperation,
     ) {
-        let x_negative = x.negative();
-        let y_negative = y.negative();
+        let x_negative = x.is_negative();
+        let y_negative = y.is_negative();
 
         let mut max_size = x.size().max(y.size());
 
@@ -105,8 +105,8 @@ impl Arbi {
         y: &mut Self,
         op: BitwiseOperation,
     ) {
-        let x_negative = x.negative();
-        let y_negative = y.negative();
+        let x_negative = x.is_negative();
+        let y_negative = y.is_negative();
 
         let mut max_size = x.size().max(y.size());
 

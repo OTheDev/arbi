@@ -112,7 +112,7 @@ impl Arbi {
 
 impl CompareWith<f64> for Arbi {
     fn cmp_with(&self, dbl: f64) -> Ordering {
-        if self.negative() {
+        if self.is_negative() {
             if dbl < 0.0 {
                 match Self::cmp_abs_double(self, -dbl) {
                     Ordering::Less => Ordering::Greater,

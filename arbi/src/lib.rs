@@ -36,6 +36,7 @@ mod from_double;
 mod from_integral;
 mod from_string;
 mod increment_decrement;
+mod is_odd_is_even;
 mod is_signed;
 mod left_shift;
 mod multiplication;
@@ -112,8 +113,6 @@ const DBL_MAX_INT: u64 = 0x20000000000000; // 2 ** 53
 ///
 /// # Panic
 /// In general:
-/// - This crate prefers not to panic, unless for good reason.
-///
 /// - If an operation can panic, it will be clearly documented.
 ///
 /// - Operations typically only panic because they are enforcing consistency
@@ -318,12 +317,6 @@ impl Arbi {
         self.vec.capacity() as BitCount * Digit::BITS as BitCount
     }
 
-    /// See [`Arbi::is_negative()`].
-    #[inline(always)]
-    fn negative(&self) -> bool {
-        self.neg
-    }
-
     /// Take away trailing zeros in the internal digit vector until we find the
     /// most significant digit. If the vector is empty after this process, make
     /// this integer have value `0`.
@@ -335,56 +328,6 @@ impl Arbi {
         if self.vec.is_empty() {
             self.neg = false;
         }
-    }
-
-    /// Return `true` if this integer is odd, `false` otherwise.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    ///
-    /// let zero = Arbi::zero();
-    /// assert!(!zero.is_odd());
-    ///
-    /// let a = Arbi::from(-123456789);
-    /// assert!(a.is_odd());
-    ///
-    /// let b = Arbi::from(-12345678);
-    /// assert!(!b.is_odd());
-    /// ```
-    ///
-    /// ## Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn is_odd(&self) -> bool {
-        if self.size() == 0 {
-            false
-        } else {
-            (self.vec[0] & 1) != 0
-        }
-    }
-
-    /// Return `true` if this integer is even, `false` otherwise.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    ///
-    /// let zero = Arbi::zero();
-    /// assert!(zero.is_even());
-    ///
-    /// let a = Arbi::from(-12345678);
-    /// assert!(a.is_even());
-    ///
-    /// let b = Arbi::from(-123456789);
-    /// assert!(!b.is_even());
-    /// ```
-    ///
-    /// ## Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn is_even(&self) -> bool {
-        !self.is_odd()
     }
 
     /// Return `true` if this integer is zero, `false` otherwise.
@@ -473,7 +416,7 @@ impl Arbi {
     pub fn sign(&self) -> core::cmp::Ordering {
         if self.size() == 0 {
             core::cmp::Ordering::Equal
-        } else if self.negative() {
+        } else if self.is_negative() {
             core::cmp::Ordering::Less
         } else {
             core::cmp::Ordering::Greater
@@ -484,31 +427,6 @@ impl Arbi {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_even_or_odd() {
-        let mut arbi: Arbi;
-
-        arbi = Arbi::from(0);
-        assert!(arbi.is_even());
-        assert!(!arbi.is_odd());
-
-        arbi = Arbi::from(Digit::MAX);
-        assert!(arbi.is_odd());
-        assert!(!arbi.is_even());
-
-        arbi = Arbi::from(Digit::MAX as DDigit + 1);
-        assert!(arbi.is_even());
-        assert!(!arbi.is_odd());
-
-        arbi = Arbi::from(-(Digit::MAX as SDDigit));
-        assert!(arbi.is_odd());
-        assert!(!arbi.is_even());
-
-        arbi.decr();
-        assert!(arbi.is_even());
-        assert!(!arbi.is_odd());
-    }
 
     #[test]
     fn test_negate() {
@@ -538,6 +456,6 @@ mod tests {
         assert_eq!(a, 0);
 
         assert_eq!(a.size(), 0);
-        assert_eq!(a.negative(), false);
+        assert_eq!(a.is_negative(), false);
     }
 }

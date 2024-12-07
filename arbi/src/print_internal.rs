@@ -32,7 +32,7 @@ impl Arbi {
             return result;
         }
 
-        if self.negative() {
+        if self.is_negative() {
             result.push('-');
         }
 

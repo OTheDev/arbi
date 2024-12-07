@@ -45,7 +45,7 @@ impl Arbi {
             }
         }
 
-        if self.negative() {
+        if self.is_negative() {
             -result
         } else {
             result

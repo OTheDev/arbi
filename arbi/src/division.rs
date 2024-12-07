@@ -242,8 +242,8 @@ impl Arbi {
             // Self::div_algo_binary(q, r, n, d);
         }
 
-        q.neg = d.negative() ^ n.negative();
-        r.neg = r.size() > 0 && n.negative();
+        q.neg = d.is_negative() ^ n.is_negative();
+        r.neg = r.size() > 0 && n.is_negative();
     }
 }
 

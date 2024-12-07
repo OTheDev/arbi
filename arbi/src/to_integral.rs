@@ -81,11 +81,11 @@ impl Arbi {
         }
 
         if T_IS_SIGNED {
-            if self.negative() {
+            if self.is_negative() {
                 // ret = -ret;
                 ret = (0 as TargetT).wrapping_sub(ret);
             }
-        } else if self.negative() {
+        } else if self.is_negative() {
             ret = (!ret).wrapping_add(1);
         }
 
