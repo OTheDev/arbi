@@ -25,7 +25,7 @@ impl Arbi {
     /// assert_eq!(a.test_bit(14), false);
     /// ```
     ///
-    /// ## Complexity
+    /// # Complexity
     /// \\( O(1) \\)
     pub fn test_bit(&self, i: BitCount) -> bool {
         let digit_idx: usize = (i / Digit::BITS as BitCount) as usize;
@@ -55,7 +55,7 @@ impl Arbi {
     /// assert_eq!(a, 28731);
     /// ```
     ///
-    /// ## Complexity
+    /// # Complexity
     /// - \\( O(1) \\) when setting an existing bit.
     /// - \\( O(n) \\) when setting a bit outside the current bit width, as
     ///     this requires resizing.
@@ -93,9 +93,9 @@ impl Arbi {
     /// assert_eq!(a, -4152);
     /// ```
     ///
-    /// ## Complexity
+    /// # Complexity
     /// \\( O(1) \\)
-    pub fn clear_bit(&mut self, i: BitCount) {
+    pub fn clear_bit(&mut self, i: BitCount) -> &mut Self {
         let n: usize = self.size();
         let digit_idx: usize = (i / Digit::BITS as BitCount) as usize;
         if digit_idx < n {
@@ -103,6 +103,37 @@ impl Arbi {
                 !((1 as Digit) << (i % Digit::BITS as BitCount));
             self.trim();
         }
+        self
+    }
+
+    /// If the bit at zero-based index `i` of the absolute value of this integer
+    /// is `1`, clear it to `0`. Otherwise, set it to `1`.
+    ///
+    /// Please note that bits with indices outside of the range
+    /// `[0, size_bits())` are considered `0`. Thus, inverting a bit outside of
+    /// that range will set it to 1.
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
+    /// let mut a = Arbi::from(0xf); // 0b1111
+    /// a.invert_bit(0); // 0b1110
+    /// assert_eq!(a, 0b1110);
+    /// a.invert_bit(4); // 0b11110
+    /// assert_eq!(a, 0b11110);
+    /// ```
+    ///
+    /// # Complexity
+    /// - \\( O(1) \\) when inverting an existing bit (i.e. a bit with index in
+    ///     `[0, size_bits())`).
+    /// - \\( O(n) \\) otherwise.
+    pub fn invert_bit(&mut self, i: BitCount) -> &mut Self {
+        if self.test_bit(i) {
+            self.clear_bit(i);
+        } else {
+            self.set_bit(i);
+        }
+        self
     }
 }
 
