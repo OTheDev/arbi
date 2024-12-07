@@ -256,20 +256,20 @@ Test or set a bit at a specified index (zero-based) on the absolute value of an
 - [`Arbi::set_bit()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.set_bit)
 
 Obtain the number of bits needed to represent the absolute value of an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html)
-integer using [`Arbi::bit_length()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.bit_length):
+integer using [`Arbi::size_bits()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.size_bits):
 
 ```rust
 use arbi::Arbi;
 
 let mut a = Arbi::zero();
-assert_eq!(a.bit_length(), 0);
+assert_eq!(a.size_bits(), 0);
 
 a.incr(); // 1
-assert_eq!(a.bit_length(), 1);
+assert_eq!(a.size_bits(), 1);
 a.incr(); // 10
-assert_eq!(a.bit_length(), 2);
+assert_eq!(a.size_bits(), 2);
 a.incr(); // 11
-assert_eq!(a.bit_length(), 2);
+assert_eq!(a.size_bits(), 2);
 ```
 
 ### To Built-In Integer

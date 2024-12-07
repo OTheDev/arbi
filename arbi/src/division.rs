@@ -62,7 +62,7 @@ impl Arbi {
         r.make_zero();
 
         // (3)
-        for i in ((0 as BitCount)..u.bit_length()).rev() {
+        for i in ((0 as BitCount)..u.size_bits()).rev() {
             // (3)(I)
             *r <<= 1_usize;
 

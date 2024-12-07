@@ -123,7 +123,7 @@ mod tests {
         for _ in 0..i16::MAX {
             let mut r = die_digit.sample(&mut rng);
             let mut a = Arbi::from(r);
-            let die = get_uniform_die(1, a.bit_length() - 1);
+            let die = get_uniform_die(1, a.size_bits() - 1);
             let i = die.sample(&mut rng);
             a.clear_bit(i);
             r &= !((1 as Digit) << i);
@@ -134,7 +134,7 @@ mod tests {
 
             let mut r = die_ddigit.sample(&mut rng);
             let mut a = Arbi::from(r);
-            let die = get_uniform_die(1, a.bit_length() - 1);
+            let die = get_uniform_die(1, a.size_bits() - 1);
             let i = die.sample(&mut rng);
             a.clear_bit(i);
             r &= !((1 as DDigit) << i);
@@ -145,7 +145,7 @@ mod tests {
 
             let mut r = die_qdigit.sample(&mut rng);
             let mut a = Arbi::from(r);
-            let die = get_uniform_die(1, a.bit_length() - 1);
+            let die = get_uniform_die(1, a.size_bits() - 1);
             let i = die.sample(&mut rng);
             a.clear_bit(i);
             r &= !((1 as QDigit) << i);
