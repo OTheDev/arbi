@@ -483,7 +483,7 @@ mod tests {
 
         s.insert(0, '-');
         let a = Arbi::from_str_base(&s, DEC).unwrap();
-        assert!(a.negative());
+        assert!(a.is_negative());
         assert_eq!(a.to_string(), s);
     }
 
