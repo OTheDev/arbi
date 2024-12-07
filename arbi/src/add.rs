@@ -207,7 +207,7 @@ impl<'b> Add<&'b Arbi> for &Arbi {
 /// let a = Arbi::from(-123456);
 /// let b = Arbi::from(1234567);
 /// let b_cap = b.capacity();
-/// let c = &a + b; // In this case, no memory allocation occurs (b's memory is
+/// let c = &a + b; // In this case, no memory allocation (b's memory is
 ///                 // used.
 /// assert_eq!(c, 1111111);
 /// assert_eq!(c.capacity(), b_cap);
@@ -277,7 +277,7 @@ impl<'a> AddAssign<&'a Arbi> for Arbi {
 /// let a = Arbi::from(-1234567);
 /// let a_cap = a.capacity();
 /// let b = Arbi::from(-123456);
-/// let c = a - b; // no memory allocation occurs
+/// let c = a - b; // no memory allocation
 /// assert_eq!(c, -1111111);
 /// assert_eq!(c.capacity(), a_cap);
 /// ```
@@ -300,7 +300,7 @@ impl Sub<Arbi> for Arbi {
 /// let a = Arbi::from(-1234567);
 /// let a_cap = a.capacity();
 /// let b = Arbi::from(-123456);
-/// let c = a - &b; // no memory allocation occurs
+/// let c = a - &b; // no memory allocation
 /// assert_eq!(c, -1111111);
 /// assert_eq!(c.capacity(), a_cap);
 /// ```
@@ -323,7 +323,7 @@ impl<'a> Sub<&'a Arbi> for Arbi {
 /// use arbi::Arbi;
 /// let a = Arbi::from(-1234567);
 /// let b = Arbi::from(-123456);
-/// let c = &a - &b; // memory allocation occurs
+/// let c = &a - &b; // memory allocation
 /// assert_eq!(c, -1111111);
 /// ```
 ///
@@ -337,7 +337,7 @@ impl<'b> Sub<&'b Arbi> for &Arbi {
     }
 }
 
-/// Implements `&self + rhs`.
+/// Implements `&self - rhs`.
 ///
 /// # Examples
 /// ```
