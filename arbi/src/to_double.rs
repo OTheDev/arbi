@@ -45,7 +45,7 @@ impl Arbi {
             }
         }
 
-        if self.negative() {
+        if self.is_negative() {
             -result
         } else {
             result
@@ -143,7 +143,7 @@ mod tests {
         let max_double = Arbi::from(MAX_DOUBLE);
 
         test_db(&max_double, MAX_DOUBLE);
-        test_db(&(&max_double + &Arbi::from(1)), MAX_DOUBLE + 1.0);
+        test_db(&(&max_double + &Arbi::one()), MAX_DOUBLE + 1.0);
         test_db(
             &(&max_double * &Arbi::from(987654321.0)),
             MAX_DOUBLE * 987654321.0,

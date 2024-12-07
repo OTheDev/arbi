@@ -154,7 +154,7 @@ use arbi::{Arbi, Assign};
 let mut a;
 
 // Float
-a = Arbi::from(1);
+a = Arbi::one();
 a <<= 2000_usize;
 
 assert_ne!(a, f64::MAX);
@@ -168,7 +168,7 @@ assert!(u128::MAX > a);
 assert!(a > u32::MAX);
 
 // Arbi
-let b = Arbi::from(1);
+let b = Arbi::one();
 assert!(a > b);
 assert!(b < a);
 ```

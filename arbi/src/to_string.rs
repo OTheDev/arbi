@@ -272,7 +272,7 @@ pub(crate) mod tests {
     fn test_to_string_base(b: usize) {
         let b: Base = b.try_into().unwrap();
 
-        assert_eq!(Arbi::from(0).to_string_base(b), 0.to_string_base(b));
+        assert_eq!(Arbi::zero().to_string_base(b), 0.to_string_base(b));
         assert_eq!(
             Arbi::from(Digit::MAX).to_string_base(b),
             Digit::MAX.to_string_base(b)

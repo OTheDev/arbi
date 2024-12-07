@@ -150,7 +150,7 @@ impl Arbi {
         } else {
             Self::mul_karatsuba(w, u, v);
         }
-        w.neg = u.negative() != v.negative();
+        w.neg = u.is_negative() != v.is_negative();
     }
 }
 
@@ -448,19 +448,19 @@ mod karatsuba {
 
             // Negate at random
             if bernoulli.sample(&mut rng) != 0 {
-                r_1.negate();
+                r_1.negate_mut();
             }
             if bernoulli.sample(&mut rng) != 0 {
-                r_2.negate();
+                r_2.negate_mut();
             }
 
-            let is_result_negative = r_1.negative() != r_2.negative();
+            let is_result_negative = r_1.is_negative() != r_2.is_negative();
 
             let x_karatsuba = &r_1 * &r_2;
             let mut x_standard = Arbi::zero();
             Arbi::mul_standard(&mut x_standard, &r_1, &r_2);
             if is_result_negative {
-                x_standard.negate();
+                x_standard.negate_mut();
             }
 
             assert_eq!(x_karatsuba, x_standard);

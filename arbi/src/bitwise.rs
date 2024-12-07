@@ -33,8 +33,8 @@ impl Arbi {
         y: &Self,
         op: BitwiseOperation,
     ) {
-        let x_negative = x.negative();
-        let y_negative = y.negative();
+        let x_negative = x.is_negative();
+        let y_negative = y.is_negative();
 
         let mut max_size = x.size().max(y.size());
 
@@ -105,8 +105,8 @@ impl Arbi {
         y: &mut Self,
         op: BitwiseOperation,
     ) {
-        let x_negative = x.negative();
-        let y_negative = y.negative();
+        let x_negative = x.is_negative();
+        let y_negative = y.is_negative();
 
         let mut max_size = x.size().max(y.size());
 
@@ -402,7 +402,7 @@ impl Not for Arbi {
     type Output = Arbi;
 
     fn not(mut self) -> Self::Output {
-        self.negate();
+        self.negate_mut();
         self.decr();
         self
     }
@@ -435,7 +435,7 @@ impl Not for &Arbi {
 
     fn not(self) -> Self::Output {
         let mut ret = self.clone();
-        ret.negate();
+        ret.negate_mut();
         ret.decr();
         ret
     }
@@ -524,7 +524,7 @@ mod tests {
     }
 
     fn get_data() -> (Arbi, Arbi, Arbi) {
-        (Arbi::from(0), Arbi::from(12345), Arbi::from(-6789))
+        (Arbi::zero(), Arbi::from(12345), Arbi::from(-6789))
     }
 
     #[test]
@@ -649,8 +649,8 @@ mod tests {
 
     #[test]
     fn bitwise_not_digit_boundaries() {
-        assert_eq!(!Arbi::from(0), -1);
-        assert_eq!(!Arbi::from(1), -2);
+        assert_eq!(!Arbi::zero(), -1);
+        assert_eq!(!Arbi::one(), -2);
         assert_eq!(!Arbi::from(Digit::MAX), !(Digit::MAX as SDDigit));
         assert_eq!(!Arbi::from(Digit::MAX), -(Digit::MAX as SDDigit) - 1);
     }

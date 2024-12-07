@@ -112,7 +112,7 @@ impl Arbi {
 
 impl CompareWith<f64> for Arbi {
     fn cmp_with(&self, dbl: f64) -> Ordering {
-        if self.negative() {
+        if self.is_negative() {
             if dbl < 0.0 {
                 match Self::cmp_abs_double(self, -dbl) {
                     Ordering::Less => Ordering::Greater,
@@ -283,7 +283,7 @@ mod tests {
         /* IEEE 754: NaN compared to another floating point number x (where x
          * can be finite, an infinite, or NaN) evaluates to false with >=, <=,
          * >, <, ==, but true when NaN != x is evaluated. */
-        let one = Arbi::from(1);
+        let one = Arbi::one();
         assert!(&one != NAN);
         assert!(!(&one == NAN));
         assert!(!(&one < NAN));
@@ -301,42 +301,42 @@ mod tests {
 
         // *x < cur; one iteration (max_double ones above cover > 1 iteration)
         assert!(
-            (Arbi::from(1) << Digit::BITS as usize)
+            (Arbi::one() << Digit::BITS as usize)
                 < ldexp(1.0, Digit::BITS as i32 + 1)
         );
         assert!(
-            (Arbi::from(1) << (Digit::BITS * 2) as usize)
+            (Arbi::one() << (Digit::BITS * 2) as usize)
                 < ldexp(1.0, (Digit::BITS as i32) * 2 + 1)
         );
 
         // *x > cur; one iteration (max_double ones above cover > 1 iteration)
         assert!(
-            (Arbi::from(1) << (Digit::BITS + 2) as usize)
+            (Arbi::one() << (Digit::BITS + 2) as usize)
                 > ldexp(1.0, Digit::BITS as i32 + 1)
         );
         assert!(
-            (Arbi::from(1) << (Digit::BITS * 2 + 2) as usize)
+            (Arbi::one() << (Digit::BITS * 2 + 2) as usize)
                 > ldexp(1.0, Digit::BITS as i32 * 2 + 1)
         );
 
         // z.size() >= CMP_DBL_SIZE_UPPER. The `large` variable is the first
         // number possible that will trigger this condition of the impl.
         let shift = Digit::BITS as usize * (CMP_DBL_SIZE_UPPER - 1);
-        let large = Arbi::from(1) << shift; // First number possible
+        let large = Arbi::one() << shift; // First number possible
         if Digit::BITS == 32 {
             assert_eq!(large.size(), 33);
         }
         assert!(&large > f64::MAX);
-        assert!((&large + &Arbi::from(1)) > f64::MAX);
-        assert!((&large - &Arbi::from(1)) > f64::MAX); // does not trigger cond.
+        assert!((&large + &Arbi::one()) > f64::MAX);
+        assert!((&large - &Arbi::one()) > f64::MAX); // does not trigger cond.
     }
 
     #[test]
     fn misc() {
         assert!(Arbi::from(5) > 4.9);
         assert!(4.9 < Arbi::from(5));
-        assert!(Arbi::from(1) > -1.0);
-        assert!(Arbi::from(-1) < 1.0);
+        assert!(Arbi::one() > -1.0);
+        assert!(Arbi::neg_one() < 1.0);
     }
 
     #[test]

@@ -50,13 +50,13 @@ impl Arbi {
     /// depending if x < y, x == y, or x > y.
     fn cmp_(x: &Self, y: &Self) -> Ordering {
         #[allow(clippy::comparison_chain)]
-        if !x.negative() && y.negative() {
+        if !x.is_negative() && y.is_negative() {
             // x >= 0, y < 0
             Ordering::Greater
-        } else if x.negative() && !y.negative() {
+        } else if x.is_negative() && !y.is_negative() {
             // x < 0, y >= 0
             Ordering::Less
-        } else if x.negative() && y.negative() {
+        } else if x.is_negative() && y.is_negative() {
             // x, y < 0
             if x.size() > y.size() {
                 return Ordering::Less;

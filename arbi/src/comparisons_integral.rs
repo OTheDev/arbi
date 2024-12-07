@@ -32,7 +32,7 @@ impl CompareWith<$signed> for Arbi {
             if a.size() == 0 {
                 return Ordering::Equal; // a
             }
-            return if a.negative() {
+            return if a.is_negative() {
                 Ordering::Less
             } else {
                 Ordering::Greater
@@ -47,10 +47,10 @@ impl CompareWith<$signed> for Arbi {
             b as UnsignedT
         };
 
-        if a.negative() && !b_negative {
+        if a.is_negative() && !b_negative {
             return Ordering::Less; // c
         }
-        if !a.negative() && b_negative {
+        if !a.is_negative() && b_negative {
             return Ordering::Greater; // d
         }
 
@@ -67,7 +67,7 @@ impl CompareWith<$signed> for Arbi {
 
         let a_size: usize = a.size();
         if a_size < n_b_digits {
-            return if a.negative() {
+            return if a.is_negative() {
                 Ordering::Greater
             } else {
                 Ordering::Less
@@ -75,7 +75,7 @@ impl CompareWith<$signed> for Arbi {
         }
 
         if a_size > n_b_digits {
-            return if a.negative() {
+            return if a.is_negative() {
                 Ordering::Less
             } else {
                 Ordering::Greater
@@ -88,14 +88,14 @@ impl CompareWith<$signed> for Arbi {
                 (unsigned_b >> (Digit::BITS as usize * i)) as Digit;
 
             if a_digit < b_digit {
-                return if a.negative() {
+                return if a.is_negative() {
                     Ordering::Greater
                 } else {
                     Ordering::Less
                 }; // g
             }
             if a_digit > b_digit {
-                return if a.negative() {
+                return if a.is_negative() {
                     Ordering::Less
                 } else {
                     Ordering::Greater
@@ -248,7 +248,7 @@ mod test_compare_with_integral {
     use crate::{DDigit, SDDigit};
 
     fn setup() -> (Arbi, Arbi, Arbi, Arbi, Arbi) {
-        let zero = Arbi::from(0);
+        let zero = Arbi::zero();
         let positive = Arbi::from(123456789);
         let negative = Arbi::from(-987654321);
         let tdigit = Arbi::from(Digit::MAX as DDigit + 242092);

@@ -189,7 +189,7 @@ mod tests {
         assert_eq!(x.test_bit(42040), false);
 
         // One
-        let x = Arbi::from(1);
+        let x = Arbi::one();
         assert_eq!(x.test_bit(0), true);
         assert_eq!(x.test_bit(1), false);
 
@@ -201,7 +201,7 @@ mod tests {
         assert_eq!(x.test_bit(3), true);
 
         // Powers of Two
-        let mut one = Arbi::from(1);
+        let mut one = Arbi::one();
         one <<= 1_usize;
         for i in 1..65000 {
             assert_eq!(one.test_bit(i - 1), false);

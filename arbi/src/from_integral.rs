@@ -199,7 +199,7 @@ mod test_internal_representation_after_from_integral {
         // Signed ints, small absolute value
         for i in i16::MIN..0 {
             let a = Arbi::from(i);
-            assert_eq!(a.negative(), true);
+            assert_eq!(a.is_negative(), true);
             assert_eq!(a.size(), 1);
             assert_eq!(a.vec[0], i.unsigned_abs() as Digit);
             assert_eq!(a.to_string(), i.to_string());
@@ -207,7 +207,7 @@ mod test_internal_representation_after_from_integral {
         }
         for i in 1..i16::MAX {
             let a = Arbi::from(i);
-            assert_eq!(a.negative(), false);
+            assert_eq!(a.is_negative(), false);
             assert_eq!(a.size(), 1);
             assert_eq!(a.vec[0], i as Digit);
             assert_eq!(a.to_string(), i.to_string());
@@ -217,7 +217,7 @@ mod test_internal_representation_after_from_integral {
         // Signed its, large absolute value
         for i in 0..u16::MAX {
             let a = Arbi::from(SDDigit::MAX - i as SDDigit);
-            assert_eq!(a.negative(), false);
+            assert_eq!(a.is_negative(), false);
             assert_eq!(a.size(), 2);
             assert_eq!(a.vec[0], Digit::MAX - i as Digit);
             assert_eq!(
@@ -232,7 +232,7 @@ mod test_internal_representation_after_from_integral {
         }
         for i in 0..u16::MAX {
             let a = Arbi::from(SDDigit::MIN + i as SDDigit);
-            assert_eq!(a.negative(), true);
+            assert_eq!(a.is_negative(), true);
             assert_eq!(a.size(), 2);
 
             if i == 0 {

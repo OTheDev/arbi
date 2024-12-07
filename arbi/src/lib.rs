@@ -21,6 +21,7 @@ pub mod base;
 mod bits;
 mod bitwise;
 mod builtin_int_methods;
+mod capacity;
 mod comparisons;
 mod comparisons_double;
 mod comparisons_integral;
@@ -36,11 +37,16 @@ mod from_double;
 mod from_integral;
 mod from_string;
 mod increment_decrement;
+mod is_odd_is_even;
 mod is_signed;
+mod is_zero;
 mod left_shift;
 mod multiplication;
+mod negate;
+mod new;
 mod print_internal;
 mod right_shift;
+mod sign;
 mod size;
 mod to_double;
 mod to_integral;
@@ -112,8 +118,6 @@ const DBL_MAX_INT: u64 = 0x20000000000000; // 2 ** 53
 ///
 /// # Panic
 /// In general:
-/// - This crate prefers not to panic, unless for good reason.
-///
 /// - If an operation can panic, it will be clearly documented.
 ///
 /// - Operations typically only panic because they are enforcing consistency
@@ -149,181 +153,6 @@ impl Arbi {
     /// Base used for the internal representation of the integer.
     pub const BASE: DDigit = (1 as DDigit) << Digit::BITS;
 
-    /// Maximum capacity for the internal vector of digits.
-    ///
-    /// [`Vec`] is limited to `isize::MAX` bytes in capacity. A digit has size
-    /// in bytes `core::mem::size_of::<Digit>()`. The maximum capacity is
-    /// therefore `isize::MAX / core::mem::size_of::<Digit>()`.
-    pub const MAX_CAPACITY: usize =
-        (isize::MAX as usize) / core::mem::size_of::<Digit>();
-
-    /// Maximum capacity for the internal vector of digits, in terms of bits.
-    ///
-    /// This represents the number of bits that can be used to represent the
-    /// absolute value of the integer when the internal digit vector is at
-    /// maximum capacity.
-    ///
-    /// This is `Arbi::MAX_CAPACITY * Digit::BITS`.
-    pub const MAX_BITS: BitCount =
-        Self::MAX_CAPACITY as BitCount * Digit::BITS as BitCount;
-
-    /// Return an `Arbi` integer with value `0`.
-    ///
-    /// No memory allocation occurs.
-    ///
-    /// [`Arbi::new()`], [`Arbi::zero()`], and [`Arbi::default()`] are
-    /// equivalent, except that `Arbi::default()` is not `const`.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    /// let zero = Arbi::new();
-    /// assert_eq!(zero, 0);
-    /// ```
-    ///
-    /// ## Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub const fn new() -> Self {
-        Arbi {
-            vec: Vec::new(),
-            neg: false,
-        }
-    }
-
-    /// Construct a new `Arbi` integer with at least the specified capacity, in
-    /// terms of [`Digit`]s.
-    ///
-    /// The integer's value will be `0`.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    ///
-    /// let a = Arbi::with_capacity(10);
-    /// assert_eq!(a.capacity(), 10);
-    /// assert_eq!(a, 0);
-    /// ```
-    ///
-    /// Panics if the new capacity exceeds `Arbi::MAX_CAPACITY` digits:
-    /// ```should_panic
-    /// use arbi::Arbi;
-    ///
-    /// let a = Arbi::with_capacity(Arbi::MAX_CAPACITY + 1);
-    /// ```
-    ///
-    /// # Panic
-    /// Panics if the new capacity exceeds `isize::MAX` bytes (or
-    /// `Arbi::MAX_CAPACITY` digits) or if the allocator reports an allocation
-    /// failure.
-    #[inline(always)]
-    pub fn with_capacity(capacity: usize) -> Self {
-        Arbi {
-            vec: Vec::with_capacity(capacity),
-            neg: false,
-        }
-    }
-
-    /// Construct a new `Arbi` integer with at least the specified capacity, in
-    /// terms of bits.
-    ///
-    /// The integer's value will be `0`.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::{Arbi, BitCount, Digit};
-    ///
-    /// let a = Arbi::with_capacity_bits(Digit::BITS as BitCount - 1);
-    /// assert_eq!(a.capacity(), 1);
-    /// assert_eq!(a, 0);
-    ///
-    /// let a = Arbi::with_capacity_bits(Digit::BITS as BitCount);
-    /// assert_eq!(a.capacity(), 1);
-    ///
-    /// let a = Arbi::with_capacity_bits(Digit::BITS as BitCount + 1);
-    /// assert_eq!(a.capacity(), 2);
-    /// ```
-    ///
-    /// Panics if the new capacity in bits exceeds `Arbi::MAX_BITS` bits:
-    /// ```should_panic
-    /// use arbi::Arbi;
-    ///
-    /// // Panics with message: "New capacity exceeds `isize::MAX` bytes".
-    /// let a = Arbi::with_capacity_bits(Arbi::MAX_BITS + 1);
-    /// ```
-    ///
-    /// Note that, in practice, while the theoretical limit for the capacity
-    /// of a `Vec` in bytes is `isize::MAX`, memory allocation failures
-    /// typically happen for less.
-    ///
-    /// # Panic
-    /// Panics if the new capacity exceeds `isize::MAX` bytes (or
-    /// `Arbi::MAX_BITS` digits) or if the allocator reports an allocation
-    /// failure.
-    #[inline(always)]
-    pub fn with_capacity_bits(capacity: BitCount) -> Self {
-        let cap = BitCount::div_ceil(capacity, Digit::BITS as BitCount);
-        if cap > Arbi::MAX_CAPACITY as BitCount {
-            panic!("New capacity exceeds `isize::MAX` bytes");
-        }
-
-        Arbi {
-            vec: Vec::with_capacity(cap as usize),
-            neg: false,
-        }
-    }
-
-    /// Returns the total number of elements the internal digit vector can hold
-    /// without reallocating.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::{Arbi, Assign};
-    ///
-    /// let zero = Arbi::zero();
-    /// assert_eq!(zero.capacity(), 0);
-    ///
-    /// let mut b = Arbi::with_capacity(10);
-    /// assert_eq!(b.capacity(), 10);
-    ///
-    /// b.assign(u64::MAX); // no memory allocation needed
-    /// assert_eq!(b, u64::MAX);
-    /// ```
-    ///
-    /// ## Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn capacity(&self) -> usize {
-        self.vec.capacity()
-    }
-
-    /// Return the total number of bits the current capacity can hold to
-    /// represent the absolute value of this integer.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::{Arbi, BitCount, Digit};
-    ///
-    /// let zero = Arbi::zero();
-    /// assert_eq!(zero.capacity_bits(), 0);
-    ///
-    /// let a = Arbi::with_capacity_bits(Digit::BITS as BitCount);
-    /// assert!(a.capacity_bits() >= Digit::BITS as BitCount);
-    /// ```
-    ///
-    /// ## Complexitys
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn capacity_bits(&self) -> BitCount {
-        self.vec.capacity() as BitCount * Digit::BITS as BitCount
-    }
-
-    /// See [`Arbi::is_negative()`].
-    #[inline(always)]
-    fn negative(&self) -> bool {
-        self.neg
-    }
-
     /// Take away trailing zeros in the internal digit vector until we find the
     /// most significant digit. If the vector is empty after this process, make
     /// this integer have value `0`.
@@ -335,79 +164,6 @@ impl Arbi {
         if self.vec.is_empty() {
             self.neg = false;
         }
-    }
-
-    /// Return `true` if this integer is odd, `false` otherwise.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    ///
-    /// let zero = Arbi::zero();
-    /// assert!(!zero.is_odd());
-    ///
-    /// let a = Arbi::from(-123456789);
-    /// assert!(a.is_odd());
-    ///
-    /// let b = Arbi::from(-12345678);
-    /// assert!(!b.is_odd());
-    /// ```
-    ///
-    /// ## Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn is_odd(&self) -> bool {
-        if self.size() == 0 {
-            false
-        } else {
-            (self.vec[0] & 1) != 0
-        }
-    }
-
-    /// Return `true` if this integer is even, `false` otherwise.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    ///
-    /// let zero = Arbi::zero();
-    /// assert!(zero.is_even());
-    ///
-    /// let a = Arbi::from(-12345678);
-    /// assert!(a.is_even());
-    ///
-    /// let b = Arbi::from(-123456789);
-    /// assert!(!b.is_even());
-    /// ```
-    ///
-    /// ## Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn is_even(&self) -> bool {
-        !self.is_odd()
-    }
-
-    /// Return `true` if this integer is zero, `false` otherwise.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    ///
-    /// let a = Arbi::new();
-    /// assert!(a.is_zero());
-    ///
-    /// let b = Arbi::with_capacity(10);
-    /// assert!(a.is_zero());
-    ///
-    /// let c = Arbi::with_capacity_bits(100);
-    /// assert!(c.is_zero());
-    /// ```
-    ///
-    /// ## Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn is_zero(&self) -> bool {
-        self.vec.is_empty()
     }
 
     /// Make this `Arbi` integer have value `0`, in-place.
@@ -423,121 +179,5 @@ impl Arbi {
         self.vec.resize(1, 0);
         self.vec[0] = 1;
         self.neg = neg;
-    }
-
-    /// Negates the integer in-place.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    ///
-    /// let mut pos = Arbi::from(123456789);
-    ///
-    /// pos.negate();
-    /// assert_eq!(pos, -123456789);
-    ///
-    /// pos.negate();
-    /// assert_eq!(pos, 123456789);
-    /// ```
-    ///
-    /// ## Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn negate(&mut self) {
-        if self.size() > 0 {
-            self.neg = !self.neg;
-        }
-    }
-
-    /// Return an `Ordering` indicating the sign of the number: `Ordering::Less`
-    /// for negative, `Ordering::Equal` for zero, `Ordering::Greater` for
-    /// positive.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    /// use core::cmp::Ordering;
-    ///
-    /// let neg = Arbi::from(-123456789);
-    /// let zer = Arbi::zero();
-    /// let pos = Arbi::from(123456789);
-    ///
-    /// assert_eq!(neg.sign(), Ordering::Less);
-    /// assert_eq!(zer.sign(), Ordering::Equal);
-    /// assert_eq!(pos.sign(), Ordering::Greater);
-    /// ```
-    ///
-    /// ## Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn sign(&self) -> core::cmp::Ordering {
-        if self.size() == 0 {
-            core::cmp::Ordering::Equal
-        } else if self.negative() {
-            core::cmp::Ordering::Less
-        } else {
-            core::cmp::Ordering::Greater
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_even_or_odd() {
-        let mut arbi: Arbi;
-
-        arbi = Arbi::from(0);
-        assert!(arbi.is_even());
-        assert!(!arbi.is_odd());
-
-        arbi = Arbi::from(Digit::MAX);
-        assert!(arbi.is_odd());
-        assert!(!arbi.is_even());
-
-        arbi = Arbi::from(Digit::MAX as DDigit + 1);
-        assert!(arbi.is_even());
-        assert!(!arbi.is_odd());
-
-        arbi = Arbi::from(-(Digit::MAX as SDDigit));
-        assert!(arbi.is_odd());
-        assert!(!arbi.is_even());
-
-        arbi.decr();
-        assert!(arbi.is_even());
-        assert!(!arbi.is_odd());
-    }
-
-    #[test]
-    fn test_negate() {
-        let mut a = Arbi::from(123);
-        let mut z = Arbi::zero();
-
-        // Zero
-        z.negate();
-        assert_eq!(z, 0);
-
-        // Positive
-        a.negate();
-        assert_eq!(a, -123);
-
-        // Negative
-        a.negate();
-        assert_eq!(a, 123);
-
-        a.negate();
-        a.negate();
-        assert_eq!(a, 123);
-    }
-
-    #[test]
-    fn test_default() {
-        let a = Arbi::default();
-        assert_eq!(a, 0);
-
-        assert_eq!(a.size(), 0);
-        assert_eq!(a.negative(), false);
     }
 }

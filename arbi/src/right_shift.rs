@@ -27,7 +27,7 @@ impl Arbi {
         }
         let n_bits: $ubitcount = n_bits as $ubitcount;
         if n_bits as BitCount > Arbi::MAX_BITS {
-            if self.negative() {
+            if self.is_negative() {
                 self.make_one(true);
             } else {
                 self.make_zero();
@@ -38,7 +38,7 @@ impl Arbi {
             (n_bits / (Digit::BITS as $ubitcount)).try_into().unwrap();
         let mut bit_shift: usize =
             (n_bits % (Digit::BITS as $ubitcount)) as usize;
-        if self.negative() && bit_shift == 0 {
+        if self.is_negative() && bit_shift == 0 {
             if dig_shift == 0 {
                 return;
             } else {
@@ -48,7 +48,7 @@ impl Arbi {
         }
         let size_self = self.size();
         if size_self <= dig_shift {
-            if self.negative() {
+            if self.is_negative() {
                 self.make_one(true);
             } else {
                 self.make_zero();
@@ -59,7 +59,7 @@ impl Arbi {
         self.vec.truncate(size + 1);
         let compl_bit_shift = (Digit::BITS as usize) - bit_shift;
         let mut s: DDigit = self.vec[dig_shift] as DDigit;
-        if self.negative() {
+        if self.is_negative() {
             self.vec.truncate(size);
             let mut d: Digit = 0;
             for i in 0..dig_shift {
@@ -272,7 +272,7 @@ mod $test {
         assert_eq!(&neg >> 0, -16);
         assert_eq!(&neg >> (Digit::BITS * 2) as $bitcount, -1);
 
-        let mon = Arbi::from(-1);
+        let mon = Arbi::neg_one();
         assert_eq!(&mon >> 0, -1);
         assert_eq!((&mon) >> 1, -1);
         assert_eq!(&mon >> (Digit::BITS + 1) as $bitcount, -1);

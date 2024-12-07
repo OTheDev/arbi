@@ -30,15 +30,13 @@ impl Arbi {
     /// This function will panic if `self` is zero or negative:
     /// ```should_panic
     /// use arbi::Arbi;
-    ///
     /// let a = Arbi::zero();
     /// a.ilog2();
     /// ```
     ///
     /// ```should_panic
     /// use arbi::Arbi;
-    ///
-    /// let a = Arbi::from(-1);
+    /// let a = Arbi::neg_one();
     /// a.ilog2();
     /// ```
     ///

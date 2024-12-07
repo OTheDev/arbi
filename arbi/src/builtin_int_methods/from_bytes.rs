@@ -132,7 +132,7 @@ impl Arbi {
         let mut num = Self::from_le_bytes(bytes);
         if is_negative {
             num.vec.to_twos_complement(ByteOrder::Le);
-            num.negate();
+            num.negate_mut();
         }
         num.trim();
         num

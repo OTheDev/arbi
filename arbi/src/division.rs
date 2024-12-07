@@ -242,8 +242,8 @@ impl Arbi {
             // Self::div_algo_binary(q, r, n, d);
         }
 
-        q.neg = d.negative() ^ n.negative();
-        r.neg = r.size() > 0 && n.negative();
+        q.neg = d.is_negative() ^ n.is_negative();
+        r.neg = r.size() > 0 && n.is_negative();
     }
 }
 
@@ -519,7 +519,7 @@ mod test_divrem {
         assert_eq!(quot, -5);
         assert_eq!(rem, 0);
 
-        let (quot, rem) = Arbi::from(SDDigit::MIN).div(&Arbi::from(-1));
+        let (quot, rem) = Arbi::from(SDDigit::MIN).div(&Arbi::neg_one());
         assert_eq!(quot, 1 as DDigit + SDDigit::MAX as DDigit);
         assert_eq!(rem, 0);
 

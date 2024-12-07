@@ -33,8 +33,8 @@ impl Arbi {
 
     /// \\( x + y \\)
     fn add_inplace(&mut self, y: &Self) {
-        if self.negative() {
-            if y.negative() {
+        if self.is_negative() {
+            if y.is_negative() {
                 // x < 0, y < 0 ==> x = -|x|, y = -|y|. ==> x + y = -(|x| + |y|)
                 self.add_abs_inplace(y);
                 self.neg = true;
@@ -42,7 +42,7 @@ impl Arbi {
                 // x < 0, y >= 0 ==> x = -|x|, y = |y| ==> x + y = |y| - |x|
                 self.sub_abs_inplace(y, true);
             }
-        } else if y.negative() {
+        } else if y.is_negative() {
             // x >= 0, y < 0 ==> x = |x|, y = -|y| ==> x + y = |x| - |y|
             self.sub_abs_inplace(y, false);
         } else {
@@ -87,8 +87,8 @@ impl Arbi {
     }
 
     fn sub_inplace(&mut self, y: &Self) {
-        if self.negative() {
-            if y.negative() {
+        if self.is_negative() {
+            if y.is_negative() {
                 // x < 0, y < 0 ==> x = -|x|, y = -|y| ==> x - y = |y| - |x|
                 self.sub_abs_inplace(y, true);
             } else {
@@ -96,7 +96,7 @@ impl Arbi {
                 self.add_abs_inplace(y);
                 self.neg = true;
             }
-        } else if y.negative() {
+        } else if y.is_negative() {
             // x >= 0, y < 0 ==> x = |x|, y = -|y| ==> x - y = |x| + |y|
             self.add_abs_inplace(y);
         } else {
@@ -306,7 +306,7 @@ mod tests {
     fn test_sub() {
         let a = Arbi::from(10);
         let b = Arbi::from(-5);
-        let z = Arbi::from(0);
+        let z = Arbi::zero();
 
         assert_eq!(&a - &b, 15);
         assert_eq!(&b - &a, -15);

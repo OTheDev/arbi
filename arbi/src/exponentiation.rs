@@ -43,7 +43,7 @@ use crate::Arbi;
 /// use arbi::{Arbi, Pow};
 ///
 /// let mut a = Arbi::from(Arbi::MAX_BITS);
-/// let mut one = Arbi::from(-1);
+/// let mut one = Arbi::neg_one();
 /// let mut two = Arbi::from(2);
 ///
 /// one = one.pow(&a); // Ok
@@ -196,7 +196,7 @@ impl Arbi {
     fn exponentiation_left_to_right_usize(base: &Self, exp: usize) -> Arbi {
         assert!(exp > 0);
         // (1)
-        let mut ret = Arbi::from(1);
+        let mut ret = Arbi::one();
         // (2)
         for j in (0..usize::bit_length(exp)).rev() {
             ret = &ret * &ret; // TODO: eff.
@@ -211,7 +211,7 @@ impl Arbi {
 
     fn exponentiation_left_to_right_u128(base: &Self, exp: u128) -> Arbi {
         assert!(exp > 0);
-        let mut ret = Arbi::from(1);
+        let mut ret = Arbi::one();
         for j in (0..u128::bit_length(exp)).rev() {
             ret = &ret * &ret;
             if (exp & ((1_u128) << j)) != 0 {
@@ -305,7 +305,7 @@ mod tests {
     #[should_panic]
     fn negative_exponent_zero_base() {
         let zero = Arbi::zero();
-        zero.pow(Arbi::from(-1));
+        zero.pow(Arbi::neg_one());
     }
 
     #[test]
@@ -328,7 +328,7 @@ mod tests {
     // Should keep negative
     #[test]
     fn negative_base_odd_exponent() {
-        let mone = Arbi::from(-1);
+        let mone = Arbi::neg_one();
         let sdmin = Arbi::from(SDDigit::MIN);
 
         assert_eq!((&mone).pow(1_usize), -1);
@@ -348,7 +348,7 @@ mod tests {
     // Should make positive
     #[test]
     fn negative_base_even_exponent() {
-        let mone = Arbi::from(-1);
+        let mone = Arbi::neg_one();
         let sdmin = Arbi::from(SDDigit::MIN);
 
         assert_eq!((&mone).pow(2_usize), 1);
@@ -369,7 +369,7 @@ mod tests {
 
     #[test]
     fn guard_branch_for_arbi_with_arbi_overload() {
-        let (zero, one, mone) = (Arbi::zero(), Arbi::from(1), Arbi::from(-1));
+        let (zero, one, mone) = (Arbi::zero(), Arbi::one(), Arbi::neg_one());
         let max_bits = Arbi::from(Arbi::MAX_BITS);
         let max_bits_plus_one = Arbi::from(Arbi::MAX_BITS + 1);
 

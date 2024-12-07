@@ -20,7 +20,7 @@ impl Arbi {
     #[inline(always)]
     pub fn abs(mut self) -> Arbi {
         if self.neg {
-            self.negate();
+            self.negate_mut();
         }
         self
     }
@@ -59,7 +59,7 @@ impl Arbi {
     pub fn abs_ref(&self) -> Arbi {
         let mut ret = self.clone();
         if self.neg {
-            ret.negate();
+            ret.negate_mut();
         }
         ret
     }

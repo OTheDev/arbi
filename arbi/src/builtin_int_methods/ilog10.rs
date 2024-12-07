@@ -27,8 +27,8 @@ impl Arbi {
     ///
     /// ```should_panic
     /// use arbi::Arbi;
-    /// let minus_one = Arbi::from(-1);
-    /// minus_one.ilog10();
+    /// let neg_one = Arbi::neg_one();
+    /// neg_one.ilog10();
     /// ```
     pub fn ilog10(self) -> BitCount {
         self.ilog(10)
@@ -58,7 +58,7 @@ impl Arbi {
     ///
     /// ```should_panic
     /// use arbi::Arbi;
-    /// let mut minus_one = Arbi::from(-1);
+    /// let mut minus_one = Arbi::neg_one();
     /// minus_one.ilog10_mut();
     /// ```
     pub fn ilog10_mut(&mut self) -> BitCount {
@@ -86,7 +86,7 @@ impl Arbi {
     ///
     /// ```should_panic
     /// use arbi::Arbi;
-    /// let minus_one = Arbi::from(-1);
+    /// let minus_one = Arbi::neg_one();
     /// minus_one.ilog10_ref();
     /// ```
     pub fn ilog10_ref(&self) -> BitCount {
