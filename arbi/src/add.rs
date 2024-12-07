@@ -198,6 +198,39 @@ impl<'b> Add<&'b Arbi> for &Arbi {
     }
 }
 
+/// Implements `&self + rhs`.
+///
+/// # Examples
+/// ```
+/// use arbi::{Arbi, Digit};
+///
+/// let a = Arbi::from(-123456);
+/// let b = Arbi::from(1234567);
+/// let b_cap = b.capacity();
+/// let c = &a + b; // In this case, no memory allocation occurs (b's memory is
+///                 // used.
+/// assert_eq!(c, 1111111);
+/// assert_eq!(c.capacity(), b_cap);
+///
+/// let a = Arbi::from(-(Digit::MAX as i128));
+/// let b = Arbi::from(-1234567);
+/// let b_cap = b.capacity();
+/// let c = &a + b; // In this case, memory allocation may or may not occur,
+///                 // depending on b's capacity.
+/// assert!(c.capacity() >= b_cap);
+/// ```
+///
+/// # Complexity
+/// \\( O(n) \\)
+impl Add<Arbi> for &Arbi {
+    type Output = Arbi;
+
+    fn add(self, mut other: Arbi) -> Arbi {
+        other.add_mut(self);
+        other
+    }
+}
+
 /// Implements `self += rhs`.
 ///
 /// # Examples
@@ -313,7 +346,7 @@ impl<'b> Sub<&'b Arbi> for &Arbi {
 /// let a = Arbi::from(1234567);
 /// let b = Arbi::from(123456);
 /// let b_cap = b.capacity();
-/// let c = &a - b; // In this case, no memory allocation occurs (b's memory is
+/// let c = &a - b; // In this case, no memory allocation (b's memory is
 ///                 // used.
 /// assert_eq!(c, 1111111);
 /// assert_eq!(c.capacity(), b_cap);
@@ -321,9 +354,8 @@ impl<'b> Sub<&'b Arbi> for &Arbi {
 /// let a = Arbi::from(-(Digit::MAX as i128));
 /// let b = Arbi::from(-1234567);
 /// let b_cap = b.capacity();
-/// let c = &a - b; // In this case, memory allocation may or may not occur,
-///                 // depending on b's capacity.
-/// assert!(c.capacity() >= b_cap);
+/// let c = &a - b; // In this case, no memory allocation
+/// assert_eq!(c.capacity(), b_cap);
 /// ```
 ///
 /// # Complexity
