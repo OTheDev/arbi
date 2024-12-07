@@ -76,12 +76,13 @@ impl Arbi {
         self.neg = false;
     }
 
-    /// \\( self -= y \\).
-    fn sub_inplace(&mut self, y: &Self) {
+    /// \\( self -= y \\) if `from_other` is `false`.
+    /// \\( self = y - self \\) if `from_other` is `true`.
+    fn sub_inplace(&mut self, y: &Self, from_other: bool) {
         if self.is_negative() {
             if y.is_negative() {
                 // x < 0, y < 0 ==> x = -|x|, y = -|y| ==> x - y = |y| - |x|
-                self.sub_abs_inplace(y, true);
+                self.sub_abs_inplace(y, !from_other);
             } else {
                 // x < 0, y >= 0 ==> x = -|x|, y = |y| ==> x - y = -(|x| + |y|)
                 self.add_abs_inplace(y);
@@ -92,7 +93,7 @@ impl Arbi {
             self.add_abs_inplace(y);
         } else {
             // x >= 0, y >= 0 ==> x = |x|, y = |y| ==> x - y = |x| - |y|
-            self.sub_abs_inplace(y, false);
+            self.sub_abs_inplace(y, from_other);
         }
     }
 
@@ -133,103 +134,245 @@ impl Arbi {
     }
 }
 
-/// ## Complexity
+/// Implements `self + rhs`.
+///
+/// # Examples
+/// ```
+/// use arbi::Arbi;
+/// let a = Arbi::from(-1234567);
+/// let b = Arbi::from(-123456);
+/// let c = a + b;
+/// assert_eq!(c, -1358023);
+/// ```
+///
+/// # Complexity
 /// \\( O(n) \\)
 impl Add<Arbi> for Arbi {
     type Output = Self;
 
-    fn add(mut self, other: Self) -> Self {
-        self.add_inplace(&other);
-        self
+    fn add(self, other: Self) -> Self {
+        self.add_(other)
     }
 }
 
-/// ## Complexity
+/// Implements `self + &rhs`.
+///
+/// # Examples
+/// ```
+/// use arbi::Arbi;
+/// let a = Arbi::from(-1234567);
+/// let b = Arbi::from(-123456);
+/// let c = a + &b;
+/// assert_eq!(c, -1358023);
+/// ```
+///
+/// # Complexity
 /// \\( O(n) \\)
 impl<'a> Add<&'a Arbi> for Arbi {
     type Output = Self;
 
     fn add(mut self, other: &'a Arbi) -> Self {
-        self.add_inplace(other);
+        self.add_mut(other);
         self
     }
 }
 
-/// ## Complexity
+/// Implements `&self + &rhs`.
+///
+/// # Examples
+/// ```
+/// use arbi::Arbi;
+/// let a = Arbi::from(-1234567);
+/// let b = Arbi::from(-123456);
+/// let c = &a + &b;
+/// assert_eq!(c, -1358023);
+/// ```
+///
+/// # Complexity
 /// \\( O(n) \\)
 impl<'b> Add<&'b Arbi> for &Arbi {
     type Output = Arbi;
 
     fn add(self, other: &'b Arbi) -> Arbi {
-        let mut ret = self.clone();
-        ret.add_inplace(other);
-        ret
+        self.add_ref(other)
     }
 }
 
-/// ## Complexity
+/// Implements `self += rhs`.
+///
+/// # Examples
+/// ```
+/// use arbi::Arbi;
+/// let mut a = Arbi::from(-1234567);
+/// let b = Arbi::from(-123456);
+/// a += b;
+/// assert_eq!(a, -1358023);
+/// ```
+///
+/// # Complexity
 /// \\( O(n) \\)
 impl AddAssign for Arbi {
-    fn add_assign(&mut self, other: Self) {
-        self.add_inplace(&other);
+    fn add_assign(&mut self, mut other: Self) {
+        self.add_mut_swap(&mut other);
     }
 }
 
-/// ## Complexity
+/// Implements `self += &rhs`.
+///
+/// # Examples
+/// ```
+/// use arbi::Arbi;
+/// let mut a = Arbi::from(-1234567);
+/// let b = Arbi::from(-123456);
+/// a += &b;
+/// assert_eq!(a, -1358023);
+/// ```
+///
+/// # Complexity
 /// \\( O(n) \\)
 impl<'a> AddAssign<&'a Arbi> for Arbi {
     fn add_assign(&mut self, other: &'a Arbi) {
-        self.add_inplace(other);
+        self.add_mut(other);
     }
 }
 
-/// ## Complexity
+/// Implements `self - rhs`.
+///
+/// # Examples
+/// ```
+/// use arbi::Arbi;
+/// let a = Arbi::from(-1234567);
+/// let a_cap = a.capacity();
+/// let b = Arbi::from(-123456);
+/// let c = a - b; // no memory allocation occurs
+/// assert_eq!(c, -1111111);
+/// assert_eq!(c.capacity(), a_cap);
+/// ```
+///
+/// # Complexity
 /// \\( O(n) \\)
 impl Sub<Arbi> for Arbi {
     type Output = Self;
 
-    fn sub(mut self, other: Self) -> Self {
-        self.sub_inplace(&other);
-        self
+    fn sub(self, other: Self) -> Self {
+        self.sub_(other)
     }
 }
 
-/// ## Complexity
+/// Implements `self - &rhs`.
+///
+/// # Examples
+/// ```
+/// use arbi::Arbi;
+/// let a = Arbi::from(-1234567);
+/// let a_cap = a.capacity();
+/// let b = Arbi::from(-123456);
+/// let c = a - &b; // no memory allocation occurs
+/// assert_eq!(c, -1111111);
+/// assert_eq!(c.capacity(), a_cap);
+/// ```
+///
+/// # Complexity
 /// \\( O(n) \\)
 impl<'a> Sub<&'a Arbi> for Arbi {
     type Output = Self;
 
     fn sub(mut self, other: &'a Arbi) -> Self {
-        self.sub_inplace(other);
+        self.sub_mut(other);
         self
     }
 }
 
-/// ## Complexity
+/// Implements `&self - &rhs`.
+///
+/// # Examples
+/// ```
+/// use arbi::Arbi;
+/// let a = Arbi::from(-1234567);
+/// let b = Arbi::from(-123456);
+/// let c = &a - &b; // memory allocation occurs
+/// assert_eq!(c, -1111111);
+/// ```
+///
+/// # Complexity
 /// \\( O(n) \\)
 impl<'b> Sub<&'b Arbi> for &Arbi {
     type Output = Arbi;
 
     fn sub(self, other: &'b Arbi) -> Arbi {
-        let mut ret = self.clone();
-        ret.sub_inplace(other);
-        ret
+        self.sub_ref(other)
     }
 }
 
-/// ## Complexity
+/// Implements `&self + rhs`.
+///
+/// # Examples
+/// ```
+/// use arbi::{Arbi, Digit};
+///
+/// let a = Arbi::from(1234567);
+/// let b = Arbi::from(123456);
+/// let b_cap = b.capacity();
+/// let c = &a - b; // In this case, no memory allocation occurs (b's memory is
+///                 // used.
+/// assert_eq!(c, 1111111);
+/// assert_eq!(c.capacity(), b_cap);
+///
+/// let a = Arbi::from(-(Digit::MAX as i128));
+/// let b = Arbi::from(-1234567);
+/// let b_cap = b.capacity();
+/// let c = &a - b; // In this case, memory allocation may or may not occur,
+///                 // depending on b's capacity.
+/// assert!(c.capacity() >= b_cap);
+/// ```
+///
+/// # Complexity
+/// \\( O(n) \\)
+impl Sub<Arbi> for &Arbi {
+    type Output = Arbi;
+
+    fn sub(self, mut other: Arbi) -> Arbi {
+        // Set other to self - other, in-place if there's enough capacity.
+        other.sub_mut_(self, true);
+        other
+    }
+}
+
+/// Implements `self -= rhs`.
+///
+/// # Examples
+/// ```
+/// use arbi::Arbi;
+/// let mut a = Arbi::from(-1234567);
+/// let b = Arbi::from(-123456);
+/// a -= b;
+/// assert_eq!(a, -1111111);
+/// ```
+///
+/// # Complexity
 /// \\( O(n) \\)
 impl SubAssign for Arbi {
-    fn sub_assign(&mut self, other: Self) {
-        self.sub_inplace(&other);
+    fn sub_assign(&mut self, mut other: Self) {
+        self.sub_mut_swap(&mut other);
     }
 }
 
-/// ## Complexity
+/// Implements `self -= &rhs`.
+///
+/// # Examples
+/// ```
+/// use arbi::Arbi;
+/// let mut a = Arbi::from(-1234567);
+/// let b = Arbi::from(-123456);
+/// a -= &b;
+/// assert_eq!(a, -1111111);
+/// ```
+///
+/// # Complexity
 /// \\( O(n) \\)
 impl<'a> SubAssign<&'a Arbi> for Arbi {
     fn sub_assign(&mut self, other: &'a Arbi) {
-        self.sub_inplace(other);
+        self.sub_mut(other);
     }
 }
 
@@ -347,34 +490,51 @@ impl Arbi {
     /// Return \\( self + rhs \\).
     pub(crate) fn add_(mut self, mut rhs: Arbi) -> Arbi {
         if rhs.capacity() > self.capacity() {
-            rhs.add_inplace(&self);
+            rhs.add_mut(&self);
             rhs
         } else {
-            self.add_inplace(&rhs);
+            self.add_mut(&rhs);
             self
         }
     }
 
-    /// \\( self = self - rhs \\)..
+    /// \\( self = self + rhs \\)..
     pub(crate) fn add_mut(&mut self, rhs: &Self) -> &mut Self {
         self.add_inplace(rhs);
         self
     }
 
+    /// \\( self = self + rhs \\) and `rhs` may be unchanged or equal to `self`,
+    /// depending if `self.capacity >= rhs.capacity` or not.
+    pub(crate) fn add_mut_swap(&mut self, rhs: &mut Self) -> &mut Self {
+        if rhs.capacity() > self.capacity() {
+            core::mem::swap(self, rhs);
+        }
+        self.add_mut(rhs);
+        self
+    }
+
     /// Return \\( self + rhs \\).
     pub(crate) fn add_ref(&self, rhs: &Self) -> Arbi {
-        let mut ret = self.clone();
-        ret.add_inplace(rhs);
-        ret
+        // Ensure only one allocation.
+        if rhs.size() > self.size() {
+            let mut ret = Arbi::with_capacity_and_copy(rhs.size() + 1, rhs);
+            ret.add_mut(self);
+            ret
+        } else {
+            let mut ret = Arbi::with_capacity_and_copy(self.size() + 1, self);
+            ret.add_mut(rhs);
+            ret
+        }
     }
 
     /// Return \\( |self| + |rhs|` \\).
     pub(crate) fn add_abs(mut self, mut rhs: Arbi) -> Arbi {
         if rhs.capacity() > self.capacity() {
-            rhs.add_abs_inplace(&self);
+            rhs.add_abs_mut(&self);
             rhs
         } else {
-            self.add_abs_inplace(&rhs);
+            self.add_abs_mut(&rhs);
             self
         }
     }
@@ -385,63 +545,144 @@ impl Arbi {
         self
     }
 
+    /// \\( self = |self| + |rhs| \\) and `rhs` may be unchanged or equal to
+    /// `self`, depending if `self.capacity >= rhs.capacity` or not.
+    pub(crate) fn add_abs_mut_swap(&mut self, rhs: &mut Arbi) -> &mut Arbi {
+        if rhs.capacity() > self.capacity() {
+            core::mem::swap(self, rhs);
+        }
+        self.add_abs_mut(rhs);
+        self
+    }
+
     /// Return \\( |self| + |rhs| \\).
     pub(crate) fn add_abs_ref(&self, rhs: &Arbi) -> Arbi {
-        let mut ret = self.clone();
-        ret.add_abs_inplace(rhs);
-        ret
+        // Ensure only one allocation.
+        if rhs.size() > self.size() {
+            let mut ret = Arbi::with_capacity_and_copy(rhs.size() + 1, rhs);
+            ret.add_abs_mut(self);
+            ret
+        } else {
+            let mut ret = Arbi::with_capacity_and_copy(self.size() + 1, self);
+            ret.add_abs_mut(rhs);
+            ret
+        }
     }
 
     /// Return \\( self - rhs \\).
     pub(crate) fn sub_(mut self, mut rhs: Arbi) -> Arbi {
         if rhs.capacity() > self.capacity() {
             // self - rhs = -(rhs - self)
-            rhs.sub_inplace(&self);
+            rhs.sub_mut(&self);
             rhs.negate_mut();
             rhs
         } else {
-            self.sub_inplace(&rhs);
-            self.sub_inplace(&rhs);
+            self.sub_mut(&rhs);
             self
         }
     }
 
     /// \\( self = self - rhs \\).
     pub(crate) fn sub_mut(&mut self, rhs: &Self) -> &mut Self {
-        self.sub_inplace(rhs);
+        self.sub_mut_(rhs, false)
+    }
+
+    /// \\( self = self - rhs \\).
+    pub(crate) fn sub_mut_(
+        &mut self,
+        rhs: &Self,
+        from_other: bool,
+    ) -> &mut Self {
+        self.sub_inplace(rhs, from_other);
+        self
+    }
+
+    /// \\( self = self - rhs \\) and `rhs` may be unchanged or equal to
+    /// `self`, depending if `self.capacity >= rhs.capacity` or not.
+    pub(crate) fn sub_mut_swap(&mut self, rhs: &mut Arbi) -> &mut Arbi {
+        if rhs.capacity() > self.capacity() {
+            // -(rhs - self) = self - rhs
+            core::mem::swap(self, rhs);
+            self.sub_mut(rhs);
+            self.negate_mut();
+        } else {
+            self.sub_mut(rhs);
+        }
         self
     }
 
     /// Return \\( self - rhs \\).
     pub(crate) fn sub_ref(&self, rhs: &Self) -> Arbi {
-        let mut ret = self.clone();
-        ret.sub_inplace(rhs);
-        ret
+        // Ensure only one allocation.
+        if rhs.size() > self.size() {
+            // -(rhs - self) = self - rhs
+            let mut ret = Arbi::with_capacity_and_copy(rhs.size(), rhs);
+            ret.sub_mut(self);
+            ret.negate_mut();
+            ret
+        } else {
+            let mut ret = Arbi::with_capacity_and_copy(self.size(), self);
+            ret.sub_mut(rhs);
+            ret
+        }
     }
 
     /// Return \\( |self| - |rhs| \\).
     pub(crate) fn sub_abs(mut self, mut rhs: Arbi) -> Arbi {
         if rhs.capacity() > self.capacity() {
             // |self| - |rhs| = -(|rhs| - |self|).
-            rhs.sub_abs_inplace(&self, false);
+            rhs.sub_abs_mut(&self);
             rhs.negate_mut();
             rhs
         } else {
-            self.sub_abs_inplace(&rhs, false);
+            self.sub_abs_mut(&rhs);
             self
         }
     }
 
     /// \\( self = |self| - |rhs| \\).
     pub(crate) fn sub_abs_mut(&mut self, rhs: &Self) -> &mut Self {
-        self.sub_abs_inplace(rhs, false);
+        self.sub_abs_mut_(rhs, false)
+    }
+
+    /// - \\( self = |rhs| - |self| \\) if `from_other` is `true`.
+    /// - \\( self = |self| - |rhs| \\) if `from_other` is `false`.
+    pub(crate) fn sub_abs_mut_(
+        &mut self,
+        rhs: &Self,
+        from_other: bool,
+    ) -> &mut Self {
+        self.sub_abs_inplace(rhs, from_other);
+        self
+    }
+
+    /// \\( self = |self| - |rhs| \\) and `rhs` may be unchanged or equal to
+    /// `self`, depending if `self.capacity >= rhs.capacity` or not.
+    pub(crate) fn sub_abs_mut_swap(&mut self, rhs: &mut Arbi) -> &mut Arbi {
+        if rhs.capacity() > self.capacity() {
+            // -(|rhs| - |self|) = |self| - |rhs|
+            core::mem::swap(self, rhs);
+            self.sub_abs_mut(rhs);
+            self.negate_mut();
+        } else {
+            self.sub_abs_mut(rhs);
+        }
         self
     }
 
     /// Return \\( |self| - |rhs| \\).
     pub(crate) fn sub_abs_ref(&self, rhs: &Self) -> Arbi {
-        let mut ret = self.clone();
-        ret.sub_abs_inplace(rhs, false);
-        ret
+        // Ensure only one allocation.
+        if rhs.size() > self.size() {
+            // |self| - |rhs| = -(|rhs| - |self|)
+            let mut ret = Arbi::with_capacity_and_copy(rhs.size(), rhs);
+            ret.sub_abs_mut(rhs);
+            ret.negate_mut();
+            ret
+        } else {
+            let mut ret = Arbi::with_capacity_and_copy(self.size(), self);
+            ret.sub_abs_mut(rhs);
+            ret
+        }
     }
 }

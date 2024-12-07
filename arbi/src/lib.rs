@@ -180,4 +180,14 @@ impl Arbi {
         self.vec[0] = 1;
         self.neg = neg;
     }
+
+    /// Same as cloning but ensuring a given capacity prior.
+    pub(crate) fn with_capacity_and_copy(capacity: usize, arbi: &Arbi) -> Self {
+        let mut new_vec = Vec::with_capacity(capacity);
+        new_vec.extend_from_slice(&arbi.vec);
+        Self {
+            vec: new_vec,
+            neg: arbi.neg,
+        }
+    }
 }
