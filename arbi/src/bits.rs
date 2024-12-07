@@ -144,7 +144,7 @@ mod tests {
     use crate::{BitCount, DDigit, QDigit};
 
     #[test]
-    fn test_clear_and_set_bit_smoke() {
+    fn test_clear_set_invert_bit_smoke() {
         let (mut rng, _) = get_seedable_rng();
         let die_digit = get_uniform_die(0, Digit::MAX);
         let die_ddigit = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
@@ -162,6 +162,9 @@ mod tests {
             a.set_bit(i);
             r |= (1 as Digit) << (i as BitCount);
             assert_eq!(a, r);
+            a.invert_bit(i);
+            r ^= (1 as Digit) << (i as BitCount);
+            assert_eq!(a, r);
 
             let mut r = die_ddigit.sample(&mut rng);
             let mut a = Arbi::from(r);
@@ -173,6 +176,9 @@ mod tests {
             a.set_bit(i);
             r |= (1 as DDigit) << (i as BitCount);
             assert_eq!(a, r);
+            a.invert_bit(i);
+            r ^= (1 as DDigit) << (i as BitCount);
+            assert_eq!(a, r);
 
             let mut r = die_qdigit.sample(&mut rng);
             let mut a = Arbi::from(r);
@@ -183,6 +189,9 @@ mod tests {
             assert_eq!(a, r);
             a.set_bit(i);
             r |= (1 as QDigit) << (i as BitCount);
+            assert_eq!(a, r);
+            a.invert_bit(i);
+            r ^= (1 as QDigit) << (i as BitCount);
             assert_eq!(a, r);
         }
     }
