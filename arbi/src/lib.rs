@@ -43,6 +43,7 @@ mod multiplication;
 mod neg;
 mod print_internal;
 mod right_shift;
+mod sign;
 mod size;
 mod to_double;
 mod to_integral;
@@ -367,36 +368,5 @@ impl Arbi {
         self.vec.resize(1, 0);
         self.vec[0] = 1;
         self.neg = neg;
-    }
-
-    /// Return an `Ordering` indicating the sign of the number: `Ordering::Less`
-    /// for negative, `Ordering::Equal` for zero, `Ordering::Greater` for
-    /// positive.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    /// use core::cmp::Ordering;
-    ///
-    /// let neg = Arbi::from(-123456789);
-    /// let zer = Arbi::zero();
-    /// let pos = Arbi::from(123456789);
-    ///
-    /// assert_eq!(neg.sign(), Ordering::Less);
-    /// assert_eq!(zer.sign(), Ordering::Equal);
-    /// assert_eq!(pos.sign(), Ordering::Greater);
-    /// ```
-    ///
-    /// ## Complexity
-    /// \\( O(1) \\)
-    #[inline(always)]
-    pub fn sign(&self) -> core::cmp::Ordering {
-        if self.size() == 0 {
-            core::cmp::Ordering::Equal
-        } else if self.is_negative() {
-            core::cmp::Ordering::Less
-        } else {
-            core::cmp::Ordering::Greater
-        }
     }
 }
