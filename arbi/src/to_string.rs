@@ -72,11 +72,11 @@ impl Arbi {
         if x == 0 {
             return 1;
         }
-        let bitlen: BitCount = x.bit_length();
+        let bitlen: BitCount = x.size_bits();
         if bitlen as BitCount > DBL_MAX_INT as BitCount {
             // TODO: find some quick upperbound.
             // let ilog2_base = base.ilog2();
-            // (x.bit_length() - 1) / (ilog2_base as BitCount) + (1 as BitCount)
+            // (x.size_bits() - 1) / (ilog2_base as BitCount) + (1 as BitCount)
             x.size_base_ref(base as u32)
         } else {
             // This is much more efficient than using size_base()

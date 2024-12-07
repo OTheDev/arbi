@@ -34,12 +34,10 @@ impl Arbi {
         self.vec.len()
     }
 
-    /// Return the number of bits used to represent the absolute value of this
+    /// Return the number of bits needed to represent the absolute value of this
     /// integer.
     ///
     /// Instance represents `0` if and only if `size_bits() == 0`.
-    ///
-    /// This is equivalent to [`Arbi::bit_length()`].
     ///
     /// # Examples
     /// ```
@@ -50,7 +48,6 @@ impl Arbi {
     ///
     /// let mut a = Arbi::from(Digit::MAX);
     /// assert_eq!(a.size_bits(), Digit::BITS as BitCount);
-    ///
     /// a.incr();
     /// assert_eq!(a.size_bits(), Digit::BITS as BitCount + 1);
     /// ```
@@ -59,7 +56,12 @@ impl Arbi {
     /// \\( O(1) \\)
     #[inline(always)]
     pub fn size_bits(&self) -> BitCount {
-        self.bit_length()
+        if self.size() == 0 {
+            0
+        } else {
+            (self.size() as BitCount - 1) * (Digit::BITS as BitCount)
+                + Digit::bit_length(*self.vec.last().unwrap()) as BitCount
+        }
     }
 
     /// Return the number of base-`base` digits needed to represent the absolute
@@ -189,7 +191,7 @@ impl Arbi {
             return Some(0);
         }
         if base.is_power_of_two() {
-            let bit_length = self.bit_length();
+            let bit_length = self.size_bits();
             let base_log2 = base.ilog2();
             return Some(BitCount::div_ceil_(
                 bit_length,
@@ -273,5 +275,72 @@ mod tests {
                 );
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests_size_bits {
+    use super::*;
+    use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
+    use crate::{DDigit, QDigit};
+
+    #[test]
+    fn test_size_bits_returns_0_for_0() {
+        assert_eq!(Arbi::zero().size_bits(), 0);
+        assert_eq!(
+            Arbi::zero().size_bits(),
+            (u32::BITS - (0 as u32).leading_zeros()) as BitCount
+        );
+    }
+
+    #[test]
+    fn smoke() {
+        let (mut rng, _) = get_seedable_rng();
+
+        let die_s = get_uniform_die(Digit::MIN, Digit::MAX);
+        let die_l = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
+        let die_e = get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+
+        for i in 1..u16::MAX {
+            assert_eq!(
+                Arbi::from(i).size_bits(),
+                (u16::BITS - i.leading_zeros()) as BitCount
+            );
+
+            let rs = die_s.sample(&mut rng);
+            let rl = die_l.sample(&mut rng);
+            let re = die_e.sample(&mut rng);
+
+            assert_eq!(
+                Arbi::from(rs).size_bits(),
+                (Digit::BITS - rs.leading_zeros()) as BitCount
+            );
+            assert_eq!(
+                Arbi::from(rl).size_bits(),
+                (DDigit::BITS - rl.leading_zeros()) as BitCount
+            );
+            assert_eq!(
+                Arbi::from(re).size_bits(),
+                (QDigit::BITS - re.leading_zeros()) as BitCount
+            );
+        }
+    }
+
+    #[test]
+    fn test_size_bits_spec() {
+        let (pos, neg, zer, one) = (
+            Arbi::from(16),
+            Arbi::from(-16),
+            Arbi::from(0),
+            Arbi::from(1),
+        );
+
+        assert_eq!(pos.size_bits(), 5);
+        assert_eq!(neg.size_bits(), 5);
+        assert_eq!(zer.size_bits(), 0);
+        assert_eq!(one.size_bits(), 1);
+
+        assert_eq!(Arbi::from(u64::MAX).size_bits(), 64);
+        assert_eq!(Arbi::from(i64::MIN).size_bits(), 64);
     }
 }

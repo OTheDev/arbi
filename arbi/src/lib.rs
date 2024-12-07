@@ -18,7 +18,6 @@ mod assign_double;
 mod assign_integral;
 mod assign_string;
 pub mod base;
-mod bit_length;
 mod bits;
 mod bitwise;
 mod builtin_int_methods;

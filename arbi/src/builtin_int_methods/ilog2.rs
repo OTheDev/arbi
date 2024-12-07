@@ -48,7 +48,7 @@ impl Arbi {
         if self <= 0 {
             panic!("self must be positive: {}", self)
         }
-        self.bit_length() - 1
+        self.size_bits() - 1
     }
 }
 
