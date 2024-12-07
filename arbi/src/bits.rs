@@ -128,11 +128,11 @@ impl Arbi {
     ///     `[0, size_bits())`).
     /// - \\( O(n) \\) otherwise.
     pub fn invert_bit(&mut self, i: BitCount) -> &mut Self {
-        if self.test_bit(i) {
-            self.clear_bit(i);
-        } else {
-            self.set_bit(i);
+        let digit_idx: usize = (i / Digit::BITS as BitCount) as usize;
+        if digit_idx >= self.vec.len() {
+            self.vec.resize(digit_idx + 1, 0);
         }
+        self.vec[digit_idx] ^= (1 as Digit) << (i % Digit::BITS as BitCount);
         self
     }
 }
