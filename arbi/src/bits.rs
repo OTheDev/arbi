@@ -25,7 +25,7 @@ impl Arbi {
     /// assert_eq!(a.test_bit(14), false);
     /// ```
     ///
-    /// ## Complexity
+    /// # Complexity
     /// \\( O(1) \\)
     pub fn test_bit(&self, i: BitCount) -> bool {
         let digit_idx: usize = (i / Digit::BITS as BitCount) as usize;
@@ -55,7 +55,7 @@ impl Arbi {
     /// assert_eq!(a, 28731);
     /// ```
     ///
-    /// ## Complexity
+    /// # Complexity
     /// - \\( O(1) \\) when setting an existing bit.
     /// - \\( O(n) \\) when setting a bit outside the current bit width, as
     ///     this requires resizing.
@@ -93,9 +93,9 @@ impl Arbi {
     /// assert_eq!(a, -4152);
     /// ```
     ///
-    /// ## Complexity
+    /// # Complexity
     /// \\( O(1) \\)
-    pub fn clear_bit(&mut self, i: BitCount) {
+    pub fn clear_bit(&mut self, i: BitCount) -> &mut Self {
         let n: usize = self.size();
         let digit_idx: usize = (i / Digit::BITS as BitCount) as usize;
         if digit_idx < n {
@@ -103,6 +103,37 @@ impl Arbi {
                 !((1 as Digit) << (i % Digit::BITS as BitCount));
             self.trim();
         }
+        self
+    }
+
+    /// If the bit at zero-based index `i` of the absolute value of this integer
+    /// is `1`, clear it to `0`. Otherwise, set it to `1`.
+    ///
+    /// Please note that bits with indices outside of the range
+    /// `[0, size_bits())` are considered `0`. Thus, inverting a bit outside of
+    /// that range will set it to 1.
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
+    /// let mut a = Arbi::from(0xf); // 0b1111
+    /// a.invert_bit(0); // 0b1110
+    /// assert_eq!(a, 0b1110);
+    /// a.invert_bit(4); // 0b11110
+    /// assert_eq!(a, 0b11110);
+    /// ```
+    ///
+    /// # Complexity
+    /// - \\( O(1) \\) when inverting an existing bit (i.e. a bit with index in
+    ///     `[0, size_bits())`).
+    /// - \\( O(n) \\) otherwise.
+    pub fn invert_bit(&mut self, i: BitCount) -> &mut Self {
+        let digit_idx: usize = (i / Digit::BITS as BitCount) as usize;
+        if digit_idx >= self.vec.len() {
+            self.vec.resize(digit_idx + 1, 0);
+        }
+        self.vec[digit_idx] ^= (1 as Digit) << (i % Digit::BITS as BitCount);
+        self
     }
 }
 
@@ -113,7 +144,7 @@ mod tests {
     use crate::{BitCount, DDigit, QDigit};
 
     #[test]
-    fn test_clear_and_set_bit_smoke() {
+    fn test_clear_set_invert_bit_smoke() {
         let (mut rng, _) = get_seedable_rng();
         let die_digit = get_uniform_die(0, Digit::MAX);
         let die_ddigit = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
@@ -131,6 +162,9 @@ mod tests {
             a.set_bit(i);
             r |= (1 as Digit) << (i as BitCount);
             assert_eq!(a, r);
+            a.invert_bit(i);
+            r ^= (1 as Digit) << (i as BitCount);
+            assert_eq!(a, r);
 
             let mut r = die_ddigit.sample(&mut rng);
             let mut a = Arbi::from(r);
@@ -142,6 +176,9 @@ mod tests {
             a.set_bit(i);
             r |= (1 as DDigit) << (i as BitCount);
             assert_eq!(a, r);
+            a.invert_bit(i);
+            r ^= (1 as DDigit) << (i as BitCount);
+            assert_eq!(a, r);
 
             let mut r = die_qdigit.sample(&mut rng);
             let mut a = Arbi::from(r);
@@ -152,6 +189,9 @@ mod tests {
             assert_eq!(a, r);
             a.set_bit(i);
             r |= (1 as QDigit) << (i as BitCount);
+            assert_eq!(a, r);
+            a.invert_bit(i);
+            r ^= (1 as QDigit) << (i as BitCount);
             assert_eq!(a, r);
         }
     }
