@@ -18,7 +18,7 @@ license = "Apache-2.0 OR MIT"
 name = "arbi"
 readme = "README.md"
 repository = "https://github.com/OTheDev/arbi"
-version = "0.2.6"
+version = "0.3.0"
 
 [dependencies]
 
