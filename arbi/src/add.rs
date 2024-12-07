@@ -8,35 +8,32 @@ use crate::{Arbi, Digit};
 use core::ops::{Add, AddAssign, Sub, SubAssign};
 
 impl Arbi {
-    /// \\( |x| + |y| \\)
+    /// Set \\( self = |self| + |y| \\).
     fn add_abs_inplace(&mut self, y: &Self) {
         let max_size = self.size().max(y.size());
         self.vec.resize(max_size + 1, 0);
-
         let mut temp: Digit = 0;
         let mut carry: u8 = 0;
         for i in 0..y.size() {
             Digit::uaddc(&mut temp, self.vec[i], y.vec[i], &mut carry);
             self.vec[i] = temp;
         }
-
         for i in y.size()..max_size {
             temp = self.vec[i].wrapping_add(carry as Digit);
             carry = if temp < carry as Digit { 1 } else { 0 };
             self.vec[i] = temp;
         }
-
         self.vec[max_size] = carry as Digit;
         self.trim();
         self.neg = false;
     }
 
-    /// \\( x + y \\)
+    /// \\( self += y \\)
     fn add_inplace(&mut self, y: &Self) {
         if self.is_negative() {
             if y.is_negative() {
                 // x < 0, y < 0 ==> x = -|x|, y = -|y|. ==> x + y = -(|x| + |y|)
-                self.add_abs_inplace(y);
+                self.add_abs_inplace(y); // this is never zero
                 self.neg = true;
             } else {
                 // x < 0, y >= 0 ==> x = -|x|, y = |y| ==> x + y = |y| - |x|
@@ -53,39 +50,33 @@ impl Arbi {
 
     fn resize_and_sub_abs_from_larger(&mut self, other: &Self) {
         self.vec.resize(other.size(), 0);
-
         let mut temp: Digit = 0;
         let mut borrow: u8 = 0;
-
         for i in 0..self.size() {
             Digit::usubb(&mut temp, other.vec[i], self.vec[i], &mut borrow);
             self.vec[i] = temp;
         }
-
         self.trim();
-        self.neg = false;
     }
 
-    /// |self| - |y|, assuming |self| > |y|.
+    /// Set \\( x = |x| - |y| \\), assuming \\( |x| > |y| \\).
     fn sub_abs_gt_inplace(&mut self, y: &Self) {
         let mut temp: Digit = 0;
         let mut borrow: u8 = 0;
-
         for i in 0..y.size() {
             Digit::usubb(&mut temp, self.vec[i], y.vec[i], &mut borrow);
             self.vec[i] = temp;
         }
-
         for i in y.size()..self.size() {
             temp = self.vec[i].wrapping_sub(borrow as Digit);
             borrow = if temp > self.vec[i] { 1 } else { 0 };
             self.vec[i] = temp;
         }
-
         self.trim();
         self.neg = false;
     }
 
+    /// \\( self -= y \\).
     fn sub_inplace(&mut self, y: &Self) {
         if self.is_negative() {
             if y.is_negative() {
@@ -105,53 +96,38 @@ impl Arbi {
         }
     }
 
-    /// \\( |x| - |y| \\)
+    /// Set \\( x = |x| - |y| \\).
     pub(crate) fn sub_abs_inplace(&mut self, y: &Self, from_other: bool) {
         match self.size().cmp(&y.size()) {
             core::cmp::Ordering::Equal => {
                 let it_self = self.vec.iter().rev();
                 let mut it_y = y.vec.iter().rev();
-
                 // Find the first mismatch
                 let mismatch = it_self.zip(it_y.by_ref()).find(|(a, b)| a != b);
-
                 if mismatch.is_none() {
                     // x, y have the same digits (or both are zero)
                     self.vec.clear();
                     self.neg = false;
                     return;
                 }
-
                 let (first_mismatched_self, first_mismatched_y) =
                     mismatch.unwrap();
 
                 if first_mismatched_y > first_mismatched_self {
                     self.resize_and_sub_abs_from_larger(y);
-
-                    if !from_other {
-                        self.neg = true;
-                    }
+                    self.neg = !from_other;
                 } else {
                     self.sub_abs_gt_inplace(y);
-
-                    if from_other {
-                        self.neg = true;
-                    }
+                    self.neg = from_other;
                 }
             }
             core::cmp::Ordering::Greater => {
                 self.sub_abs_gt_inplace(y);
-
-                if from_other {
-                    self.neg = true;
-                }
+                self.neg = from_other;
             }
             core::cmp::Ordering::Less => {
                 self.resize_and_sub_abs_from_larger(y);
-
-                if !from_other {
-                    self.neg = true;
-                }
+                self.neg = !from_other;
             }
         }
     }
@@ -363,5 +339,109 @@ mod tests {
         let mut c = Arbi::from(7);
         c -= c.clone(); // Can't do c -= &c
         assert_eq!(c, 0);
+    }
+}
+
+#[allow(dead_code)]
+impl Arbi {
+    /// Return \\( self + rhs \\).
+    pub(crate) fn add_(mut self, mut rhs: Arbi) -> Arbi {
+        if rhs.capacity() > self.capacity() {
+            rhs.add_inplace(&self);
+            rhs
+        } else {
+            self.add_inplace(&rhs);
+            self
+        }
+    }
+
+    /// \\( self = self - rhs \\)..
+    pub(crate) fn add_mut(&mut self, rhs: &Self) -> &mut Self {
+        self.add_inplace(rhs);
+        self
+    }
+
+    /// Return \\( self + rhs \\).
+    pub(crate) fn add_ref(&self, rhs: &Self) -> Arbi {
+        let mut ret = self.clone();
+        ret.add_inplace(rhs);
+        ret
+    }
+
+    /// Return \\( |self| + |rhs|` \\).
+    pub(crate) fn add_abs(mut self, mut rhs: Arbi) -> Arbi {
+        if rhs.capacity() > self.capacity() {
+            rhs.add_abs_inplace(&self);
+            rhs
+        } else {
+            self.add_abs_inplace(&rhs);
+            self
+        }
+    }
+
+    /// \\( self = |self| + |rhs| \\).
+    pub(crate) fn add_abs_mut(&mut self, rhs: &Arbi) -> &mut Arbi {
+        self.add_abs_inplace(rhs);
+        self
+    }
+
+    /// Return \\( |self| + |rhs| \\).
+    pub(crate) fn add_abs_ref(&self, rhs: &Arbi) -> Arbi {
+        let mut ret = self.clone();
+        ret.add_abs_inplace(rhs);
+        ret
+    }
+
+    /// Return \\( self - rhs \\).
+    pub(crate) fn sub_(mut self, mut rhs: Arbi) -> Arbi {
+        if rhs.capacity() > self.capacity() {
+            // self - rhs = -(rhs - self)
+            rhs.sub_inplace(&self);
+            rhs.negate_mut();
+            rhs
+        } else {
+            self.sub_inplace(&rhs);
+            self.sub_inplace(&rhs);
+            self
+        }
+    }
+
+    /// \\( self = self - rhs \\).
+    pub(crate) fn sub_mut(&mut self, rhs: &Self) -> &mut Self {
+        self.sub_inplace(rhs);
+        self
+    }
+
+    /// Return \\( self - rhs \\).
+    pub(crate) fn sub_ref(&self, rhs: &Self) -> Arbi {
+        let mut ret = self.clone();
+        ret.sub_inplace(rhs);
+        ret
+    }
+
+    /// Return \\( |self| - |rhs| \\).
+    pub(crate) fn sub_abs(mut self, mut rhs: Arbi) -> Arbi {
+        if rhs.capacity() > self.capacity() {
+            // |self| - |rhs| = -(|rhs| - |self|).
+            rhs.sub_abs_inplace(&self, false);
+            rhs.negate_mut();
+            rhs
+        } else {
+            self.sub_abs_inplace(&rhs, false);
+            self
+        }
+    }
+
+    /// \\( self = |self| - |rhs| \\).
+    pub(crate) fn sub_abs_mut(&mut self, rhs: &Self) -> &mut Self {
+        self.sub_abs_inplace(rhs, false);
+        self
+    }
+
+    /// Return \\( |self| - |rhs| \\).
+    pub(crate) fn sub_abs_ref(&self, rhs: &Self) -> Arbi {
+        let mut ret = self.clone();
+        ret.sub_abs_inplace(rhs, false);
+        ret
     }
 }
