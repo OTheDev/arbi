@@ -30,7 +30,8 @@ impl Arbi {
     ///
     /// # Note
     /// - `From<Arbi>` and `From<&Arbi>` are implemented for each primitive
-    ///   integral type and has the same semantics.
+    ///   integral type and has the same semantics. See, for example,
+    ///   [`impl From<&Arbi> for i32`](#impl-From<%26Arbi>-for-i32).
     /// - In Rust, casting from a larger primitive integer type to a smaller
     ///   integer type truncates. This function has the same semantics.
     ///
@@ -42,11 +43,9 @@ impl Arbi {
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    ///
     /// let x = Arbi::from(i32::MIN);
-    /// let y: i32 = x.to_i32();
-    /// let z: i16 = x.to_i16();
-    ///
+    /// let y: i32 = x.wrapping_to_i32();
+    /// let z: i16 = x.wrapping_to_i16();
     /// assert_eq!(y, i32::MIN);
     /// assert_eq!(z, i32::MIN as i16);
     /// assert_eq!(i16::from(&x), i32::MIN as i16);
@@ -101,13 +100,10 @@ impl Arbi {
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    ///
     /// let x = Arbi::from(i32::MIN);
-    /// let y = x.to_i32_checked();
-    ///
+    /// let y = x.checked_to_i32();
     /// assert_eq!(y, Some(i32::MIN));
-    ///
-    /// let z = x.to_i16_checked();
+    /// let z = x.checked_to_i16();
     /// assert!(z.is_none());
     /// ```
     pub fn $to_checked(&self) -> Option<$t> {
@@ -124,14 +120,13 @@ impl Arbi {
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    ///
     /// let mut x = Arbi::from(u8::MAX);
     /// assert!(x.fits_u8());
-    ///
     /// x.incr();
-    ///
     /// assert!(!x.fits_u8());
     /// ```
+    ///
+    /// #
     pub fn $fits(&self) -> bool {
         type TargetT = $t;
         (&TargetT::MIN..=&TargetT::MAX).contains(&self)
@@ -229,12 +224,42 @@ mod $to_unchecked {
     }
 }
 
+/// Equivalent to converting an `Arbi` integer to this type using its
+/// corresponding `wrapping_to_*()` method. For example, see
+/// [`Arbi::wrapping_to_u32()`].
+///
+/// Please note that `From<&Arbi>` is also implemented. See, for example,
+/// [`impl From<&Arbi> for i32`](#impl-From<%26Arbi>-for-i32).
+///
+/// # Examples
+/// ```
+/// use arbi::Arbi;
+/// let a = Arbi::from(123456789); // 0b111010110111100110100010101
+/// let a_clone = a.clone();
+/// let b = u32::from(a);
+/// assert_eq!(b, 123456789);
+/// let c = u16::from(a_clone);
+/// assert_eq!(c, 52501); // 0b1100110100010101
+/// ```
 impl From<Arbi> for $t {
     fn from(arbi: Arbi) -> Self {
         arbi.$to_unchecked()
     }
 }
 
+/// Equivalent to converting an `Arbi` integer to this type using its
+/// corresponding `wrapping_to_*()` method. For example, see
+/// [`Arbi::wrapping_to_u32()`].
+///
+/// # Examples
+/// ```
+/// use arbi::Arbi;
+/// let a = Arbi::from(123456789); // 0b111010110111100110100010101
+/// let b = u32::from(&a);
+/// assert_eq!(b, 123456789);
+/// let c = u16::from(&a);
+/// assert_eq!(c, 52501); // 0b1100110100010101
+/// ```
 impl From<&Arbi> for $t {
     fn from(arbi: &Arbi) -> Self {
         arbi.$to_unchecked()
@@ -247,16 +272,16 @@ impl From<&Arbi> for $t {
 /* impl_to_integral! */
 
 impl_to_integral!(
-    i8 => (to_i8, to_i8_checked, fits_i8),
-    i16 => (to_i16, to_i16_checked, fits_i16),
-    i32 => (to_i32, to_i32_checked, fits_i32),
-    i64 => (to_i64, to_i64_checked, fits_i64),
-    i128 => (to_i128, to_i128_checked, fits_i128),
-    isize => (to_isize, to_isize_checked, fits_isize),
-    u8 => (to_u8, to_u8_checked, fits_u8),
-    u16 => (to_u16, to_u16_checked, fits_u16),
-    u32 => (to_u32, to_u32_checked, fits_u32),
-    u64 => (to_u64, to_u64_checked, fits_u64),
-    u128 => (to_u128, to_u128_checked, fits_u128),
-    usize => (to_usize, to_usize_checked, fits_usize)
+    i8 => (wrapping_to_i8, checked_to_i8, fits_i8),
+    i16 => (wrapping_to_i16, checked_to_i16, fits_i16),
+    i32 => (wrapping_to_i32, checked_to_i32, fits_i32),
+    i64 => (wrapping_to_i64, checked_to_i64, fits_i64),
+    i128 => (wrapping_to_i128, checked_to_i128, fits_i128),
+    isize => (wrapping_to_isize, checked_to_isize, fits_isize),
+    u8 => (wrapping_to_u8, checked_to_u8, fits_u8),
+    u16 => (wrapping_to_u16, checked_to_u16, fits_u16),
+    u32 => (wrapping_to_u32, checked_to_u32, fits_u32),
+    u64 => (wrapping_to_u64, checked_to_u64, fits_u64),
+    u128 => (wrapping_to_u128, checked_to_u128, fits_u128),
+    usize => (wrapping_to_usize, checked_to_usize, fits_usize)
 );

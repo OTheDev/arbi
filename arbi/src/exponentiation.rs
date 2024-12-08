@@ -168,7 +168,7 @@ impl<'a> Pow<&'a Arbi> for &Arbi {
 
         Arbi::exponentiation_left_to_right_u128(
             self,
-            match exp.to_u128_checked() {
+            match exp.checked_to_u128() {
                 Some(val) => val,
                 None => panic!("Exponent does not fit in a u128."),
             },
