@@ -45,7 +45,7 @@ use crate::Arbi;
 /// assert_eq!(a.capacity(), capacity); // no memory allocation occurred
 /// ```
 pub trait Assign<T> {
-    #[allow(dead_code)]
+    /// Assign a value of type `T` to an integer.
     fn assign(&mut self, value: T);
 }
 

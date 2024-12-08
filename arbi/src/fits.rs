@@ -27,7 +27,7 @@ use core::ops::RangeInclusive;
 /// assert!(a.fits::<u128>());
 /// ```
 pub trait Fits<T> {
-    #[allow(dead_code)]
+    /// Test if `value` fits within the range of type `T`.
     fn fits(value: &Arbi) -> bool;
 }
 
