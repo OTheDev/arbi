@@ -278,16 +278,16 @@ In what follows, let `*` denote any primitive integer type name:
 `i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize`.
 
 Methods
-- `to_*()`: convert this [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer to a primitive integer type value.
+- `wrapping_to_*()`: convert this [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer to a primitive integer type value.
   This is “wrapping”.
   
-  See [`Arbi::to_i32()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.to_i32).
+  See [`Arbi::wrapping_to_i32()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.wrapping_to_i32).
 
-- `to_*_checked()`: try to convert this [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer to a primitive integer
+- `checked_to_*()`: try to convert this [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer to a primitive integer
   type value. If this [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer does not fit in the target primitive
   integer type, returns `None`. 
   
-  See [`Arbi::to_i32_checked()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.to_i32_checked).
+  See [`Arbi::checked_to_i32()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.checked_to_i32).
 
 - `fits_*()`: test if this [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer fits in a primitive integer type.
   The [`Fits`](https://docs.rs/arbi/latest/arbi/trait.Fits.html) trait can also be used to do the same thing.
