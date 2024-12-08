@@ -125,8 +125,6 @@ impl Arbi {
     /// x.incr();
     /// assert!(!x.fits_u8());
     /// ```
-    ///
-    /// #
     pub fn $fits(&self) -> bool {
         type TargetT = $t;
         (&TargetT::MIN..=&TargetT::MAX).contains(&self)
