@@ -60,9 +60,9 @@ use crate::Arbi;
 /// a = a.pow(Arbi::from(-10));
 /// ```
 pub trait Pow<T> {
+    /// The return type of `pow()`.
     type Output;
-
-    #[allow(dead_code)]
+    ///  Return `self` to the power `exponent`.
     fn pow(self, exponent: T) -> Self::Output;
 }
 
