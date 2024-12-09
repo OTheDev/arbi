@@ -9,16 +9,16 @@ use core::ops::{Add, AddAssign, Sub, SubAssign};
 
 impl Arbi {
     /// Set \\( self = |self| + |y| \\).
-    fn add_abs_inplace(&mut self, y: &Self) {
-        let max_size = self.size().max(y.size());
+    fn dadd_abs_inplace(&mut self, y: &[Digit]) {
+        let max_size = self.size().max(y.len());
         self.vec.resize(max_size + 1, 0);
         let mut temp: Digit = 0;
         let mut carry: u8 = 0;
-        for i in 0..y.size() {
-            Digit::uaddc(&mut temp, self.vec[i], y.vec[i], &mut carry);
+        for (i, y_digit) in y.iter().enumerate() {
+            Digit::uaddc(&mut temp, self.vec[i], *y_digit, &mut carry);
             self.vec[i] = temp;
         }
-        for i in y.size()..max_size {
+        for i in y.len()..max_size {
             temp = self.vec[i].wrapping_add(carry as Digit);
             carry = if temp < carry as Digit { 1 } else { 0 };
             self.vec[i] = temp;
@@ -28,46 +28,56 @@ impl Arbi {
         self.neg = false;
     }
 
+    /// Set \\( self = |self| + |y| \\).
+    fn add_abs_inplace(&mut self, y: &Self) {
+        self.dadd_abs_inplace(&y.vec);
+    }
+
     /// \\( self += y \\)
-    fn add_inplace(&mut self, y: &Self) {
+    fn dadd_inplace(&mut self, y: &[Digit], y_is_neg: bool) {
         if self.is_negative() {
-            if y.is_negative() {
+            if y_is_neg {
                 // x < 0, y < 0 ==> x = -|x|, y = -|y|. ==> x + y = -(|x| + |y|)
-                self.add_abs_inplace(y); // this is never zero
+                self.dadd_abs_inplace(y); // this is never zero
                 self.neg = true;
             } else {
                 // x < 0, y >= 0 ==> x = -|x|, y = |y| ==> x + y = |y| - |x|
-                self.sub_abs_inplace(y, true);
+                self.dsub_abs_inplace(y, true);
             }
-        } else if y.is_negative() {
+        } else if y_is_neg {
             // x >= 0, y < 0 ==> x = |x|, y = -|y| ==> x + y = |x| - |y|
-            self.sub_abs_inplace(y, false);
+            self.dsub_abs_inplace(y, false);
         } else {
             // x >= 0, y >= 0 ==> x = |x|, y = |y| ==> x + y = |x| + |y|
-            self.add_abs_inplace(y);
+            self.dadd_abs_inplace(y);
         }
     }
 
-    fn resize_and_sub_abs_from_larger(&mut self, other: &Self) {
-        self.vec.resize(other.size(), 0);
+    /// \\( self += y \\)
+    fn add_inplace(&mut self, y: &Self) {
+        self.dadd_inplace(&y.vec, y.is_negative());
+    }
+
+    fn dresize_and_sub_abs_from_larger(&mut self, other: &[Digit]) {
+        self.vec.resize(other.len(), 0);
         let mut temp: Digit = 0;
         let mut borrow: u8 = 0;
-        for i in 0..self.size() {
-            Digit::usubb(&mut temp, other.vec[i], self.vec[i], &mut borrow);
+        for (i, other_digit) in other.iter().enumerate().take(self.size()) {
+            Digit::usubb(&mut temp, *other_digit, self.vec[i], &mut borrow);
             self.vec[i] = temp;
         }
         self.trim();
     }
 
     /// Set \\( x = |x| - |y| \\), assuming \\( |x| > |y| \\).
-    fn sub_abs_gt_inplace(&mut self, y: &Self) {
+    fn dsub_abs_gt_inplace(&mut self, y: &[Digit]) {
         let mut temp: Digit = 0;
         let mut borrow: u8 = 0;
-        for i in 0..y.size() {
-            Digit::usubb(&mut temp, self.vec[i], y.vec[i], &mut borrow);
+        for (i, y_digit) in y.iter().enumerate() {
+            Digit::usubb(&mut temp, self.vec[i], *y_digit, &mut borrow);
             self.vec[i] = temp;
         }
-        for i in y.size()..self.size() {
+        for i in y.len()..self.size() {
             temp = self.vec[i].wrapping_sub(borrow as Digit);
             borrow = if temp > self.vec[i] { 1 } else { 0 };
             self.vec[i] = temp;
@@ -78,31 +88,37 @@ impl Arbi {
 
     /// \\( self -= y \\) if `from_other` is `false`.
     /// \\( self = y - self \\) if `from_other` is `true`.
-    fn sub_inplace(&mut self, y: &Self, from_other: bool) {
+    fn dsub_inplace(&mut self, y: &[Digit], from_other: bool, y_is_neg: bool) {
         if self.is_negative() {
-            if y.is_negative() {
+            if y_is_neg {
                 // x < 0, y < 0 ==> x = -|x|, y = -|y| ==> x - y = |y| - |x|
-                self.sub_abs_inplace(y, !from_other);
+                self.dsub_abs_inplace(y, !from_other);
             } else {
                 // x < 0, y >= 0 ==> x = -|x|, y = |y| ==> x - y = -(|x| + |y|)
-                self.add_abs_inplace(y);
+                self.dadd_abs_inplace(y);
                 self.neg = true;
             }
-        } else if y.is_negative() {
+        } else if y_is_neg {
             // x >= 0, y < 0 ==> x = |x|, y = -|y| ==> x - y = |x| + |y|
-            self.add_abs_inplace(y);
+            self.dadd_abs_inplace(y);
         } else {
             // x >= 0, y >= 0 ==> x = |x|, y = |y| ==> x - y = |x| - |y|
-            self.sub_abs_inplace(y, from_other);
+            self.dsub_abs_inplace(y, from_other);
         }
     }
 
+    /// \\( self -= y \\) if `from_other` is `false`.
+    /// \\( self = y - self \\) if `from_other` is `true`.
+    fn sub_inplace(&mut self, y: &Self, from_other: bool) {
+        self.dsub_inplace(&y.vec, from_other, y.is_negative());
+    }
+
     /// Set \\( x = |x| - |y| \\).
-    pub(crate) fn sub_abs_inplace(&mut self, y: &Self, from_other: bool) {
-        match self.size().cmp(&y.size()) {
+    pub(crate) fn dsub_abs_inplace(&mut self, y: &[Digit], from_other: bool) {
+        match self.size().cmp(&y.len()) {
             core::cmp::Ordering::Equal => {
                 let it_self = self.vec.iter().rev();
-                let mut it_y = y.vec.iter().rev();
+                let mut it_y = y.iter().rev();
                 // Find the first mismatch
                 let mismatch = it_self.zip(it_y.by_ref()).find(|(a, b)| a != b);
                 if mismatch.is_none() {
@@ -115,22 +131,27 @@ impl Arbi {
                     mismatch.unwrap();
 
                 if first_mismatched_y > first_mismatched_self {
-                    self.resize_and_sub_abs_from_larger(y);
+                    self.dresize_and_sub_abs_from_larger(y);
                     self.neg = !from_other;
                 } else {
-                    self.sub_abs_gt_inplace(y);
+                    self.dsub_abs_gt_inplace(y);
                     self.neg = from_other;
                 }
             }
             core::cmp::Ordering::Greater => {
-                self.sub_abs_gt_inplace(y);
+                self.dsub_abs_gt_inplace(y);
                 self.neg = from_other;
             }
             core::cmp::Ordering::Less => {
-                self.resize_and_sub_abs_from_larger(y);
+                self.dresize_and_sub_abs_from_larger(y);
                 self.neg = !from_other;
             }
         }
+    }
+
+    /// Set \\( x = |x| - |y| \\).
+    pub(crate) fn sub_abs_inplace(&mut self, y: &Self, from_other: bool) {
+        self.dsub_abs_inplace(&y.vec, from_other);
     }
 }
 
