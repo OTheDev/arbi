@@ -14,7 +14,7 @@ use crate::Base;
 use crate::{Arbi, Digit};
 use rand::distributions::uniform::SampleUniform;
 pub(crate) use rand::distributions::Distribution;
-use rand::distributions::Uniform;
+pub use rand::distributions::Uniform;
 use rand::rngs::{StdRng, ThreadRng};
 pub(crate) use rand::Rng;
 use rand::SeedableRng;

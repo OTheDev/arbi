@@ -9,16 +9,16 @@ use core::ops::{Add, AddAssign, Sub, SubAssign};
 
 impl Arbi {
     /// Set \\( self = |self| + |y| \\).
-    fn add_abs_inplace(&mut self, y: &Self) {
-        let max_size = self.size().max(y.size());
+    fn dadd_abs_inplace(&mut self, y: &[Digit]) {
+        let max_size = self.size().max(y.len());
         self.vec.resize(max_size + 1, 0);
         let mut temp: Digit = 0;
         let mut carry: u8 = 0;
-        for i in 0..y.size() {
-            Digit::uaddc(&mut temp, self.vec[i], y.vec[i], &mut carry);
+        for (i, y_digit) in y.iter().enumerate() {
+            Digit::uaddc(&mut temp, self.vec[i], *y_digit, &mut carry);
             self.vec[i] = temp;
         }
-        for i in y.size()..max_size {
+        for i in y.len()..max_size {
             temp = self.vec[i].wrapping_add(carry as Digit);
             carry = if temp < carry as Digit { 1 } else { 0 };
             self.vec[i] = temp;
@@ -28,46 +28,56 @@ impl Arbi {
         self.neg = false;
     }
 
+    /// Set \\( self = |self| + |y| \\).
+    fn add_abs_inplace(&mut self, y: &Self) {
+        self.dadd_abs_inplace(&y.vec);
+    }
+
     /// \\( self += y \\)
-    fn add_inplace(&mut self, y: &Self) {
+    fn dadd_inplace(&mut self, y: &[Digit], y_is_neg: bool) {
         if self.is_negative() {
-            if y.is_negative() {
+            if y_is_neg {
                 // x < 0, y < 0 ==> x = -|x|, y = -|y|. ==> x + y = -(|x| + |y|)
-                self.add_abs_inplace(y); // this is never zero
+                self.dadd_abs_inplace(y); // this is never zero
                 self.neg = true;
             } else {
                 // x < 0, y >= 0 ==> x = -|x|, y = |y| ==> x + y = |y| - |x|
-                self.sub_abs_inplace(y, true);
+                self.dsub_abs_inplace(y, true);
             }
-        } else if y.is_negative() {
+        } else if y_is_neg {
             // x >= 0, y < 0 ==> x = |x|, y = -|y| ==> x + y = |x| - |y|
-            self.sub_abs_inplace(y, false);
+            self.dsub_abs_inplace(y, false);
         } else {
             // x >= 0, y >= 0 ==> x = |x|, y = |y| ==> x + y = |x| + |y|
-            self.add_abs_inplace(y);
+            self.dadd_abs_inplace(y);
         }
     }
 
-    fn resize_and_sub_abs_from_larger(&mut self, other: &Self) {
-        self.vec.resize(other.size(), 0);
+    /// \\( self += y \\)
+    fn add_inplace(&mut self, y: &Self) {
+        self.dadd_inplace(&y.vec, y.is_negative());
+    }
+
+    fn dresize_and_sub_abs_from_larger(&mut self, other: &[Digit]) {
+        self.vec.resize(other.len(), 0);
         let mut temp: Digit = 0;
         let mut borrow: u8 = 0;
-        for i in 0..self.size() {
-            Digit::usubb(&mut temp, other.vec[i], self.vec[i], &mut borrow);
+        for (i, other_digit) in other.iter().enumerate().take(self.size()) {
+            Digit::usubb(&mut temp, *other_digit, self.vec[i], &mut borrow);
             self.vec[i] = temp;
         }
         self.trim();
     }
 
     /// Set \\( x = |x| - |y| \\), assuming \\( |x| > |y| \\).
-    fn sub_abs_gt_inplace(&mut self, y: &Self) {
+    fn dsub_abs_gt_inplace(&mut self, y: &[Digit]) {
         let mut temp: Digit = 0;
         let mut borrow: u8 = 0;
-        for i in 0..y.size() {
-            Digit::usubb(&mut temp, self.vec[i], y.vec[i], &mut borrow);
+        for (i, y_digit) in y.iter().enumerate() {
+            Digit::usubb(&mut temp, self.vec[i], *y_digit, &mut borrow);
             self.vec[i] = temp;
         }
-        for i in y.size()..self.size() {
+        for i in y.len()..self.size() {
             temp = self.vec[i].wrapping_sub(borrow as Digit);
             borrow = if temp > self.vec[i] { 1 } else { 0 };
             self.vec[i] = temp;
@@ -78,31 +88,37 @@ impl Arbi {
 
     /// \\( self -= y \\) if `from_other` is `false`.
     /// \\( self = y - self \\) if `from_other` is `true`.
-    fn sub_inplace(&mut self, y: &Self, from_other: bool) {
+    fn dsub_inplace(&mut self, y: &[Digit], from_other: bool, y_is_neg: bool) {
         if self.is_negative() {
-            if y.is_negative() {
+            if y_is_neg {
                 // x < 0, y < 0 ==> x = -|x|, y = -|y| ==> x - y = |y| - |x|
-                self.sub_abs_inplace(y, !from_other);
+                self.dsub_abs_inplace(y, !from_other);
             } else {
                 // x < 0, y >= 0 ==> x = -|x|, y = |y| ==> x - y = -(|x| + |y|)
-                self.add_abs_inplace(y);
+                self.dadd_abs_inplace(y);
                 self.neg = true;
             }
-        } else if y.is_negative() {
+        } else if y_is_neg {
             // x >= 0, y < 0 ==> x = |x|, y = -|y| ==> x - y = |x| + |y|
-            self.add_abs_inplace(y);
+            self.dadd_abs_inplace(y);
         } else {
             // x >= 0, y >= 0 ==> x = |x|, y = |y| ==> x - y = |x| - |y|
-            self.sub_abs_inplace(y, from_other);
+            self.dsub_abs_inplace(y, from_other);
         }
     }
 
+    /// \\( self -= y \\) if `from_other` is `false`.
+    /// \\( self = y - self \\) if `from_other` is `true`.
+    fn sub_inplace(&mut self, y: &Self, from_other: bool) {
+        self.dsub_inplace(&y.vec, from_other, y.is_negative());
+    }
+
     /// Set \\( x = |x| - |y| \\).
-    pub(crate) fn sub_abs_inplace(&mut self, y: &Self, from_other: bool) {
-        match self.size().cmp(&y.size()) {
+    pub(crate) fn dsub_abs_inplace(&mut self, y: &[Digit], from_other: bool) {
+        match self.size().cmp(&y.len()) {
             core::cmp::Ordering::Equal => {
                 let it_self = self.vec.iter().rev();
-                let mut it_y = y.vec.iter().rev();
+                let mut it_y = y.iter().rev();
                 // Find the first mismatch
                 let mismatch = it_self.zip(it_y.by_ref()).find(|(a, b)| a != b);
                 if mismatch.is_none() {
@@ -115,22 +131,27 @@ impl Arbi {
                     mismatch.unwrap();
 
                 if first_mismatched_y > first_mismatched_self {
-                    self.resize_and_sub_abs_from_larger(y);
+                    self.dresize_and_sub_abs_from_larger(y);
                     self.neg = !from_other;
                 } else {
-                    self.sub_abs_gt_inplace(y);
+                    self.dsub_abs_gt_inplace(y);
                     self.neg = from_other;
                 }
             }
             core::cmp::Ordering::Greater => {
-                self.sub_abs_gt_inplace(y);
+                self.dsub_abs_gt_inplace(y);
                 self.neg = from_other;
             }
             core::cmp::Ordering::Less => {
-                self.resize_and_sub_abs_from_larger(y);
+                self.dresize_and_sub_abs_from_larger(y);
                 self.neg = !from_other;
             }
         }
+    }
+
+    /// Set \\( x = |x| - |y| \\).
+    pub(crate) fn sub_abs_inplace(&mut self, y: &Self, from_other: bool) {
+        self.dsub_abs_inplace(&y.vec, from_other);
     }
 }
 
@@ -715,6 +736,467 @@ impl Arbi {
             let mut ret = Arbi::with_capacity_and_copy(self.size(), self);
             ret.sub_abs_mut(rhs);
             ret
+        }
+    }
+}
+
+/* !impl_arbi_add_for_primitive */
+macro_rules! impl_arbi_add_for_primitive {
+    ($(($digit_size:expr, $unsigned_type:ty, $signed_type:ty, $to_digits:ident)),* ) => {
+        $(
+
+#[allow(unused_comparisons)]
+fn $to_digits(other: $signed_type) -> Option<[Digit; $digit_size]> {
+    if other == 0 {
+        return None;
+    }
+    let mut value = if other < 0 {
+        (0 as $unsigned_type).wrapping_sub(other as $unsigned_type)
+    } else {
+        other as $unsigned_type
+    };
+    if Digit::BITS >= <$unsigned_type>::BITS {
+        Some([value as Digit; $digit_size])
+    } else {
+        let mut digits = [0 as Digit; $digit_size];
+        for digit in &mut digits {
+            *digit = (value & (Digit::MAX as $unsigned_type)) as Digit;
+            value >>= Digit::BITS;
+        }
+        Some(digits)
+    }
+}
+
+/* Add */
+impl Add<$signed_type> for Arbi {
+    type Output = Self;
+    #[allow(unused_comparisons)]
+    fn add(mut self, other: $signed_type) -> Self {
+        match $to_digits(other) {
+            None => self,
+            Some(v) => {
+                self.dadd_inplace(&v, other < 0);
+                self
+            }
+        }
+    }
+}
+
+impl Add<&$signed_type> for Arbi {
+    type Output = Self;
+    fn add(self, other: &$signed_type) -> Self {
+        self + *other
+    }
+}
+
+impl Add<$signed_type> for &Arbi {
+    type Output = Arbi;
+    fn add(self, other: $signed_type) -> Arbi {
+        self.clone() + other
+    }
+}
+
+impl Add<&$signed_type> for &Arbi {
+    type Output = Arbi;
+    fn add(self, other: &$signed_type) -> Arbi {
+        self.clone() + *other
+    }
+}
+
+impl Add<Arbi> for $signed_type {
+    type Output = Arbi;
+    fn add(self, other: Arbi) -> Arbi {
+        other + self
+    }
+}
+
+impl Add<&Arbi> for $signed_type {
+    type Output = Arbi;
+    fn add(self, other: &Arbi) -> Arbi {
+        other.clone() + self
+    }
+}
+
+impl Add<Arbi> for &$signed_type {
+    type Output = Arbi;
+    fn add(self, other: Arbi) -> Arbi {
+        other + *self
+    }
+}
+
+impl Add<&Arbi> for &$signed_type {
+    type Output = Arbi;
+    fn add(self, other: &Arbi) -> Arbi {
+        other.clone() + *self
+    }
+}
+
+impl AddAssign<&$signed_type> for Arbi {
+    fn add_assign(&mut self, other: &$signed_type) {
+        self.add_assign(*other);
+    }
+}
+
+impl AddAssign<$signed_type> for Arbi {
+    #[allow(unused_comparisons)]
+    fn add_assign(&mut self, other: $signed_type) {
+        match $to_digits(other) {
+            None => {},
+            Some(v) => {
+                self.dadd_inplace(&v, other < 0);
+            }
+        }
+    }
+}
+
+/* Sub */
+impl Sub<&$signed_type> for Arbi {
+    type Output = Self;
+    fn sub(self, other: &$signed_type) -> Self {
+        self - *other
+    }
+}
+
+impl Sub<$signed_type> for Arbi {
+    type Output = Arbi;
+    #[allow(unused_comparisons)]
+    fn sub(mut self, other: $signed_type) -> Arbi {
+        match $to_digits(other) {
+            None => self,
+            Some(v) => {
+                self.dsub_inplace(&v, false, other < 0);
+                self
+            }
+        }
+    }
+}
+
+impl Sub<&$signed_type> for &Arbi {
+    type Output = Arbi;
+    fn sub(self, other: &$signed_type) -> Arbi {
+        self.clone() - *other
+    }
+}
+
+impl Sub<$signed_type> for &Arbi {
+    type Output = Arbi;
+    fn sub(self, other: $signed_type) -> Arbi {
+        self.clone() - other
+    }
+}
+
+impl Sub<Arbi> for $signed_type {
+    type Output = Arbi;
+    fn sub(self, other: Arbi) -> Arbi {
+        -(other - self)
+    }
+}
+
+impl Sub<&Arbi> for $signed_type {
+    type Output = Arbi;
+    fn sub(self, other: &Arbi) -> Arbi {
+        -(other.clone() - self)
+    }
+}
+
+impl Sub<Arbi> for &$signed_type {
+    type Output = Arbi;
+    fn sub(self, other: Arbi) -> Arbi {
+        -(other - *self)
+    }
+}
+
+impl Sub<&Arbi> for &$signed_type {
+    type Output = Arbi;
+    fn sub(self, other: &Arbi) -> Arbi {
+        -(other.clone() - *self)
+    }
+}
+
+impl SubAssign<&$signed_type> for Arbi {
+    fn sub_assign(&mut self, other: &$signed_type) {
+        *self -= *other;
+    }
+}
+
+impl SubAssign<$signed_type> for Arbi {
+    #[allow(unused_comparisons)]
+    fn sub_assign(&mut self, other: $signed_type) {
+        match $to_digits(other) {
+            None => {},
+            Some(v) => {
+                self.dsub_inplace(&v, false, other < 0);
+            }
+        }
+    }
+}
+
+        )*
+    }
+}
+/* impl_arbi_add_for_primitive! */
+
+impl_arbi_add_for_primitive![
+    (1, u8, i8, i8_to_digits),
+    (1, u8, u8, u8_to_digits),
+    (1, u16, i16, i16_to_digits),
+    (1, u16, u16, u16_to_digits),
+    (1, u32, i32, i32_to_digits),
+    (1, u32, u32, u32_to_digits),
+    (2, u64, i64, i64_to_digits),
+    (2, u64, u64, u64_to_digits),
+    (4, u128, i128, i128_to_digits),
+    (4, u128, u128, u128_to_digits),
+    (4, usize, isize, isize_to_digits),
+    (4, usize, usize, usize_to_digits)
+];
+
+#[cfg(test)]
+mod test_add_with_integral {
+    use super::*;
+    use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
+    use crate::{SDDigit, SDigit, SQDigit};
+
+    #[test]
+    fn test_add_zero() {
+        let mut a = Arbi::zero();
+        assert_eq!(&a + 0, 0);
+        a = Arbi::from(123456789);
+        assert_eq!(a + 0, 123456789);
+
+        let mut a = Arbi::zero();
+        assert_eq!(0 + &a, 0);
+        a = Arbi::from(123456789);
+        assert_eq!(0 + a, 123456789);
+    }
+
+    #[test]
+    fn test_add_with_digit_or_less() {
+        let mut a = Arbi::zero();
+        let rhs = 1216627769;
+        assert_eq!(&a + rhs, rhs);
+        a = Arbi::from(rhs);
+        assert_eq!(a + rhs, 2 * rhs as i64);
+
+        let mut a = Arbi::zero();
+        let rhs = 1216627769;
+        assert_eq!(rhs + &a, rhs);
+        a = Arbi::from(rhs);
+        assert_eq!(rhs + a, 2 * rhs as i64);
+    }
+
+    #[test]
+    fn test_add_with_more_than_a_digit() {
+        let a = Arbi::from(-123456789101112i64);
+        let rhs = 1118814392749466777i64;
+        let expected = 1118690935960365665i64;
+        assert_eq!(&a + rhs, expected);
+        assert_eq!(a + rhs, expected);
+
+        let a = Arbi::from(-123456789101112i64);
+        let rhs = 1118814392749466777i64;
+        let expected = 1118690935960365665i64;
+        assert_eq!(rhs + &a, expected);
+        assert_eq!(rhs + a, expected);
+    }
+
+    #[test]
+    fn smoke() {
+        let (mut rng, _) = get_seedable_rng();
+        let die_sdigit = get_uniform_die(SDigit::MIN, SDigit::MAX);
+        let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
+
+        for _ in 0..i16::MAX {
+            let lhs = die_sddigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(&lhs_arbi + rhs, lhs as SQDigit + rhs as SQDigit);
+            let rhs = die_sdigit.sample(&mut rng);
+            assert_eq!(lhs_arbi + rhs, lhs as SQDigit + rhs as SQDigit);
+
+            let lhs = die_sdigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sdigit.sample(&mut rng);
+            assert_eq!(&lhs_arbi + rhs, lhs as SDDigit + rhs as SDDigit);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(lhs_arbi + rhs, lhs as SQDigit + rhs as SQDigit);
+
+            let lhs = die_sddigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(rhs + &lhs_arbi, lhs as SQDigit + rhs as SQDigit);
+            let rhs = die_sdigit.sample(&mut rng);
+            assert_eq!(rhs + lhs_arbi, lhs as SQDigit + rhs as SQDigit);
+
+            let lhs = die_sdigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sdigit.sample(&mut rng);
+            assert_eq!(rhs + &lhs_arbi, lhs as SDDigit + rhs as SDDigit);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(rhs + lhs_arbi, lhs as SQDigit + rhs as SQDigit);
+        }
+    }
+
+    #[test]
+    fn smoke_3_to_4_digits() {
+        let (mut rng, _) = get_seedable_rng();
+        let die_sqdigit = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+
+        for _ in 0..i16::MAX {
+            let lhs = die_sqdigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sqdigit.sample(&mut rng);
+            let expected = match (lhs as SQDigit).checked_add(rhs as SQDigit) {
+                None => continue,
+                Some(v) => v,
+            };
+            assert_eq!(&lhs_arbi + rhs, expected);
+            let rhs = die_sqdigit.sample(&mut rng);
+            let expected = match (lhs as SQDigit).checked_add(rhs as SQDigit) {
+                None => continue,
+                Some(v) => v,
+            };
+            assert_eq!(lhs_arbi + rhs, expected);
+
+            let lhs = die_sqdigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sqdigit.sample(&mut rng);
+            let expected = match (lhs as SQDigit).checked_add(rhs as SQDigit) {
+                None => continue,
+                Some(v) => v,
+            };
+            assert_eq!(rhs + &lhs_arbi, expected);
+            let rhs = die_sqdigit.sample(&mut rng);
+            let expected = match (lhs as SQDigit).checked_add(rhs as SQDigit) {
+                None => continue,
+                Some(v) => v,
+            };
+            assert_eq!(rhs + lhs_arbi, expected);
+        }
+    }
+}
+
+#[cfg(test)]
+mod test_sub_with_integral {
+    use super::*;
+    use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
+    use crate::{SDDigit, SDigit, SQDigit};
+
+    #[test]
+    fn test_sub_zero() {
+        let mut a = Arbi::zero();
+        assert_eq!(&a - 0, 0);
+        a = Arbi::from(123456789);
+        assert_eq!(a - 0, 123456789);
+
+        let mut a = Arbi::zero();
+        assert_eq!(0 - &a, 0);
+        a = Arbi::from(123456789);
+        assert_eq!(0 - a, -123456789);
+    }
+
+    #[test]
+    fn test_sub_with_digit_or_less() {
+        let mut a = Arbi::zero();
+        let rhs = 1216627769_i64;
+        assert_eq!(&a - rhs, -rhs);
+        a = Arbi::from(-rhs);
+        assert_eq!(a - rhs, -2 * rhs as i64);
+
+        let mut a = Arbi::zero();
+        let rhs = 1216627769;
+        assert_eq!(rhs - &a, rhs);
+        a = Arbi::from(rhs);
+        assert_eq!(rhs - a, 0);
+    }
+
+    #[test]
+    fn test_sub_with_more_than_a_digit() {
+        let a = Arbi::from(-123456789101112i64);
+        let rhs = 1118814392749466777i64;
+        let expected = -1118937849538567889i64;
+        assert_eq!(&a - rhs, expected);
+        assert_eq!(a - rhs, expected);
+
+        let a = Arbi::from(-123456789101112i64);
+        let rhs = 1118814392749466777i64;
+        let expected = 1118937849538567889i64;
+        assert_eq!(rhs - &a, expected);
+        assert_eq!(rhs - a, expected);
+    }
+
+    #[test]
+    fn smoke() {
+        let (mut rng, _) = get_seedable_rng();
+        let die_sdigit = get_uniform_die(SDigit::MIN, SDigit::MAX);
+        let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
+
+        for _ in 0..i16::MAX {
+            let lhs = die_sddigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(&lhs_arbi - rhs, lhs as SQDigit - rhs as SQDigit);
+            let rhs = die_sdigit.sample(&mut rng);
+            assert_eq!(lhs_arbi - rhs, lhs as SQDigit - rhs as SQDigit);
+
+            let lhs = die_sdigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sdigit.sample(&mut rng);
+            assert_eq!(&lhs_arbi - rhs, lhs as SDDigit - rhs as SDDigit);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(lhs_arbi - rhs, lhs as SQDigit - rhs as SQDigit);
+
+            let lhs = die_sddigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(rhs - &lhs_arbi, rhs as SQDigit - lhs as SQDigit);
+            let rhs = die_sdigit.sample(&mut rng);
+            assert_eq!(rhs - lhs_arbi, rhs as SQDigit - lhs as SQDigit);
+
+            let lhs = die_sdigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sdigit.sample(&mut rng);
+            assert_eq!(rhs - &lhs_arbi, rhs as SDDigit - lhs as SDDigit);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(rhs - lhs_arbi, rhs as SQDigit - lhs as SQDigit);
+        }
+    }
+
+    #[test]
+    fn smoke_3_to_4_digits() {
+        let (mut rng, _) = get_seedable_rng();
+        let die_sqdigit = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+
+        for _ in 0..i16::MAX {
+            let lhs = die_sqdigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sqdigit.sample(&mut rng);
+            let expected = match (lhs as SQDigit).checked_sub(rhs as SQDigit) {
+                None => continue,
+                Some(v) => v,
+            };
+            assert_eq!(&lhs_arbi - rhs, expected);
+            let rhs = die_sqdigit.sample(&mut rng);
+            let expected = match (lhs as SQDigit).checked_sub(rhs as SQDigit) {
+                None => continue,
+                Some(v) => v,
+            };
+            assert_eq!(lhs_arbi - rhs, expected);
+
+            let lhs = die_sqdigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sqdigit.sample(&mut rng);
+            let expected = match (rhs as SQDigit).checked_sub(lhs as SQDigit) {
+                None => continue,
+                Some(v) => v,
+            };
+            assert_eq!(rhs - &lhs_arbi, expected);
+            let rhs = die_sqdigit.sample(&mut rng);
+            let expected = match (rhs as SQDigit).checked_sub(lhs as SQDigit) {
+                None => continue,
+                Some(v) => v,
+            };
+            assert_eq!(rhs - lhs_arbi, expected);
         }
     }
 }
