@@ -3,6 +3,7 @@ Copyright 2024 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
+use crate::util::to_digits::ToDigits;
 use crate::{Arbi, DDigit, Digit};
 use core::ops::{Mul, MulAssign};
 
@@ -605,3 +606,112 @@ mod square {
         }
     }
 }
+
+/* !impl_arbi_mul_for_primitive */
+macro_rules! impl_arbi_mul_for_primitive {
+    ($($signed_type:ty),* ) => {
+        $(
+
+impl Mul<$signed_type> for Arbi {
+    type Output = Self;
+    #[allow(unused_comparisons)]
+    fn mul(mut self, other: $signed_type) -> Self {
+        match other.to_digits() {
+            None => self.make_zero(),
+            Some(v) => {
+                let mut ret = Arbi::zero();
+                Self::dmul_(
+                    &mut ret,
+                    &self.vec,
+                    &v,
+                    self.is_negative(),
+                    other < 0,
+                );
+            }
+        }
+        self
+    }
+}
+
+impl Mul<&$signed_type> for Arbi {
+    type Output = Self;
+    fn mul(self, other: &$signed_type) -> Self {
+        self * *other
+    }
+}
+
+impl Mul<$signed_type> for &Arbi {
+    type Output = Arbi;
+    fn mul(self, other: $signed_type) -> Arbi {
+        self.clone() * other
+    }
+}
+
+impl Mul<&$signed_type> for &Arbi {
+    type Output = Arbi;
+    fn mul(self, other: &$signed_type) -> Arbi {
+        self.clone() * (*other)
+    }
+}
+
+impl Mul<Arbi> for $signed_type {
+    type Output = Arbi;
+    fn mul(self, other: Arbi) -> Arbi {
+        other * self
+    }
+}
+
+impl Mul<&Arbi> for $signed_type {
+    type Output = Arbi;
+    fn mul(self, other: &Arbi) -> Arbi {
+        other.clone() * self
+    }
+}
+
+impl Mul<Arbi> for &$signed_type {
+    type Output = Arbi;
+    fn mul(self, other: Arbi) -> Arbi {
+        other * (*self)
+    }
+}
+
+impl Mul<&Arbi> for &$signed_type {
+    type Output = Arbi;
+    fn mul(self, other: &Arbi) -> Arbi {
+        other.clone() * (*self)
+    }
+}
+
+impl MulAssign<&$signed_type> for Arbi {
+    fn mul_assign(&mut self, other: &$signed_type) {
+        self.mul_assign(*other);
+    }
+}
+
+impl MulAssign<$signed_type> for Arbi {
+    #[allow(unused_comparisons)]
+    fn mul_assign(&mut self, other: $signed_type) {
+        match other.to_digits() {
+            None => self.make_zero(),
+            Some(v) => {
+                let mut ret = Arbi::zero();
+                Self::dmul_(
+                    &mut ret,
+                    &self.vec,
+                    &v,
+                    self.is_negative(),
+                    other < 0,
+                );
+            }
+        }
+    }
+}
+
+        )*
+    }
+}
+/* impl_arbi_mul_for_primitive! */
+
+impl_arbi_mul_for_primitive![
+    i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize
+];
