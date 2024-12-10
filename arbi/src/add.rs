@@ -4,6 +4,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
 use crate::uints::UnsignedUtilities;
+use crate::util::to_digits::ToDigits;
 use crate::{Arbi, Digit};
 use core::ops::{Add, AddAssign, Sub, SubAssign};
 
@@ -742,37 +743,15 @@ impl Arbi {
 
 /* !impl_arbi_add_for_primitive */
 macro_rules! impl_arbi_add_for_primitive {
-    ($(($digit_size:expr, $unsigned_type:ty, $signed_type:ty, $to_digits:ident)),* ) => {
+    ($(($digit_size:expr, $unsigned_type:ty, $signed_type:ty)),* ) => {
         $(
-
-#[allow(unused_comparisons)]
-fn $to_digits(other: $signed_type) -> Option<[Digit; $digit_size]> {
-    if other == 0 {
-        return None;
-    }
-    let mut value = if other < 0 {
-        (0 as $unsigned_type).wrapping_sub(other as $unsigned_type)
-    } else {
-        other as $unsigned_type
-    };
-    if Digit::BITS >= <$unsigned_type>::BITS {
-        Some([value as Digit; $digit_size])
-    } else {
-        let mut digits = [0 as Digit; $digit_size];
-        for digit in &mut digits {
-            *digit = (value & (Digit::MAX as $unsigned_type)) as Digit;
-            value >>= Digit::BITS;
-        }
-        Some(digits)
-    }
-}
 
 /* Add */
 impl Add<$signed_type> for Arbi {
     type Output = Self;
     #[allow(unused_comparisons)]
     fn add(mut self, other: $signed_type) -> Self {
-        match $to_digits(other) {
+        match other.to_digits() {
             None => self,
             Some(v) => {
                 self.dadd_inplace(&v, other < 0);
@@ -840,7 +819,7 @@ impl AddAssign<&$signed_type> for Arbi {
 impl AddAssign<$signed_type> for Arbi {
     #[allow(unused_comparisons)]
     fn add_assign(&mut self, other: $signed_type) {
-        match $to_digits(other) {
+        match other.to_digits() {
             None => {},
             Some(v) => {
                 self.dadd_inplace(&v, other < 0);
@@ -861,7 +840,7 @@ impl Sub<$signed_type> for Arbi {
     type Output = Arbi;
     #[allow(unused_comparisons)]
     fn sub(mut self, other: $signed_type) -> Arbi {
-        match $to_digits(other) {
+        match other.to_digits() {
             None => self,
             Some(v) => {
                 self.dsub_inplace(&v, false, other < 0);
@@ -922,7 +901,7 @@ impl SubAssign<&$signed_type> for Arbi {
 impl SubAssign<$signed_type> for Arbi {
     #[allow(unused_comparisons)]
     fn sub_assign(&mut self, other: $signed_type) {
-        match $to_digits(other) {
+        match other.to_digits() {
             None => {},
             Some(v) => {
                 self.dsub_inplace(&v, false, other < 0);
@@ -937,18 +916,18 @@ impl SubAssign<$signed_type> for Arbi {
 /* impl_arbi_add_for_primitive! */
 
 impl_arbi_add_for_primitive![
-    (1, u8, i8, i8_to_digits),
-    (1, u8, u8, u8_to_digits),
-    (1, u16, i16, i16_to_digits),
-    (1, u16, u16, u16_to_digits),
-    (1, u32, i32, i32_to_digits),
-    (1, u32, u32, u32_to_digits),
-    (2, u64, i64, i64_to_digits),
-    (2, u64, u64, u64_to_digits),
-    (4, u128, i128, i128_to_digits),
-    (4, u128, u128, u128_to_digits),
-    (4, usize, isize, isize_to_digits),
-    (4, usize, usize, usize_to_digits)
+    (1, u8, i8),
+    (1, u8, u8),
+    (1, u16, i16),
+    (1, u16, u16),
+    (1, u32, i32),
+    (1, u32, u32),
+    (2, u64, i64),
+    (2, u64, u64),
+    (4, u128, i128),
+    (4, u128, u128),
+    (4, usize, isize),
+    (4, usize, usize)
 ];
 
 #[cfg(test)]
