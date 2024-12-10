@@ -743,7 +743,7 @@ impl Arbi {
 
 /* !impl_arbi_add_for_primitive */
 macro_rules! impl_arbi_add_for_primitive {
-    ($(($digit_size:expr, $unsigned_type:ty, $signed_type:ty)),* ) => {
+    ($($signed_type:ty),* ) => {
         $(
 
 /* Add */
@@ -916,18 +916,7 @@ impl SubAssign<$signed_type> for Arbi {
 /* impl_arbi_add_for_primitive! */
 
 impl_arbi_add_for_primitive![
-    (1, u8, i8),
-    (1, u8, u8),
-    (1, u16, i16),
-    (1, u16, u16),
-    (1, u32, i32),
-    (1, u32, u32),
-    (2, u64, i64),
-    (2, u64, u64),
-    (4, u128, i128),
-    (4, u128, u128),
-    (4, usize, isize),
-    (4, usize, usize)
+    i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize
 ];
 
 #[cfg(test)]
