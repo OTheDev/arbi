@@ -33,124 +33,142 @@ impl Arbi {
             k = (t >> Digit::BITS) as Digit; // floor(t / 2^{Digit::BITS})
             *d = t as Digit; // t mod 2^{Digit::BITS}
         }
-
         if k != 0 {
             x.vec.push(k);
         }
     }
 
     /// Grade School Multiplication Algorithm
-    fn mul_algo_knuth(w: &mut Self, a: &Self, b: &Self, m: usize, n: usize) {
-        w.vec[..m].fill(0);
-
+    fn dmul_algo_knuth(
+        w: &mut [Digit],
+        a: &[Digit],
+        b: &[Digit],
+        m: usize,
+        n: usize,
+    ) {
+        w[..m].fill(0);
         for j in 0..n {
             let mut k: Digit = 0;
             for i in 0..m {
-                let t: DDigit = a.vec[i] as DDigit * b.vec[j] as DDigit
-                    + w.vec[i + j] as DDigit
+                let t: DDigit = a[i] as DDigit * b[j] as DDigit
+                    + w[i + j] as DDigit
                     + k as DDigit;
                 k = (t >> Digit::BITS) as Digit; // floor(t / 2^{Digit::BITS})
-                w.vec[i + j] = t as Digit; // t mod 2^{Digit::BITS}
+                w[i + j] = t as Digit; // t mod 2^{Digit::BITS}
             }
-            w.vec[j + m] = k;
+            w[j + m] = k;
         }
     }
 
-    fn mul_algo_square(w: &mut Self, a: &Self, t: usize) {
+    #[allow(dead_code)]
+    fn mul_algo_knuth(w: &mut Self, a: &Self, b: &Self, m: usize, n: usize) {
+        Arbi::dmul_algo_knuth(&mut w.vec, &a.vec, &b.vec, m, n);
+    }
+
+    fn dmul_algo_square(w: &mut [Digit], a: &[Digit], t: usize) {
         use crate::{uints::UnsignedUtilities, QDigit};
-
-        w.vec.fill(0);
-
+        w.fill(0);
         let mut c: DDigit;
         for i in 0..t {
             if Digit::BITS == 32 {
-                let uv: QDigit = w.vec[2 * i] as QDigit
-                    + a.vec[i] as QDigit * a.vec[i] as QDigit;
-                w.vec[2 * i] = uv as Digit; // set w[2 * i] <- v
+                let uv: QDigit =
+                    w[2 * i] as QDigit + a[i] as QDigit * a[i] as QDigit;
+                w[2 * i] = uv as Digit; // set w[2 * i] <- v
                 c = (uv >> Digit::BITS) as DDigit; // set c <- u
-
                 for j in (i + 1)..t {
-                    let uv: QDigit =
-                        2 * a.vec[j] as QDigit * a.vec[i] as QDigit
-                            + w.vec[i + j] as QDigit
-                            + c as QDigit;
-                    w.vec[i + j] = uv as Digit; // set w[i + j] <- v
+                    let uv: QDigit = 2 * a[j] as QDigit * a[i] as QDigit
+                        + w[i + j] as QDigit
+                        + c as QDigit;
+                    w[i + j] = uv as Digit; // set w[i + j] <- v
                     c = (uv >> Digit::BITS) as DDigit; // set c <- u
                 }
             } else if Digit::BITS == 64 {
                 // This works for the 32-bit case as well.
-                let uv: DDigit = w.vec[2 * i] as DDigit
-                    + a.vec[i] as DDigit * a.vec[i] as DDigit;
-                w.vec[2 * i] = uv as Digit; // set w[2 * i] <- v
+                let uv: DDigit =
+                    w[2 * i] as DDigit + a[i] as DDigit * a[i] as DDigit;
+                w[2 * i] = uv as Digit; // set w[2 * i] <- v
                 c = uv >> Digit::BITS; // set c <- u
-
                 for j in (i + 1)..t {
                     // (hi, lo) represents a quadruple digit
-                    let mut lo: DDigit =
-                        a.vec[j] as DDigit * a.vec[i] as DDigit;
-
+                    let mut lo: DDigit = a[j] as DDigit * a[i] as DDigit;
                     // Multiply product by two
                     let mut hi = lo >> (DDigit::BITS - 1);
                     lo <<= 1;
-
                     // Now add w[i + j] and c to (hi, lo)
                     let mut lo_clone = lo;
                     let overflow = DDigit::uadd_overflow(
                         &mut lo,
                         lo_clone,
-                        w.vec[i + j] as DDigit,
+                        w[i + j] as DDigit,
                     );
                     hi += if overflow { 1 } else { 0 };
                     lo_clone = lo;
                     let overflow = DDigit::uadd_overflow(&mut lo, lo_clone, c);
                     hi += if overflow { 1 } else { 0 };
-
-                    w.vec[i + j] = lo as Digit; // set w[i + j] <- v
+                    // Collect
+                    w[i + j] = lo as Digit; // set w[i + j] <- v
                     c = (hi << Digit::BITS) | (lo >> Digit::BITS); // set c <- u
                 }
             } else {
                 unreachable!("Digit::BITS must be 32 or 64.");
             }
-
             let mut k = i + t;
             while c > 0 {
-                c += w.vec[k] as DDigit;
-                w.vec[k] = c as Digit;
+                c += w[k] as DDigit;
+                w[k] = c as Digit;
                 c >>= Digit::BITS;
                 k += 1;
             }
         }
     }
 
+    #[allow(dead_code)]
+    fn mul_algo_square(w: &mut Self, a: &Self, t: usize) {
+        Arbi::dmul_algo_square(&mut w.vec, &a.vec, t);
+    }
+
     // Performs `result = |a| * |b|`.
-    fn mul_standard(result: &mut Self, a: &Self, b: &Self) {
-        if a.size() == 0 || b.size() == 0 {
+    fn dmul_standard(result: &mut Self, a: &[Digit], b: &[Digit]) {
+        let m = a.len();
+        let n = b.len();
+        if m == 0 || n == 0 {
             result.make_zero();
             return;
         }
-
-        let m = a.size();
-        let n = b.size();
         result.vec.resize(m + n, 0);
-
         if core::ptr::eq(a, b) {
-            Self::mul_algo_square(result, a, m);
+            Self::dmul_algo_square(&mut result.vec, a, m);
         } else {
-            Self::mul_algo_knuth(result, a, b, m, n);
+            Self::dmul_algo_knuth(&mut result.vec, a, b, m, n);
         }
-
         result.trim();
     }
 
-    fn mul_(w: &mut Self, u: &Self, v: &Self) {
-        if u.size() < Self::KARATSUBA_THRESHOLD
-            || v.size() < Self::KARATSUBA_THRESHOLD
+    #[allow(dead_code)]
+    // Performs `result = |a| * |b|`.
+    fn mul_standard(result: &mut Self, a: &Self, b: &Self) {
+        Arbi::dmul_standard(result, &a.vec, &b.vec);
+    }
+
+    fn dmul_(
+        w: &mut Self,
+        u: &[Digit],
+        v: &[Digit],
+        u_is_neg: bool,
+        v_is_neg: bool,
+    ) {
+        if u.len() < Self::KARATSUBA_THRESHOLD
+            || v.len() < Self::KARATSUBA_THRESHOLD
         {
-            Self::mul_standard(w, u, v);
+            Self::dmul_standard(w, u, v);
         } else {
-            Self::mul_karatsuba(w, u, v);
+            Self::dmul_karatsuba(w, u, v);
         }
-        w.neg = u.is_negative() != v.is_negative();
+        w.neg = u_is_neg != v_is_neg;
+    }
+
+    fn mul_(w: &mut Self, u: &Self, v: &Self) {
+        Self::dmul_(w, &u.vec, &v.vec, u.is_negative(), v.is_negative());
     }
 }
 
@@ -374,36 +392,62 @@ mod tests {
 }
 
 impl Arbi {
-    fn bisect(x: &Self, lower: &mut Self, upper: &mut Self, n: usize) {
-        let bisect_point = core::cmp::min(n, x.size());
-
-        lower.vec = x.vec[..bisect_point].to_vec();
-        upper.vec = x.vec[bisect_point..].to_vec();
-
+    fn dbisect(x: &[Digit], lower: &mut Self, upper: &mut Self, n: usize) {
+        let bisect_point = core::cmp::min(n, x.len());
+        lower.vec = x[..bisect_point].to_vec();
+        upper.vec = x[bisect_point..].to_vec();
         lower.trim();
         upper.trim();
     }
 
-    fn mul_karatsuba(w: &mut Self, u: &Self, v: &Self) {
-        let n: usize = core::cmp::min(u.size(), v.size()) >> 1;
+    #[allow(dead_code)]
+    fn bisect(x: &Self, lower: &mut Self, upper: &mut Self, n: usize) {
+        Self::dbisect(&x.vec, lower, upper, n);
+    }
+
+    fn dmul_karatsuba(w: &mut Self, u: &[Digit], v: &[Digit]) {
+        let n: usize = core::cmp::min(u.len(), v.len()) >> 1;
 
         let (mut u0, mut u1, mut v0, mut v1) =
             (Arbi::zero(), Arbi::zero(), Arbi::zero(), Arbi::zero());
-        Self::bisect(u, &mut u0, &mut u1, n);
-        Self::bisect(v, &mut v0, &mut v1, n);
+        Self::dbisect(u, &mut u0, &mut u1, n);
+        Self::dbisect(v, &mut v0, &mut v1, n);
 
         let (mut a, mut b, mut c) = (Arbi::zero(), Arbi::zero(), Arbi::zero());
-        Self::mul_(&mut a, &u1, &v1); // a = u1 * v1
-        Self::mul_(&mut b, &u0, &v0); // b = u0 * v0
+        Self::dmul_(
+            &mut a,
+            &u1.vec,
+            &v1.vec,
+            u1.is_negative(),
+            v1.is_negative(),
+        ); // a = u1 * v1
+        Self::dmul_(
+            &mut b,
+            &u0.vec,
+            &v0.vec,
+            u0.is_negative(),
+            v0.is_negative(),
+        ); // b = u0 * v0
 
         u1 += u0;
         v1 += v0;
-        Self::mul_(&mut c, &u1, &v1);
+        Self::dmul_(
+            &mut c,
+            &u1.vec,
+            &v1.vec,
+            u1.is_negative(),
+            v1.is_negative(),
+        );
         c -= &a + &b; // c = (u1 + u0)(v1 + v0) - (u0v0 + u1v1)
 
         a <<= 2 * n * Digit::BITS as usize;
         c <<= n * Digit::BITS as usize;
         *w = &a + &c + &b; // w = (Arbi::BASE ** 2n) * a + (Arbi::BASE ** n) * c + b
+    }
+
+    #[allow(dead_code)]
+    fn mul_karatsuba(w: &mut Self, u: &Self, v: &Self) {
+        Self::dmul_karatsuba(w, &u.vec, &v.vec);
     }
 }
 
