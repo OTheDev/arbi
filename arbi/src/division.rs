@@ -6,48 +6,44 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 use crate::{Arbi, BitCount, DDigit, Digit, SDDigit};
 
 impl Arbi {
-    fn div_algo_single(q: &mut Self, r: &mut Self, u: &Self, v: &Self) {
+    fn ddiv_algo_single(q: &mut Self, r: &mut Self, u: &[Digit], v: &[Digit]) {
         let mut rem: DDigit = 0;
-
-        for j in (0..u.vec.len()).rev() {
-            let temp: DDigit = (rem << Digit::BITS) | u.vec[j] as DDigit; // rem * Arbi::BASE + u[j]
-            q.vec[j] = (temp / v.vec[0] as DDigit) as Digit;
-            rem = temp % v.vec[0] as DDigit;
+        for j in (0..u.len()).rev() {
+            let temp: DDigit = (rem << Digit::BITS) | u[j] as DDigit; // rem * Arbi::BASE + u[j]
+            q.vec[j] = (temp / v[0] as DDigit) as Digit;
+            rem = temp % v[0] as DDigit;
         }
-
         r.vec[0] = rem as Digit;
-
         q.trim();
         r.trim();
+    }
+
+    #[allow(dead_code)]
+    fn div_algo_single(q: &mut Self, r: &mut Self, u: &Self, v: &Self) {
+        Self::ddiv_algo_single(q, r, &u.vec, &v.vec);
     }
 
     /// NOTE: Assumes space and size have already been set for q and r.
     #[allow(dead_code)]
     fn div_algo_digit(q: &mut Self, u: &Self, v: Digit) -> Digit {
         let mut rem: DDigit = 0;
-
         for j in (0..u.vec.len()).rev() {
             let temp: DDigit = (rem << Digit::BITS) | u.vec[j] as DDigit; // rem * Arbi::BASE + u[j]
             q.vec[j] = (temp / v as DDigit) as Digit;
             rem = temp % v as DDigit;
         }
-
         q.trim();
-
         rem as Digit
     }
 
     pub(crate) fn div_algo_digit_inplace(q: &mut Self, v: Digit) -> Digit {
         let mut rem: DDigit = 0;
-
         for j in (0..q.vec.len()).rev() {
             let temp: DDigit = (rem << Digit::BITS) | q.vec[j] as DDigit; // rem * Arbi::BASE + u[j]
             q.vec[j] = (temp / v as DDigit) as Digit;
             rem = temp % v as DDigit;
         }
-
         q.trim();
-
         rem as Digit
     }
 
@@ -60,17 +56,14 @@ impl Arbi {
         // (2)
         q.make_zero();
         r.make_zero();
-
         // (3)
         for i in ((0 as BitCount)..u.size_bits()).rev() {
             // (3)(I)
             *r <<= 1_usize;
-
             // (3)(II)
             if u.test_bit(i) {
                 r.set_bit(0 as BitCount);
             }
-
             // (3)(III)
             if Arbi::cmp_abs(r, v) != core::cmp::Ordering::Less {
                 // (3)(III)(a)
@@ -82,16 +75,16 @@ impl Arbi {
         }
     }
 
-    fn div_algo_knuth(q: &mut Self, r: &mut Self, u: &Self, v: &Self) {
-        let m = u.size();
-        let n = v.size();
+    fn ddiv_algo_knuth(q: &mut Self, r: &mut Self, u: &[Digit], v: &[Digit]) {
+        let m = u.len();
+        let n = v.len();
 
         const BASE: DDigit = Digit::MAX as DDigit + 1;
         const B_HALF: Digit = (BASE >> 1) as Digit;
 
         /* (1) Normalize */
         // Find e such that b > 2^{e} * v_{n-1} >= b / 2
-        let v_msd: Digit = v.vec[n - 1];
+        let v_msd: Digit = v[n - 1];
         let mut e: u32 = 0;
         while (v_msd << e) < B_HALF {
             e += 1;
@@ -106,19 +99,19 @@ impl Arbi {
 
         // u_norm set to u * 2^{e}. Cast to ddigit as e may be 0 which would be
         // UB
-        u_norm.vec[0] = u.vec[0] << e;
+        u_norm.vec[0] = u[0] << e;
         for i in 1..m {
-            u_norm.vec[i] = (((u.vec[i] as DDigit) << e)
-                | (u.vec[i - 1] as DDigit >> compl_e as DDigit))
+            u_norm.vec[i] = (((u[i] as DDigit) << e)
+                | (u[i - 1] as DDigit >> compl_e as DDigit))
                 as Digit;
         }
-        u_norm.vec[m] = (u.vec[m - 1] as DDigit >> compl_e) as Digit;
+        u_norm.vec[m] = (u[m - 1] as DDigit >> compl_e) as Digit;
 
         // v_norm set to v * 2^{e}
-        v_norm.vec[0] = v.vec[0] << e;
+        v_norm.vec[0] = v[0] << e;
         for i in 1..n {
-            v_norm.vec[i] = (((v.vec[i] as DDigit) << e)
-                | (v.vec[i - 1] as DDigit >> compl_e as DDigit))
+            v_norm.vec[i] = (((v[i] as DDigit) << e)
+                | (v[i - 1] as DDigit >> compl_e as DDigit))
                 as Digit;
         }
 
@@ -196,32 +189,34 @@ impl Arbi {
         r.trim();
     }
 
-    /// `Q = N / D, R = N % D`, in one pass.
-    /// Panics if the divisor is zero.
-    ///
-    /// (ISO/IEC 2020, 7.6.6, C++):
-    /// > The binary / operator yields the quotient, and the binary % operator
-    /// > yields the remainder from the division of the first expression by the
-    /// > second. If the second operand of / or % is zero the behavior is
-    /// > undefined. For integral operands the / operator yields the algebraic
-    /// > quotient with any fractional part discarded; if the quotient a/b is
-    /// > representable in the type of the result, (a/b)*b + a%b is equal to a;
-    /// > otherwise, the behavior of both a/b and a%b is undefined.
-    fn divide(q: &mut Self, r: &mut Self, n: &Self, d: &Self) {
-        if d.size() == 0 {
+    #[allow(dead_code)]
+    fn div_algo_knuth(q: &mut Self, r: &mut Self, u: &Self, v: &Self) {
+        Self::ddiv_algo_knuth(q, r, &u.vec, &v.vec);
+    }
+
+    fn ddivide(
+        q: &mut Self,
+        r: &mut Self,
+        n: &[Digit],
+        d: &[Digit],
+        n_is_neg: bool,
+        d_is_neg: bool,
+    ) {
+        if d.is_empty() {
             panic!("Division by zero attempt.");
         }
 
-        let size_n = n.size();
-        let size_d = d.size();
+        let size_n = n.len();
+        let size_d = d.len();
 
         // |N| < |D| case
-        if (size_n == size_d && n.vec[size_n - 1] < d.vec[size_d - 1])
+        if (size_n == size_d && n[size_n - 1] < d[size_d - 1])
             || size_n < size_d
         {
             q.make_zero(); // |N| < |D| ==> |N| / |D| < 1 ==> Q computes to 0
-            *r = n.clone(); // Computation (a/b)*b + a%b should equal a ==> a%b
-                            // is a.
+            r.vec = n.to_vec(); // Computation (a/b)*b + a%b should equal a ==>
+                                // a%b is a.
+            r.neg = n_is_neg;
             return;
         }
 
@@ -236,14 +231,29 @@ impl Arbi {
         if size_d == 1 {
             // Knuth (Vol. 2, 4.3.1, p. 272) recommends using the algorithm used
             // in div_algo_single() when size_D is 1.
-            Self::div_algo_single(q, r, n, d);
+            Self::ddiv_algo_single(q, r, n, d);
         } else {
-            Self::div_algo_knuth(q, r, n, d);
+            Self::ddiv_algo_knuth(q, r, n, d);
             // Self::div_algo_binary(q, r, n, d);
         }
 
-        q.neg = d.is_negative() ^ n.is_negative();
-        r.neg = r.size() > 0 && n.is_negative();
+        q.neg = d_is_neg ^ n_is_neg;
+        r.neg = r.size() > 0 && n_is_neg;
+    }
+
+    /// `Q = N / D, R = N % D`, in one pass.
+    /// Panics if the divisor is zero.
+    ///
+    /// (ISO/IEC 2020, 7.6.6, C++):
+    /// > The binary / operator yields the quotient, and the binary % operator
+    /// > yields the remainder from the division of the first expression by the
+    /// > second. If the second operand of / or % is zero the behavior is
+    /// > undefined. For integral operands the / operator yields the algebraic
+    /// > quotient with any fractional part discarded; if the quotient a/b is
+    /// > representable in the type of the result, (a/b)*b + a%b is equal to a;
+    /// > otherwise, the behavior of both a/b and a%b is undefined.
+    fn divide(q: &mut Self, r: &mut Self, n: &Self, d: &Self) {
+        Self::ddivide(q, r, &n.vec, &d.vec, n.is_negative(), d.is_negative());
     }
 }
 
