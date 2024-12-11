@@ -3,7 +3,7 @@ Copyright 2024 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-use crate::util::to_digits::ToDigits;
+use crate::util::to_digits::{length_digits, ToDigits};
 use crate::{Arbi, DDigit, Digit};
 use core::ops::{Mul, MulAssign};
 
@@ -617,26 +617,30 @@ impl Mul<$signed_type> for Arbi {
     #[allow(unused_comparisons)]
     fn mul(mut self, other: $signed_type) -> Self {
         match other.to_digits() {
-            None => self.make_zero(),
+            None => {
+                self.make_zero();
+                self
+            }
             Some(v) => {
                 let mut ret = Arbi::zero();
+                let v_len: usize = length_digits(&v);
                 Self::dmul_(
                     &mut ret,
                     &self.vec,
-                    &v,
+                    &v[..v_len],
                     self.is_negative(),
                     other < 0,
                 );
+                ret
             }
         }
-        self
     }
 }
 
 impl Mul<&$signed_type> for Arbi {
     type Output = Self;
     fn mul(self, other: &$signed_type) -> Self {
-        self * *other
+        self * (*other)
     }
 }
 
@@ -694,12 +698,13 @@ impl MulAssign<$signed_type> for Arbi {
         match other.to_digits() {
             None => self.make_zero(),
             Some(v) => {
-                let mut ret = Arbi::zero();
+                let self_clone = self.clone();
+                let v_len: usize = length_digits(&v);
                 Self::dmul_(
-                    &mut ret,
-                    &self.vec,
-                    &v,
-                    self.is_negative(),
+                    self,
+                    &self_clone.vec,
+                    &v[..v_len],
+                    self_clone.is_negative(),
                     other < 0,
                 );
             }
@@ -715,3 +720,128 @@ impl MulAssign<$signed_type> for Arbi {
 impl_arbi_mul_for_primitive![
     i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize
 ];
+
+#[cfg(test)]
+mod test_mul_with_integral {
+    use super::*;
+    use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
+    use crate::{SDDigit, SDigit, SQDigit};
+
+    #[test]
+    fn test_mul_zero() {
+        let mut a = Arbi::zero();
+        assert_eq!(&a * 0, 0);
+        a = Arbi::from(123456789);
+        assert_eq!(a * 0, 0);
+
+        let mut a = Arbi::zero();
+        assert_eq!(0 * &a, 0);
+        a = Arbi::from(123456789);
+        assert_eq!(0 * a, 0);
+    }
+
+    #[test]
+    fn test_mul_with_digit_or_less() {
+        let mut a = Arbi::from(-932011);
+        let rhs = 1216627769_i64;
+        assert_eq!(&a * rhs, -1133910463613459_i64);
+        a = Arbi::from(-rhs);
+        assert_eq!(a * rhs, -1480183128301917361i128);
+
+        let mut a = Arbi::from(-932011);
+        let rhs = -1216627769;
+        assert_eq!(rhs * &a, 1133910463613459i64);
+        a = Arbi::from(rhs);
+        assert_eq!(rhs * a, 1480183128301917361i128);
+    }
+
+    #[test]
+    fn test_mul_with_more_than_a_digit() {
+        let a = Arbi::from(-123456789101112i64);
+        let rhs = 1118814392749466777i64;
+        let expected = -138125232528959610630283137756024i128;
+        assert_eq!(&a * rhs, expected);
+        assert_eq!(a * rhs, expected);
+
+        let a = Arbi::from(-123456789101112i64);
+        let rhs = 1118814392749466777i64;
+        let expected = -138125232528959610630283137756024i128;
+        assert_eq!(rhs * &a, expected);
+        assert_eq!(rhs * a, expected);
+    }
+
+    #[test]
+    fn smoke() {
+        let (mut rng, _) = get_seedable_rng();
+        let die_sdigit = get_uniform_die(SDigit::MIN, SDigit::MAX);
+        let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
+
+        for _ in 0..i16::MAX {
+            let lhs = die_sddigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(&lhs_arbi * rhs, lhs as SQDigit * rhs as SQDigit);
+            let rhs = die_sdigit.sample(&mut rng);
+            assert_eq!(lhs_arbi * rhs, lhs as SQDigit * rhs as SQDigit);
+
+            let lhs = die_sdigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sdigit.sample(&mut rng);
+            assert_eq!(&lhs_arbi * rhs, lhs as SDDigit * rhs as SDDigit);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(lhs_arbi * rhs, lhs as SQDigit * rhs as SQDigit);
+
+            let lhs = die_sddigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(rhs * &lhs_arbi, rhs as SQDigit * lhs as SQDigit);
+            let rhs = die_sdigit.sample(&mut rng);
+            assert_eq!(rhs * lhs_arbi, rhs as SQDigit * lhs as SQDigit);
+
+            let lhs = die_sdigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sdigit.sample(&mut rng);
+            assert_eq!(rhs * &lhs_arbi, rhs as SDDigit * lhs as SDDigit);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(rhs * lhs_arbi, rhs as SQDigit * lhs as SQDigit);
+        }
+    }
+
+    #[test]
+    fn smoke_3_to_4_digits() {
+        let (mut rng, _) = get_seedable_rng();
+        let die_sqdigit = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+
+        for _ in 0..i16::MAX {
+            let lhs = die_sqdigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sqdigit.sample(&mut rng);
+            let expected = match (lhs as SQDigit).checked_mul(rhs as SQDigit) {
+                None => continue,
+                Some(v) => v,
+            };
+            assert_eq!(&lhs_arbi * rhs, expected);
+            let rhs = die_sqdigit.sample(&mut rng);
+            let expected = match (lhs as SQDigit).checked_mul(rhs as SQDigit) {
+                None => continue,
+                Some(v) => v,
+            };
+            assert_eq!(lhs_arbi * rhs, expected);
+
+            let lhs = die_sqdigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sqdigit.sample(&mut rng);
+            let expected = match (rhs as SQDigit).checked_mul(lhs as SQDigit) {
+                None => continue,
+                Some(v) => v,
+            };
+            assert_eq!(rhs * &lhs_arbi, expected);
+            let rhs = die_sqdigit.sample(&mut rng);
+            let expected = match (rhs as SQDigit).checked_mul(lhs as SQDigit) {
+                None => continue,
+                Some(v) => v,
+            };
+            assert_eq!(rhs * lhs_arbi, expected);
+        }
+    }
+}

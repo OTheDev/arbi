@@ -59,3 +59,30 @@ impl_to_digits_for_primitive![
     (4, usize, isize),
     (4, usize, usize)
 ];
+
+/// Return the number of `Digit`s actually needed. Note that this returns `None`
+/// if the slice is empty or nonempty with all zeros.
+pub(crate) fn length_digits(digits: &[Digit]) -> usize {
+    for (index, &digit) in digits.iter().rev().enumerate() {
+        if digit != 0 {
+            return digits.len() - index;
+        }
+    }
+    0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::length_digits;
+    use crate::Digit;
+
+    #[test]
+    fn test_length_digits() {
+        let a = [Digit::MAX];
+        assert_eq!(length_digits(&a), 1);
+        let b = [0, 1, 0];
+        assert_eq!(length_digits(&b), 2);
+        let c = [0, 0, 0];
+        assert_eq!(length_digits(&c), 0)
+    }
+}
