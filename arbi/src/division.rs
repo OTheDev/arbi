@@ -99,8 +99,8 @@ impl Arbi {
 
         let compl_e: u32 = Digit::BITS - e;
 
-        let mut u_norm = Arbi::default();
-        let mut v_norm = Arbi::default();
+        let mut u_norm = Arbi::zero();
+        let mut v_norm = Arbi::zero();
         u_norm.vec.resize(m + 1, 0);
         v_norm.vec.resize(n, 0);
 
@@ -252,8 +252,8 @@ impl core::ops::Div<Arbi> for Arbi {
     type Output = Arbi;
 
     fn div(self, rhs: Arbi) -> Arbi {
-        let mut quot: Arbi = Arbi::default();
-        let mut rem: Arbi = Arbi::default();
+        let mut quot: Arbi = Arbi::zero();
+        let mut rem: Arbi = Arbi::zero();
         Self::divide(&mut quot, &mut rem, &self, &rhs);
         quot
     }
@@ -264,8 +264,8 @@ impl<'a> core::ops::Div<&'a Arbi> for Arbi {
     type Output = Arbi;
 
     fn div(self, rhs: &'a Arbi) -> Arbi {
-        let mut quot: Arbi = Arbi::default();
-        let mut rem: Arbi = Arbi::default();
+        let mut quot: Arbi = Arbi::zero();
+        let mut rem: Arbi = Arbi::zero();
         Self::divide(&mut quot, &mut rem, &self, rhs);
         quot
     }
@@ -276,8 +276,8 @@ impl<'a> core::ops::Div<&'a Arbi> for &Arbi {
     type Output = Arbi;
 
     fn div(self, rhs: &'a Arbi) -> Arbi {
-        let mut quot: Arbi = Arbi::default();
-        let mut rem: Arbi = Arbi::default();
+        let mut quot: Arbi = Arbi::zero();
+        let mut rem: Arbi = Arbi::zero();
         Arbi::divide(&mut quot, &mut rem, self, rhs);
         quot
     }
@@ -286,8 +286,8 @@ impl<'a> core::ops::Div<&'a Arbi> for &Arbi {
 /// See the [`div()`](#method.div) method.
 impl core::ops::DivAssign<Arbi> for Arbi {
     fn div_assign(&mut self, rhs: Arbi) {
-        let mut quot: Arbi = Arbi::default();
-        let mut rem: Arbi = Arbi::default();
+        let mut quot: Arbi = Arbi::zero();
+        let mut rem: Arbi = Arbi::zero();
         Self::divide(&mut quot, &mut rem, self, &rhs);
         *self = quot;
     }
@@ -296,8 +296,8 @@ impl core::ops::DivAssign<Arbi> for Arbi {
 /// See the [`div()`](#method.div) method.
 impl<'a> core::ops::DivAssign<&'a Arbi> for Arbi {
     fn div_assign(&mut self, rhs: &'a Arbi) {
-        let mut quot: Arbi = Arbi::default();
-        let mut rem: Arbi = Arbi::default();
+        let mut quot: Arbi = Arbi::zero();
+        let mut rem: Arbi = Arbi::zero();
         Self::divide(&mut quot, &mut rem, self, rhs);
         *self = quot;
     }
@@ -308,8 +308,8 @@ impl core::ops::Rem<Arbi> for Arbi {
     type Output = Arbi;
 
     fn rem(self, rhs: Arbi) -> Arbi {
-        let mut quot: Arbi = Arbi::default();
-        let mut rem: Arbi = Arbi::default();
+        let mut quot: Arbi = Arbi::zero();
+        let mut rem: Arbi = Arbi::zero();
         Self::divide(&mut quot, &mut rem, &self, &rhs);
         rem
     }
@@ -320,8 +320,8 @@ impl<'a> core::ops::Rem<&'a Arbi> for Arbi {
     type Output = Arbi;
 
     fn rem(self, rhs: &'a Arbi) -> Arbi {
-        let mut quot: Arbi = Arbi::default();
-        let mut rem: Arbi = Arbi::default();
+        let mut quot: Arbi = Arbi::zero();
+        let mut rem: Arbi = Arbi::zero();
         Self::divide(&mut quot, &mut rem, &self, rhs);
         rem
     }
@@ -332,8 +332,8 @@ impl<'a> core::ops::Rem<&'a Arbi> for &Arbi {
     type Output = Arbi;
 
     fn rem(self, rhs: &'a Arbi) -> Arbi {
-        let mut quot: Arbi = Arbi::default();
-        let mut rem: Arbi = Arbi::default();
+        let mut quot: Arbi = Arbi::zero();
+        let mut rem: Arbi = Arbi::zero();
         Arbi::divide(&mut quot, &mut rem, self, rhs);
         rem
     }
@@ -342,8 +342,8 @@ impl<'a> core::ops::Rem<&'a Arbi> for &Arbi {
 /// See the [`div()`](#method.div) method.
 impl core::ops::RemAssign<Arbi> for Arbi {
     fn rem_assign(&mut self, rhs: Arbi) {
-        let mut quot: Arbi = Arbi::default();
-        let mut rem: Arbi = Arbi::default();
+        let mut quot: Arbi = Arbi::zero();
+        let mut rem: Arbi = Arbi::zero();
         Self::divide(&mut quot, &mut rem, self, &rhs);
         *self = rem;
     }
@@ -352,8 +352,8 @@ impl core::ops::RemAssign<Arbi> for Arbi {
 /// See the [`div()`](#method.div) method.
 impl<'a> core::ops::RemAssign<&'a Arbi> for Arbi {
     fn rem_assign(&mut self, rhs: &'a Arbi) {
-        let mut quot: Arbi = Arbi::default();
-        let mut rem: Arbi = Arbi::default();
+        let mut quot: Arbi = Arbi::zero();
+        let mut rem: Arbi = Arbi::zero();
         Self::divide(&mut quot, &mut rem, self, rhs);
         *self = rem;
     }
@@ -493,8 +493,8 @@ impl Arbi {
     /// ## Complexity
     /// \\( O(m \cdot n) \\)
     pub fn div(&self, other: &Arbi) -> (Arbi, Arbi) {
-        let mut quot: Arbi = Arbi::default();
-        let mut rem: Arbi = Arbi::default();
+        let mut quot: Arbi = Arbi::zero();
+        let mut rem: Arbi = Arbi::zero();
         Self::divide(&mut quot, &mut rem, self, other);
         (quot, rem)
     }
