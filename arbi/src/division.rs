@@ -3,7 +3,9 @@ Copyright 2024 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
+use crate::util::to_digits::{length_digits, ToDigits};
 use crate::{Arbi, BitCount, DDigit, Digit, SDDigit};
+use core::ops::{Div, DivAssign, Rem, RemAssign};
 
 impl Arbi {
     fn ddiv_algo_single(q: &mut Self, r: &mut Self, u: &[Digit], v: &[Digit]) {
@@ -258,7 +260,7 @@ impl Arbi {
 }
 
 /// See the [`div()`](#method.div) method.
-impl core::ops::Div<Arbi> for Arbi {
+impl Div<Arbi> for Arbi {
     type Output = Arbi;
 
     fn div(self, rhs: Arbi) -> Arbi {
@@ -270,7 +272,7 @@ impl core::ops::Div<Arbi> for Arbi {
 }
 
 /// See the [`div()`](#method.div) method.
-impl<'a> core::ops::Div<&'a Arbi> for Arbi {
+impl<'a> Div<&'a Arbi> for Arbi {
     type Output = Arbi;
 
     fn div(self, rhs: &'a Arbi) -> Arbi {
@@ -282,7 +284,7 @@ impl<'a> core::ops::Div<&'a Arbi> for Arbi {
 }
 
 /// See the [`div()`](#method.div) method.
-impl<'a> core::ops::Div<&'a Arbi> for &Arbi {
+impl<'a> Div<&'a Arbi> for &Arbi {
     type Output = Arbi;
 
     fn div(self, rhs: &'a Arbi) -> Arbi {
@@ -294,7 +296,7 @@ impl<'a> core::ops::Div<&'a Arbi> for &Arbi {
 }
 
 /// See the [`div()`](#method.div) method.
-impl core::ops::DivAssign<Arbi> for Arbi {
+impl DivAssign<Arbi> for Arbi {
     fn div_assign(&mut self, rhs: Arbi) {
         let mut quot: Arbi = Arbi::zero();
         let mut rem: Arbi = Arbi::zero();
@@ -304,7 +306,7 @@ impl core::ops::DivAssign<Arbi> for Arbi {
 }
 
 /// See the [`div()`](#method.div) method.
-impl<'a> core::ops::DivAssign<&'a Arbi> for Arbi {
+impl<'a> DivAssign<&'a Arbi> for Arbi {
     fn div_assign(&mut self, rhs: &'a Arbi) {
         let mut quot: Arbi = Arbi::zero();
         let mut rem: Arbi = Arbi::zero();
@@ -314,7 +316,7 @@ impl<'a> core::ops::DivAssign<&'a Arbi> for Arbi {
 }
 
 /// See the [`div()`](#method.div) method.
-impl core::ops::Rem<Arbi> for Arbi {
+impl Rem<Arbi> for Arbi {
     type Output = Arbi;
 
     fn rem(self, rhs: Arbi) -> Arbi {
@@ -326,7 +328,7 @@ impl core::ops::Rem<Arbi> for Arbi {
 }
 
 /// See the [`div()`](#method.div) method.
-impl<'a> core::ops::Rem<&'a Arbi> for Arbi {
+impl<'a> Rem<&'a Arbi> for Arbi {
     type Output = Arbi;
 
     fn rem(self, rhs: &'a Arbi) -> Arbi {
@@ -338,7 +340,7 @@ impl<'a> core::ops::Rem<&'a Arbi> for Arbi {
 }
 
 /// See the [`div()`](#method.div) method.
-impl<'a> core::ops::Rem<&'a Arbi> for &Arbi {
+impl<'a> Rem<&'a Arbi> for &Arbi {
     type Output = Arbi;
 
     fn rem(self, rhs: &'a Arbi) -> Arbi {
@@ -350,7 +352,7 @@ impl<'a> core::ops::Rem<&'a Arbi> for &Arbi {
 }
 
 /// See the [`div()`](#method.div) method.
-impl core::ops::RemAssign<Arbi> for Arbi {
+impl RemAssign<Arbi> for Arbi {
     fn rem_assign(&mut self, rhs: Arbi) {
         let mut quot: Arbi = Arbi::zero();
         let mut rem: Arbi = Arbi::zero();
@@ -360,7 +362,7 @@ impl core::ops::RemAssign<Arbi> for Arbi {
 }
 
 /// See the [`div()`](#method.div) method.
-impl<'a> core::ops::RemAssign<&'a Arbi> for Arbi {
+impl<'a> RemAssign<&'a Arbi> for Arbi {
     fn rem_assign(&mut self, rhs: &'a Arbi) {
         let mut quot: Arbi = Arbi::zero();
         let mut rem: Arbi = Arbi::zero();
@@ -459,7 +461,7 @@ impl Arbi {
     ///     Arbi::from_str_radix("40000000000000000000000000000000000000", 16)
     ///         .unwrap();
     ///
-    /// let (quo, rem) = num.div(&den);
+    /// let (quo, rem) = num.divrem(&den);
     /// assert_eq!(quo, 1125899906842624_u64);
     /// assert_eq!(rem, 0);
     ///
@@ -470,7 +472,7 @@ impl Arbi {
     ///     panic!("Parse error: {}", e);
     /// }
     ///
-    /// let (quo, rem) = num.div(&den);
+    /// let (quo, rem) = num.divrem(&den);
     /// let expected_rem = Arbi::from_str_radix(
     ///     "54e92bc47a9d2e49a6543c40fc47666d59b2c38caac071917",
     ///     16,
@@ -490,7 +492,7 @@ impl Arbi {
     /// use arbi::Arbi;
     ///
     /// let x = Arbi::from_str_radix("123456789", 10).unwrap();
-    /// let (quo, rem) = x.div(&Arbi::zero());
+    /// let (quo, rem) = x.divrem(&Arbi::zero());
     /// ```
     ///
     /// Dividing a primitive integer value by zero panics:
@@ -502,7 +504,7 @@ impl Arbi {
     ///
     /// ## Complexity
     /// \\( O(m \cdot n) \\)
-    pub fn div(&self, other: &Arbi) -> (Arbi, Arbi) {
+    pub fn divrem(&self, other: &Arbi) -> (Arbi, Arbi) {
         let mut quot: Arbi = Arbi::zero();
         let mut rem: Arbi = Arbi::zero();
         Self::divide(&mut quot, &mut rem, self, other);
@@ -520,26 +522,26 @@ mod test_divrem {
     #[test]
     #[should_panic]
     fn test_div_by_zero() {
-        Arbi::from(10).div(&Arbi::zero());
+        Arbi::from(10).divrem(&Arbi::zero());
     }
 
     #[test]
     fn test_misc() {
-        let (quot, rem) = Arbi::from(10).div(&Arbi::from(-2));
+        let (quot, rem) = Arbi::from(10).divrem(&Arbi::from(-2));
         assert_eq!(quot, -5);
         assert_eq!(rem, 0);
 
-        let (quot, rem) = Arbi::from(SDDigit::MIN).div(&Arbi::neg_one());
+        let (quot, rem) = Arbi::from(SDDigit::MIN).divrem(&Arbi::neg_one());
         assert_eq!(quot, 1 as DDigit + SDDigit::MAX as DDigit);
         assert_eq!(rem, 0);
 
-        let (quot, rem) = Arbi::from(10).div(&Arbi::from(3));
+        let (quot, rem) = Arbi::from(10).divrem(&Arbi::from(3));
         assert_eq!(quot, 3);
         assert_eq!(rem, 1);
 
         let (a_in, b_in) =
             (13565672763181344623_u128, 10964129492588451979_u128);
-        let (quot, rem) = Arbi::from(a_in).div(&Arbi::from(b_in));
+        let (quot, rem) = Arbi::from(a_in).divrem(&Arbi::from(b_in));
         assert_eq!(quot, a_in / b_in);
         assert_eq!(rem, a_in % b_in);
     }
@@ -551,7 +553,7 @@ mod test_divrem {
         let a = Arbi::from_str_base("237634993259031120016359157450036169713011146626949272664357175750540350033099851627590", BASE10).unwrap();
         let b = Arbi::from_str_base("62391207566730956436059735556895094403209083705277492693463432131493682000515", BASE10).unwrap();
 
-        let (quot, rem) = a.div(&b);
+        let (quot, rem) = a.divrem(&b);
 
         assert_eq!(quot, 3808789772_i64);
         assert_eq!(rem, Arbi::from_str_base("16137245666917264679909410073093944632796496071688924192091054946917820895010", BASE10).unwrap());
@@ -565,7 +567,7 @@ mod test_divrem {
             Arbi::from_str_base("1208925820177561948258300", BASE10).unwrap();
         let b = Arbi::from_str_base("281474976841724", BASE10).unwrap();
 
-        let (quot, rem) = a.div(&b);
+        let (quot, rem) = a.divrem(&b);
 
         assert_eq!(quot, 4294967295_u64);
         assert_eq!(rem, 281474976841720_u64);
@@ -578,7 +580,7 @@ mod test_divrem {
         let b =
             Arbi::from_str_base("77371252455336267181195265", BASE10).unwrap();
 
-        let (quot, rem) = a.div(&b);
+        let (quot, rem) = a.divrem(&b);
 
         assert_eq!(quot, 15362);
         assert_eq!(rem, 77371252455336267181179904_u128);
@@ -612,7 +614,7 @@ mod test_divrem {
                     continue;
                 }
 
-                let (quot, rem) = a.div(&b);
+                let (quot, rem) = a.divrem(&b);
 
                 assert_eq!(
                     quot,
@@ -632,3 +634,221 @@ mod test_divrem {
         }
     }
 }
+
+/* !impl_arbi_div_for_primitive */
+macro_rules! impl_arbi_div_for_primitive {
+    ($($signed_type:ty),* ) => {
+        $(
+
+impl Div<$signed_type> for Arbi {
+    type Output = Self;
+    #[allow(unused_comparisons)]
+    fn div(self, other: $signed_type) -> Self {
+        match other.to_digits() {
+            None => panic!("Division by zero attempt."),
+            Some(v) => {
+                let v_len: usize = length_digits(&v);
+                let mut quo = Arbi::zero();
+                let mut rem = Arbi::zero();
+                Self::ddivide(
+                    &mut quo,
+                    &mut rem,
+                    &self.vec,
+                    &v[..v_len],
+                    self.is_negative(),
+                    other < 0,
+                );
+                quo
+            }
+        }
+    }
+}
+
+impl Div<&$signed_type> for Arbi {
+    type Output = Self;
+    fn div(self, other: &$signed_type) -> Self {
+        self / (*other)
+    }
+}
+
+impl Div<$signed_type> for &Arbi {
+    type Output = Arbi;
+    fn div(self, other: $signed_type) -> Arbi {
+        self.clone() / other
+    }
+}
+
+impl Div<&$signed_type> for &Arbi {
+    type Output = Arbi;
+    fn div(self, other: &$signed_type) -> Arbi {
+        self.clone() / (*other)
+    }
+}
+
+impl Div<Arbi> for $signed_type {
+    type Output = Arbi;
+    fn div(self, other: Arbi) -> Arbi {
+        self / &other
+    }
+}
+
+impl Div<&Arbi> for $signed_type {
+    type Output = Arbi;
+    fn div(self, other: &Arbi) -> Arbi {
+        Arbi::from(self) / other
+    }
+}
+
+impl Div<Arbi> for &$signed_type {
+    type Output = Arbi;
+    fn div(self, other: Arbi) -> Arbi {
+        (*self) / other
+    }
+}
+
+impl Div<&Arbi> for &$signed_type {
+    type Output = Arbi;
+    fn div(self, other: &Arbi) -> Arbi {
+        (*self) / other
+    }
+}
+
+impl DivAssign<&$signed_type> for Arbi {
+    fn div_assign(&mut self, other: &$signed_type) {
+        self.div_assign(*other);
+    }
+}
+
+impl DivAssign<$signed_type> for Arbi {
+    #[allow(unused_comparisons)]
+    fn div_assign(&mut self, other: $signed_type) {
+        match other.to_digits() {
+            None => panic!("Division by zero attempt."),
+            Some(v) => {
+                let v_len: usize = length_digits(&v);
+                let mut quo = Arbi::zero();
+                let mut rem = Arbi::zero();
+                Self::ddivide(
+                    &mut quo,
+                    &mut rem,
+                    &self.vec,
+                    &v[..v_len],
+                    self.is_negative(),
+                    other < 0,
+                );
+                *self = quo;
+            }
+        }
+    }
+}
+
+impl Rem<$signed_type> for Arbi {
+    type Output = Self;
+    #[allow(unused_comparisons)]
+    fn rem(self, other: $signed_type) -> Self {
+        match other.to_digits() {
+            None => panic!("Division by zero attempt."),
+            Some(v) => {
+                let v_len: usize = length_digits(&v);
+                let mut quo = Arbi::zero();
+                let mut rem = Arbi::zero();
+                Self::ddivide(
+                    &mut quo,
+                    &mut rem,
+                    &self.vec,
+                    &v[..v_len],
+                    self.is_negative(),
+                    other < 0,
+                );
+                rem
+            }
+        }
+    }
+}
+
+impl Rem<&$signed_type> for Arbi {
+    type Output = Self;
+    fn rem(self, other: &$signed_type) -> Self {
+        self % (*other)
+    }
+}
+
+impl Rem<$signed_type> for &Arbi {
+    type Output = Arbi;
+    fn rem(self, other: $signed_type) -> Arbi {
+        self.clone() % other
+    }
+}
+
+impl Rem<&$signed_type> for &Arbi {
+    type Output = Arbi;
+    fn rem(self, other: &$signed_type) -> Arbi {
+        self.clone() % (*other)
+    }
+}
+
+impl Rem<Arbi> for $signed_type {
+    type Output = Arbi;
+    fn rem(self, other: Arbi) -> Arbi {
+        self % &other
+    }
+}
+
+impl Rem<&Arbi> for $signed_type {
+    type Output = Arbi;
+    fn rem(self, other: &Arbi) -> Arbi {
+        Arbi::from(self) % other
+    }
+}
+
+impl Rem<Arbi> for &$signed_type {
+    type Output = Arbi;
+    fn rem(self, other: Arbi) -> Arbi {
+        (*self) % other
+    }
+}
+
+impl Rem<&Arbi> for &$signed_type {
+    type Output = Arbi;
+    fn rem(self, other: &Arbi) -> Arbi {
+        (*self) % other
+    }
+}
+
+impl RemAssign<&$signed_type> for Arbi {
+    fn rem_assign(&mut self, other: &$signed_type) {
+        self.div_assign(*other);
+    }
+}
+
+impl RemAssign<$signed_type> for Arbi {
+    #[allow(unused_comparisons)]
+    fn rem_assign(&mut self, other: $signed_type) {
+        match other.to_digits() {
+            None => panic!("Division by zero attempt."),
+            Some(v) => {
+                let v_len: usize = length_digits(&v);
+                let mut quo = Arbi::zero();
+                let mut rem = Arbi::zero();
+                Self::ddivide(
+                    &mut quo,
+                    &mut rem,
+                    &self.vec,
+                    &v[..v_len],
+                    self.is_negative(),
+                    other < 0,
+                );
+                *self = rem;
+            }
+        }
+    }
+}
+
+        )*
+    }
+}
+/* impl_arbi_div_for_primitive! */
+
+impl_arbi_div_for_primitive![
+    i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize
+];

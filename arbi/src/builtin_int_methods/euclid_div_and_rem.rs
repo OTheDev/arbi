@@ -144,7 +144,7 @@ impl Arbi {
     /// # Complexity
     /// \\( O(m \cdot n) \\)
     pub fn divrem_euclid_ref(&self, rhs: &Self) -> (Arbi, Arbi) {
-        let (mut quot, mut rem) = self.div(rhs);
+        let (mut quot, mut rem) = self.divrem(rhs);
         if rem.is_negative() {
             if rhs.is_negative() {
                 // rhs < 0
