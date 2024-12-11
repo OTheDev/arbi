@@ -60,7 +60,7 @@ impl_to_digits_for_primitive![
     (4, usize, usize)
 ];
 
-/// Return the number of `Digit`s actually needed. Note that this returns `None`
+/// Return the number of `Digit`s actually needed. Note that this returns `0`
 /// if the slice is empty or nonempty with all zeros.
 pub(crate) fn length_digits(digits: &[Digit]) -> usize {
     for (index, &digit) in digits.iter().rev().enumerate() {

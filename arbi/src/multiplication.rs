@@ -778,32 +778,60 @@ mod test_mul_with_integral {
 
         for _ in 0..i16::MAX {
             let lhs = die_sddigit.sample(&mut rng);
-            let lhs_arbi = Arbi::from(lhs);
+            let mut lhs_arbi = Arbi::from(lhs);
             let rhs = die_sddigit.sample(&mut rng);
-            assert_eq!(&lhs_arbi * rhs, lhs as SQDigit * rhs as SQDigit);
+            let expected = lhs as SQDigit * rhs as SQDigit;
+            assert_eq!(&lhs_arbi * rhs, expected);
+            let mut lhs_clone = lhs_arbi.clone();
+            lhs_clone *= rhs;
+            assert_eq!(lhs_clone, expected);
             let rhs = die_sdigit.sample(&mut rng);
-            assert_eq!(lhs_arbi * rhs, lhs as SQDigit * rhs as SQDigit);
+            let expected = lhs as SQDigit * rhs as SQDigit;
+            assert_eq!(lhs_arbi.clone() * rhs, expected);
+            lhs_arbi *= rhs;
+            assert_eq!(lhs_arbi, expected);
 
             let lhs = die_sdigit.sample(&mut rng);
-            let lhs_arbi = Arbi::from(lhs);
+            let mut lhs_arbi = Arbi::from(lhs);
             let rhs = die_sdigit.sample(&mut rng);
-            assert_eq!(&lhs_arbi * rhs, lhs as SDDigit * rhs as SDDigit);
+            let expected = lhs as SDDigit * rhs as SDDigit;
+            assert_eq!(&lhs_arbi * rhs, expected);
+            let mut lhs_clone = lhs_arbi.clone();
+            lhs_clone *= rhs;
+            assert_eq!(lhs_clone, expected);
             let rhs = die_sddigit.sample(&mut rng);
-            assert_eq!(lhs_arbi * rhs, lhs as SQDigit * rhs as SQDigit);
+            let expected = lhs as SQDigit * rhs as SQDigit;
+            assert_eq!(lhs_arbi.clone() * rhs, expected);
+            lhs_arbi *= rhs;
+            assert_eq!(lhs_arbi, expected);
 
             let lhs = die_sddigit.sample(&mut rng);
-            let lhs_arbi = Arbi::from(lhs);
+            let mut lhs_arbi = Arbi::from(lhs);
             let rhs = die_sddigit.sample(&mut rng);
-            assert_eq!(rhs * &lhs_arbi, rhs as SQDigit * lhs as SQDigit);
+            let expected = rhs as SQDigit * lhs as SQDigit;
+            assert_eq!(rhs * &lhs_arbi, expected);
+            let mut lhs_clone = lhs_arbi.clone();
+            lhs_clone *= rhs;
+            assert_eq!(lhs_clone, expected);
             let rhs = die_sdigit.sample(&mut rng);
-            assert_eq!(rhs * lhs_arbi, rhs as SQDigit * lhs as SQDigit);
+            let expected = rhs as SQDigit * lhs as SQDigit;
+            assert_eq!(rhs * lhs_arbi.clone(), expected);
+            lhs_arbi *= rhs;
+            assert_eq!(lhs_arbi, expected);
 
             let lhs = die_sdigit.sample(&mut rng);
-            let lhs_arbi = Arbi::from(lhs);
+            let mut lhs_arbi = Arbi::from(lhs);
             let rhs = die_sdigit.sample(&mut rng);
-            assert_eq!(rhs * &lhs_arbi, rhs as SDDigit * lhs as SDDigit);
+            let expected = rhs as SDDigit * lhs as SDDigit;
+            assert_eq!(rhs * &lhs_arbi, expected);
+            let mut lhs_clone = lhs_arbi.clone();
+            lhs_clone *= rhs;
+            assert_eq!(lhs_clone, expected);
             let rhs = die_sddigit.sample(&mut rng);
-            assert_eq!(rhs * lhs_arbi, rhs as SQDigit * lhs as SQDigit);
+            let expected = rhs as SQDigit * lhs as SQDigit;
+            assert_eq!(rhs * lhs_arbi.clone(), expected);
+            lhs_arbi *= rhs;
+            assert_eq!(lhs_arbi, expected);
         }
     }
 
@@ -814,7 +842,7 @@ mod test_mul_with_integral {
 
         for _ in 0..i16::MAX {
             let lhs = die_sqdigit.sample(&mut rng);
-            let lhs_arbi = Arbi::from(lhs);
+            let mut lhs_arbi = Arbi::from(lhs);
             let rhs = die_sqdigit.sample(&mut rng);
             let expected = match (lhs as SQDigit).checked_mul(rhs as SQDigit) {
                 None => continue,
@@ -826,10 +854,12 @@ mod test_mul_with_integral {
                 None => continue,
                 Some(v) => v,
             };
-            assert_eq!(lhs_arbi * rhs, expected);
+            assert_eq!(lhs_arbi.clone() * rhs, expected);
+            lhs_arbi *= rhs;
+            assert_eq!(lhs_arbi, expected);
 
             let lhs = die_sqdigit.sample(&mut rng);
-            let lhs_arbi = Arbi::from(lhs);
+            let mut lhs_arbi = Arbi::from(lhs);
             let rhs = die_sqdigit.sample(&mut rng);
             let expected = match (rhs as SQDigit).checked_mul(lhs as SQDigit) {
                 None => continue,
@@ -841,7 +871,9 @@ mod test_mul_with_integral {
                 None => continue,
                 Some(v) => v,
             };
-            assert_eq!(rhs * lhs_arbi, expected);
+            assert_eq!(rhs * lhs_arbi.clone(), expected);
+            lhs_arbi *= rhs;
+            assert_eq!(lhs_arbi, expected);
         }
     }
 }
