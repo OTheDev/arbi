@@ -520,7 +520,7 @@ mod test_divrem {
     use crate::{SDDigit, SDigit, SQDigit};
 
     #[test]
-    #[should_panic]
+    #[should_panic = "Division by zero attempt."]
     fn test_div_by_zero() {
         Arbi::from(10).divrem(&Arbi::zero());
     }
@@ -637,7 +637,7 @@ mod test_divrem {
 
 /* !impl_arbi_div_for_primitive */
 macro_rules! impl_arbi_div_for_primitive {
-    ($($signed_type:ty),* ) => {
+    ($(($signed_type:ty, $test_module:ident)),* ) => {
         $(
 
 impl Div<$signed_type> for Arbi {
@@ -674,7 +674,7 @@ impl Div<&$signed_type> for Arbi {
 impl Div<$signed_type> for &Arbi {
     type Output = Arbi;
     fn div(self, other: $signed_type) -> Arbi {
-        self.clone() / other
+        self.clone() / Arbi::from(other)
     }
 }
 
@@ -844,11 +844,123 @@ impl RemAssign<$signed_type> for Arbi {
     }
 }
 
+#[cfg(test)]
+mod $test_module {
+    use super::*;
+    use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
+    use crate::{SDDigit, SDigit, SQDigit};
+
+    #[test]
+    #[should_panic = "Division by zero attempt."]
+    fn test_div_by_zero() {
+        let zero = 0 as $signed_type;
+        let n = Arbi::from(-123456789);
+        let _ = n / zero;
+    }
+
+    #[test]
+    #[should_panic = "Division by zero attempt."]
+    fn test_rem_by_zero() {
+        let zero = 0 as $signed_type;
+        let n = Arbi::from(-123456789);
+        let _ = n % zero;
+    }
+
+    #[test]
+    #[should_panic = "Division by zero attempt."]
+    fn test_div_by_zero_ref() {
+        let zero = 0 as $signed_type;
+        let n = Arbi::from(-123456789);
+        let _ = &n / zero;
+    }
+
+    #[test]
+    #[should_panic = "Division by zero attempt."]
+    fn test_rem_by_zero_ref() {
+        let zero = 0 as $signed_type;
+        let n = Arbi::from(-123456789);
+        let _ = &n % zero;
+    }
+
+    #[test]
+    fn smoke() {
+        let (mut rng, _) = get_seedable_rng();
+        let die_sdigit = get_uniform_die(SDigit::MIN, SDigit::MAX);
+        let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
+        let die_sqdigit = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+        let die = get_uniform_die(<$signed_type>::MIN, <$signed_type>::MAX);
+        for _ in 0..i16::MAX {
+            let r = die.sample(&mut rng);
+            if !fits_in_i128(r) {
+                continue;
+            }
+            if r == 0 {
+                continue;
+            }
+
+            let lhs = die_sdigit.sample(&mut rng);
+            if (lhs as i128 == i128::MIN) && (r as i128 == -1) {
+                continue;
+            }
+            let lhs_arbi = Arbi::from(lhs);
+            let expected_div = lhs as SQDigit / r as SQDigit;
+            let expected_rem = lhs as SQDigit % r as SQDigit;
+            assert_eq!(&lhs_arbi / r, expected_div);
+            assert_eq!(&lhs_arbi % r, expected_rem);
+            assert_eq!(lhs_arbi.clone() / r, expected_div);
+            assert_eq!(lhs_arbi % r, expected_rem);
+
+            let lhs = die_sddigit.sample(&mut rng);
+            if (lhs as i128 == i128::MIN) && (r as i128 == -1) {
+                continue;
+            }
+            let lhs_arbi = Arbi::from(lhs);
+            let expected_div = lhs as SQDigit / r as SQDigit;
+            let expected_rem = lhs as SQDigit % r as SQDigit;
+            assert_eq!(&lhs_arbi / r, expected_div);
+            assert_eq!(&lhs_arbi % r, expected_rem);
+            assert_eq!(lhs_arbi.clone() / r, expected_div);
+            assert_eq!(lhs_arbi % r, expected_rem);
+
+            let lhs = die_sqdigit.sample(&mut rng);
+            if (lhs as i128 == i128::MIN) && (r as i128 == -1) {
+                continue;
+            }
+            let lhs_arbi = Arbi::from(lhs);
+            let expected_div = lhs as SQDigit / r as SQDigit;
+            let expected_rem = lhs as SQDigit % r as SQDigit;
+            assert_eq!(&lhs_arbi / r, expected_div);
+            assert_eq!(&lhs_arbi % r, expected_rem);
+            assert_eq!(lhs_arbi.clone() / r, expected_div);
+            assert_eq!(lhs_arbi % r, expected_rem);
+        }
+    }
+}
+
         )*
     }
 }
 /* impl_arbi_div_for_primitive! */
 
 impl_arbi_div_for_primitive![
-    i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize
+    (i8, test_i8),
+    (u8, test_u8),
+    (i16, test_i16),
+    (u16, test_u16),
+    (i32, test_i32),
+    (u32, test_u32),
+    (i64, test_i64),
+    (u64, test_u64),
+    (i128, test_i128),
+    (u128, test_u128),
+    (isize, test_isize),
+    (usize, test_usize)
 ];
+
+#[allow(dead_code)]
+pub(crate) fn fits_in_i128<T>(num: T) -> bool
+where
+    T: PartialOrd + Copy + core::convert::TryInto<i128>,
+{
+    num.try_into().is_ok()
+}
