@@ -935,6 +935,57 @@ mod $test_module {
             assert_eq!(lhs_arbi % r, expected_rem);
         }
     }
+
+    #[test]
+    fn smoke_primitive_on_lhs() {
+        let (mut rng, _) = get_seedable_rng();
+        let die = get_uniform_die(<$signed_type>::MIN, <$signed_type>::MAX);
+        let die_sdigit = get_uniform_die(SDigit::MIN, SDigit::MAX);
+        let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
+        let die_sqdigit = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+        for _ in 0..i16::MAX {
+            let lhs = die.sample(&mut rng);
+            if !fits_in_i128(lhs) {
+                continue;
+            }
+
+            let rhs = die_sqdigit.sample(&mut rng);
+            if rhs == 0 {
+                continue;
+            }
+            let rhs_arbi = Arbi::from(rhs);
+            let expected_div = lhs as SQDigit / rhs as SQDigit;
+            let expected_rem = lhs as SQDigit % rhs as SQDigit;
+            assert_eq!(lhs / &rhs_arbi, expected_div);
+            assert_eq!(lhs % &rhs_arbi, expected_rem);
+            assert_eq!(lhs / rhs_arbi.clone(), expected_div);
+            assert_eq!(lhs % rhs_arbi, expected_rem);
+
+            let rhs = die_sddigit.sample(&mut rng);
+            if rhs == 0 {
+                continue;
+            }
+            let rhs_arbi = Arbi::from(rhs);
+            let expected_div = lhs as SQDigit / rhs as SQDigit;
+            let expected_rem = lhs as SQDigit % rhs as SQDigit;
+            assert_eq!(lhs / &rhs_arbi, expected_div);
+            assert_eq!(lhs % &rhs_arbi, expected_rem);
+            assert_eq!(lhs / rhs_arbi.clone(), expected_div);
+            assert_eq!(lhs % rhs_arbi, expected_rem);
+
+            let rhs = die_sdigit.sample(&mut rng);
+            if rhs == 0 {
+                continue;
+            }
+            let rhs_arbi = Arbi::from(rhs);
+            let expected_div = lhs as SQDigit / rhs as SQDigit;
+            let expected_rem = lhs as SQDigit % rhs as SQDigit;
+            assert_eq!(lhs / &rhs_arbi, expected_div);
+            assert_eq!(lhs % &rhs_arbi, expected_rem);
+            assert_eq!(lhs / rhs_arbi.clone(), expected_div);
+            assert_eq!(lhs % rhs_arbi, expected_rem);
+        }
+    }
 }
 
         )*
