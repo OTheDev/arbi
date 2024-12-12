@@ -674,7 +674,7 @@ impl Div<&$signed_type> for Arbi {
 impl Div<$signed_type> for &Arbi {
     type Output = Arbi;
     fn div(self, other: $signed_type) -> Arbi {
-        self.clone() / Arbi::from(other)
+        self.clone() / other
     }
 }
 
@@ -715,7 +715,7 @@ impl Div<&Arbi> for &$signed_type {
 
 impl DivAssign<&$signed_type> for Arbi {
     fn div_assign(&mut self, other: &$signed_type) {
-        self.div_assign(*other);
+        (*self) /= *other;
     }
 }
 
@@ -817,7 +817,7 @@ impl Rem<&Arbi> for &$signed_type {
 
 impl RemAssign<&$signed_type> for Arbi {
     fn rem_assign(&mut self, other: &$signed_type) {
-        self.div_assign(*other);
+        (*self) %= *other;
     }
 }
 
