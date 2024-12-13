@@ -685,34 +685,6 @@ impl Div<&$signed_type> for &Arbi {
     }
 }
 
-impl Div<Arbi> for $signed_type {
-    type Output = Arbi;
-    fn div(self, other: Arbi) -> Arbi {
-        self / &other
-    }
-}
-
-impl Div<&Arbi> for $signed_type {
-    type Output = Arbi;
-    fn div(self, other: &Arbi) -> Arbi {
-        Arbi::from(self) / other
-    }
-}
-
-impl Div<Arbi> for &$signed_type {
-    type Output = Arbi;
-    fn div(self, other: Arbi) -> Arbi {
-        (*self) / other
-    }
-}
-
-impl Div<&Arbi> for &$signed_type {
-    type Output = Arbi;
-    fn div(self, other: &Arbi) -> Arbi {
-        (*self) / other
-    }
-}
-
 impl DivAssign<&$signed_type> for Arbi {
     fn div_assign(&mut self, other: &$signed_type) {
         (*self) /= *other;
@@ -787,34 +759,6 @@ impl Rem<&$signed_type> for &Arbi {
     }
 }
 
-impl Rem<Arbi> for $signed_type {
-    type Output = Arbi;
-    fn rem(self, other: Arbi) -> Arbi {
-        self % &other
-    }
-}
-
-impl Rem<&Arbi> for $signed_type {
-    type Output = Arbi;
-    fn rem(self, other: &Arbi) -> Arbi {
-        Arbi::from(self) % other
-    }
-}
-
-impl Rem<Arbi> for &$signed_type {
-    type Output = Arbi;
-    fn rem(self, other: Arbi) -> Arbi {
-        (*self) % other
-    }
-}
-
-impl Rem<&Arbi> for &$signed_type {
-    type Output = Arbi;
-    fn rem(self, other: &Arbi) -> Arbi {
-        (*self) % other
-    }
-}
-
 impl RemAssign<&$signed_type> for Arbi {
     fn rem_assign(&mut self, other: &$signed_type) {
         (*self) %= *other;
@@ -841,6 +785,64 @@ impl RemAssign<$signed_type> for Arbi {
                 *self = rem;
             }
         }
+    }
+}
+
+impl Div<Arbi> for $signed_type {
+    type Output = Arbi;
+    fn div(self, other: Arbi) -> Self::Output {
+        self / &other
+    }
+}
+
+impl Div<&Arbi> for $signed_type {
+    type Output = Arbi;
+    fn div(self, other: &Arbi) -> Self::Output {
+        let num = Arbi::from(self);
+        num / other
+    }
+}
+
+impl Div<Arbi> for &$signed_type {
+    type Output = Arbi;
+    fn div(self, other: Arbi) -> Self::Output {
+        (*self) / other
+    }
+}
+
+impl Div<&Arbi> for &$signed_type {
+    type Output = Arbi;
+    fn div(self, other: &Arbi) -> Self::Output {
+        (*self) / other
+    }
+}
+
+impl Rem<Arbi> for $signed_type {
+    type Output = Arbi;
+    fn rem(self, other: Arbi) -> Self::Output {
+        self % &other
+    }
+}
+
+impl Rem<&Arbi> for $signed_type {
+    type Output = Arbi;
+    fn rem(self, other: &Arbi) -> Self::Output {
+        let num = Arbi::from(self);
+        num % other
+    }
+}
+
+impl Rem<Arbi> for &$signed_type {
+    type Output = Arbi;
+    fn rem(self, other: Arbi) -> Self::Output {
+        (*self) % other
+    }
+}
+
+impl Rem<&Arbi> for &$signed_type {
+    type Output = Arbi;
+    fn rem(self, other: &Arbi) -> Self::Output {
+        (*self) % other
     }
 }
 
