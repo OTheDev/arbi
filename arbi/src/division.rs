@@ -637,7 +637,7 @@ mod test_divrem {
 
 /* !impl_arbi_div_for_primitive */
 macro_rules! impl_arbi_div_for_primitive {
-    ($(($signed_type:ty, $test_module:ident)),* ) => {
+    ($(($signed_type:ty, $test_module:ident)),*) => {
         $(
 
 impl Div<$signed_type> for Arbi {
