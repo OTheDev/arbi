@@ -406,6 +406,7 @@ impl Arbi {
         Self::dbisect(&x.vec, lower, upper, n);
     }
 
+    // TODO: optimize
     fn dmul_karatsuba(w: &mut Self, u: &[Digit], v: &[Digit]) {
         let n: usize = core::cmp::min(u.len(), v.len()) >> 1;
 
