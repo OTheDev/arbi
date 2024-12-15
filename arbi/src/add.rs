@@ -440,7 +440,7 @@ mod tests {
     fn test_add() {
         let a = Arbi::from(10);
         let b = Arbi::from(-5);
-        let zero = Arbi::default();
+        let zero = Arbi::zero();
 
         assert_eq!(&a + &b, 5);
         assert_eq!(&b + &a, 5);

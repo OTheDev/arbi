@@ -42,7 +42,7 @@ impl From<$signed> for Arbi {
         type UnsignedT = $unsigned;
 
         let mut uvalue: UnsignedT;
-        let mut x = Arbi::default();
+        let mut x = Arbi::zero();
         if value == 0 {
             return x;
         } else if value < 0 {
