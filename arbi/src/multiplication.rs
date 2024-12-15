@@ -180,7 +180,7 @@ impl Mul<Arbi> for Arbi {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        let mut ret = Arbi::default();
+        let mut ret = Arbi::zero();
         Self::mul_(&mut ret, &self, &rhs);
         ret
     }
@@ -191,7 +191,7 @@ impl<'a> Mul<&'a Arbi> for Arbi {
     type Output = Self;
 
     fn mul(self, rhs: &'a Arbi) -> Self {
-        let mut ret = Arbi::default();
+        let mut ret = Arbi::zero();
         Self::mul_(&mut ret, &self, rhs);
         ret
     }
@@ -232,7 +232,7 @@ impl<'b> Mul<&'b Arbi> for &Arbi {
     type Output = Arbi;
 
     fn mul(self, rhs: &'b Arbi) -> Self::Output {
-        let mut ret = Arbi::default();
+        let mut ret = Arbi::zero();
         Arbi::mul_(&mut ret, self, rhs);
         ret
     }

@@ -176,7 +176,7 @@ mod tests {
 
     #[test]
     fn test_around_zero() {
-        let mut arbi = Arbi::default();
+        let mut arbi = Arbi::zero();
         arbi.incr();
         assert_eq!(arbi, 1);
 
