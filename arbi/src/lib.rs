@@ -7,7 +7,10 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 #![no_std]
+#![cfg_attr(feature = "nightly", feature(test))]
 extern crate alloc;
+#[cfg(all(feature = "nightly", test))]
+extern crate test;
 
 #[allow(unused_imports)]
 use alloc::string::String;

@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use crate::uints::UnsignedUtilities;
 use crate::util::to_digits::ToDigits;
-use crate::{Arbi, Digit};
+use crate::{Arbi, DDigit, Digit};
 use core::ops::{Add, AddAssign, Sub, SubAssign};
 
 impl Arbi {
@@ -1166,5 +1166,35 @@ mod test_sub_with_integral {
             };
             assert_eq!(rhs - lhs_arbi, expected);
         }
+    }
+}
+
+impl Arbi {
+    /// \\( self = |a| + |b| + |c| \\).
+    pub(crate) fn add3_abs_assign(&mut self, a: &Arbi, b: &Arbi, c: &Arbi) {
+        let max_size = a.size().max(b.size()).max(c.size());
+        self.vec.resize(max_size + 1, 0);
+        let mut carry: Digit = 0;
+        for i in 0..max_size {
+            let mut sum: DDigit = carry as DDigit;
+            carry = 0;
+            if i < a.size() {
+                sum += a.vec[i] as DDigit;
+            }
+            if i < b.size() {
+                sum += b.vec[i] as DDigit;
+            }
+            if i < c.size() {
+                sum += c.vec[i] as DDigit;
+            }
+            if sum >= Arbi::BASE {
+                carry = (sum >> Digit::BITS) as Digit;
+                sum -= Arbi::BASE;
+            }
+            self.vec[i] = sum as Digit;
+        }
+        self.vec[max_size] = carry;
+        self.trim();
+        self.neg = false;
     }
 }
