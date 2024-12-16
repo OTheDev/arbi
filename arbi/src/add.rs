@@ -1198,3 +1198,34 @@ impl Arbi {
         self.neg = false;
     }
 }
+
+#[cfg(test)]
+mod test_add3_abs_assign {
+    use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
+    use crate::{Arbi, DDigit, QDigit};
+
+    // sum >= Arbi::BASE
+    #[test]
+    fn test_sum_gt_arbi_base_branch() {
+        let mut s = Arbi::zero();
+        let a = 9368850493200048722_u64;
+        let b = 11334117686971261073_u64;
+        let c = 9795558189060012567_u64;
+        s.add3_abs_assign(&Arbi::from(a), &Arbi::from(b), &Arbi::from(c));
+        assert_eq!(s, (a as QDigit) + (b as QDigit) + (c as QDigit));
+    }
+
+    #[test]
+    fn smoke() {
+        let (mut rng, _) = get_seedable_rng();
+        let die = get_uniform_die(DDigit::MIN, DDigit::MAX);
+        let mut s = Arbi::zero();
+        for _ in 0..i16::MAX {
+            let a = die.sample(&mut rng);
+            let b = die.sample(&mut rng);
+            let c = die.sample(&mut rng);
+            s.add3_abs_assign(&Arbi::from(a), &Arbi::from(b), &Arbi::from(c));
+            assert_eq!(s, (a as QDigit) + (b as QDigit) + (c as QDigit));
+        }
+    }
+}
