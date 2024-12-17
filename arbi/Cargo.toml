@@ -27,3 +27,6 @@ rand = { version = "0.8.5", features = ["std_rng"] }
 
 [package.metadata.docs.rs]
 rustdoc-args = ["--html-in-header", "./doc/header.html"]
+
+[features]
+nightly = [] # for nightly bench, dev only

@@ -406,14 +406,13 @@ impl Arbi {
         Self::dbisect(&x.vec, lower, upper, n);
     }
 
+    // TODO: optimize
     fn dmul_karatsuba(w: &mut Self, u: &[Digit], v: &[Digit]) {
         let n: usize = core::cmp::min(u.len(), v.len()) >> 1;
-
         let (mut u0, mut u1, mut v0, mut v1) =
             (Arbi::zero(), Arbi::zero(), Arbi::zero(), Arbi::zero());
         Self::dbisect(u, &mut u0, &mut u1, n);
         Self::dbisect(v, &mut v0, &mut v1, n);
-
         let (mut a, mut b, mut c) = (Arbi::zero(), Arbi::zero(), Arbi::zero());
         Self::dmul_(
             &mut a,
@@ -429,7 +428,6 @@ impl Arbi {
             u0.is_negative(),
             v0.is_negative(),
         ); // b = u0 * v0
-
         u1 += u0;
         v1 += v0;
         Self::dmul_(
@@ -439,16 +437,59 @@ impl Arbi {
             u1.is_negative(),
             v1.is_negative(),
         );
-        c -= &a + &b; // c = (u1 + u0)(v1 + v0) - (u0v0 + u1v1)
-
+        // c -= &a + &b; // c = (u1 + u0)(v1 + v0) - (u0v0 + u1v1)
+        c.sub_sum_of_abs_gt(&a, &b);
         a <<= 2 * n * Digit::BITS as usize;
         c <<= n * Digit::BITS as usize;
-        *w = &a + &c + &b; // w = (Arbi::BASE ** 2n) * a + (Arbi::BASE ** n) * c + b
+        // *w = &a + &c + &b; // w = (Arbi::BASE ** 2n) * a + (Arbi::BASE ** n) * c + b
+        w.add3_abs_assign(&a, &b, &c);
     }
 
     #[allow(dead_code)]
     fn mul_karatsuba(w: &mut Self, u: &Self, v: &Self) {
         Self::dmul_karatsuba(w, &u.vec, &v.vec);
+    }
+}
+
+#[cfg(all(feature = "nightly", test))]
+mod benches_karatsuba {
+    use test::Bencher;
+
+    use super::*;
+    use crate::util::test::{
+        get_seedable_rng, get_uniform_die, random_arbi, Distribution,
+    };
+
+    #[bench]
+    fn bench_karatsuba(b: &mut Bencher) {
+        let (mut rng, _) = get_seedable_rng();
+        let die = get_uniform_die(
+            Arbi::KARATSUBA_THRESHOLD,
+            Arbi::KARATSUBA_THRESHOLD * 4,
+        );
+        b.iter(|| {
+            let random_size = Digit::BITS as usize * die.sample(&mut rng);
+            let r_1 = random_arbi(random_size);
+            let r_2 = random_arbi(random_size);
+            let mut x_k = Arbi::zero();
+            Arbi::mul_karatsuba(&mut x_k, &r_1, &r_2);
+        });
+    }
+
+    #[bench]
+    fn bench_standard(b: &mut Bencher) {
+        let (mut rng, _) = get_seedable_rng();
+        let die = get_uniform_die(
+            Arbi::KARATSUBA_THRESHOLD,
+            Arbi::KARATSUBA_THRESHOLD * 4,
+        );
+        b.iter(|| {
+            let random_size = Digit::BITS as usize * die.sample(&mut rng);
+            let r_1 = random_arbi(random_size);
+            let r_2 = random_arbi(random_size);
+            let mut x_k = Arbi::zero();
+            Arbi::mul_standard(&mut x_k, &r_1, &r_2);
+        });
     }
 }
 
