@@ -409,12 +409,10 @@ impl Arbi {
     // TODO: optimize
     fn dmul_karatsuba(w: &mut Self, u: &[Digit], v: &[Digit]) {
         let n: usize = core::cmp::min(u.len(), v.len()) >> 1;
-
         let (mut u0, mut u1, mut v0, mut v1) =
             (Arbi::zero(), Arbi::zero(), Arbi::zero(), Arbi::zero());
         Self::dbisect(u, &mut u0, &mut u1, n);
         Self::dbisect(v, &mut v0, &mut v1, n);
-
         let (mut a, mut b, mut c) = (Arbi::zero(), Arbi::zero(), Arbi::zero());
         Self::dmul_(
             &mut a,
@@ -430,7 +428,6 @@ impl Arbi {
             u0.is_negative(),
             v0.is_negative(),
         ); // b = u0 * v0
-
         u1 += u0;
         v1 += v0;
         Self::dmul_(
@@ -440,14 +437,10 @@ impl Arbi {
             u1.is_negative(),
             v1.is_negative(),
         );
-
         // c -= &a + &b; // c = (u1 + u0)(v1 + v0) - (u0v0 + u1v1)
-        c -= &a;
-        c -= &b;
-
+        c.sub_sum_of_abs_gt(&a, &b);
         a <<= 2 * n * Digit::BITS as usize;
         c <<= n * Digit::BITS as usize;
-
         // *w = &a + &c + &b; // w = (Arbi::BASE ** 2n) * a + (Arbi::BASE ** n) * c + b
         w.add3_abs_assign(&a, &b, &c);
     }
