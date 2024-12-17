@@ -1170,10 +1170,34 @@ mod test_sub_with_integral {
 }
 
 impl Arbi {
+    //  A nonnegative integer with n digits in base-B >= 2 has maximum value
+    //  B^{n} - 1.
+    //  ==> integers a, b, c have maximum values B^{n_a} - 1, ..., B^{n_c} - 1.
+    //  ==>
+    //      a + b + c <= (B^{n_a} - 1) + (B^{n_b} - 1) + (B^{n_c} - 1)
+    //                 = B^{n_a} + B^{n_b} + B^{n_c} - 3
+    //  Define N = max{n_a, n_b, n_c} so that B^N >= B^{n_a}, B^{n_b}, B^{n_c}.
+    //  ==>
+    //      a + b + c <= B^{N} + B^{N} + B^{N} - 3
+    //                 = 3B^{N} - 3
+    //  We want to show that an N + 1 digit base-B integer can hold the sum:
+    //      3B^{N} - 3 <= B^{N + 1} - 1 = B x B^{N} - 1
+    //  <==>
+    //      -3 <= B x B^{N} - 1 - 3B^{N}
+    //  <==>
+    //      -3 <= (B - 3)B^{N} - 1
+    //  <==>
+    //      -2 <= (B - 3)B^{N}
+    //  But
+    //      B >= 2 ==> (B - 3) >= -1 ==> (B - 3)B^{N} >= -B^{N} >= -2
+    //      (for B >= 2).
+    //  Thus, B^{N + 1} - 1 is an upper bound for the sum a + b + c.
+    //  The maximum number of digits needed to represent a + b + c is therefore
+    //      N + 1 = max{n_a, n_b, n_c} + 1.
     /// \\( self = |a| + |b| + |c| \\).
     pub(crate) fn add3_abs_assign(&mut self, a: &Arbi, b: &Arbi, c: &Arbi) {
         let max_size = a.size().max(b.size()).max(c.size());
-        self.vec.resize(max_size + 1, 0);
+        self.vec.resize(max_size + 1, 0); // see proof above
         let mut carry: Digit = 0;
         for i in 0..max_size {
             let mut sum: DDigit = carry as DDigit;
