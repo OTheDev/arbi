@@ -507,7 +507,7 @@ mod karatsuba {
         get_seedable_rng, get_uniform_die, random_arbi, Distribution,
     };
 
-    // #[test]
+    #[test]
     fn test_karatsuba() {
         let (mut rng, _) = get_seedable_rng();
         let die = get_uniform_die(
