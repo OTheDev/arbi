@@ -1216,6 +1216,26 @@ mod test_add3_abs_assign {
     }
 
     #[test]
+    fn test_nonzero_carry_after_loop() {
+        let mut s = Arbi::zero();
+        let a = 17384971691622762845_u64;
+        let b = 13975311186207392826_u64;
+        let c = 12301324174353418444_u64;
+        s.add3_abs_assign(&Arbi::from(a), &Arbi::from(b), &Arbi::from(c));
+        assert_eq!(s, (a as QDigit) + (b as QDigit) + (c as QDigit));
+    }
+
+    #[test]
+    fn test_zero_carry_after_loop() {
+        let mut s = Arbi::zero();
+        let a = 1743738137480021943_u64;
+        let b = 1619148075948679532_u64;
+        let c = 2567961127114686782_u64;
+        s.add3_abs_assign(&Arbi::from(a), &Arbi::from(b), &Arbi::from(c));
+        assert_eq!(s, (a as QDigit) + (b as QDigit) + (c as QDigit));
+    }
+
+    #[test]
     fn smoke() {
         let (mut rng, _) = get_seedable_rng();
         let die = get_uniform_die(DDigit::MIN, DDigit::MAX);
