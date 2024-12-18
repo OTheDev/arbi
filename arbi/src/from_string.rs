@@ -3,6 +3,7 @@ Copyright 2024 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
+use crate::uints::UnsignedUtilities;
 use crate::Base;
 use crate::{Arbi, Digit};
 use core::str::FromStr;
@@ -168,7 +169,7 @@ impl Arbi {
         let base_idx = base as usize;
         let BaseMbs { mbs, base_pow_mbs } = configs::BASE_MBS[base_idx];
 
-        x.vec.reserve(usize::div_ceil(n_base, mbs));
+        x.vec.reserve(usize::div_ceil_(n_base, mbs));
 
         let mut dec_iter = start_digit.clone();
         let rem_batch_size = n_base % mbs;
@@ -302,7 +303,7 @@ impl Arbi {
         // Second Pass: Modification
         let base_idx = base as usize;
         let BaseMbs { mbs, base_pow_mbs } = configs::BASE_MBS[base_idx];
-        let estimate = usize::div_ceil(n_base, mbs);
+        let estimate = usize::div_ceil_(n_base, mbs);
 
         if self.vec.capacity() < estimate {
             self.vec.reserve(estimate - self.vec.capacity());

@@ -3,6 +3,7 @@ Copyright 2024 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
+use crate::uints::UnsignedUtilities;
 use crate::{Arbi, BitCount, Digit};
 use alloc::vec::Vec;
 
@@ -141,7 +142,7 @@ impl Arbi {
     /// failure.
     #[inline(always)]
     pub fn with_capacity_bits(capacity: BitCount) -> Self {
-        let cap = BitCount::div_ceil(capacity, Digit::BITS as BitCount);
+        let cap = BitCount::div_ceil_(capacity, Digit::BITS as BitCount);
         if cap > Arbi::MAX_CAPACITY as BitCount {
             panic!("New capacity exceeds `isize::MAX` bytes");
         }
