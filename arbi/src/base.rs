@@ -63,8 +63,6 @@ impl fmt::Display for BaseError {
     }
 }
 
-impl core::error::Error for BaseError {}
-
 impl TryFrom<u8> for Base {
     type Error = BaseError;
 

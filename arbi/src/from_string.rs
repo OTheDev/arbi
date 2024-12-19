@@ -6,8 +6,8 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 use crate::uints::UnsignedUtilities;
 use crate::Base;
 use crate::{Arbi, Digit};
+use core::fmt;
 use core::str::FromStr;
-use core::{error::Error, fmt};
 
 /// Errors that occur when parsing a string into an [`Arbi`].
 ///
@@ -46,8 +46,6 @@ impl fmt::Display for ParseError {
         }
     }
 }
-
-impl Error for ParseError {}
 
 /// Calculate base ** exp
 const fn pow(base: Digit, exp: usize) -> Digit {

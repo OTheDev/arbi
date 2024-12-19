@@ -192,7 +192,8 @@ impl Arbi {
         }
         if base.is_power_of_two() {
             let bit_length = self.size_bits();
-            let base_log2 = base.ilog2();
+            // let base_log2 = base.ilog2();
+            let base_log2 = u32::ilog2_(base);
             return Some(BitCount::div_ceil_(
                 bit_length,
                 base_log2 as BitCount,

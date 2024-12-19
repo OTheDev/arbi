@@ -33,6 +33,8 @@ pub(crate) trait UnsignedUtilities: Sized {
     fn has_double_exact(value: Self) -> bool;
 
     fn div_ceil_(x: Self, y: Self) -> Self;
+
+    fn ilog2_(v: Self) -> u8;
 }
 
 /* !impl_unsigned_utilities */
@@ -70,16 +72,13 @@ impl UnsignedUtilities for $t {
 
     fn bit_length(mut number: Self) -> u8 {
         const WIDTH: u8 = <$t>::BITS as u8;
-
         let mut n_bits: u8 = 1;
-
         if WIDTH == 32 {
             const MASK32_UPPER: u32 = 0xffff0000;
             const MASK16_UPPER: u32 = 0xff00;
             const MASK8_UPPER: u32 = 0xf0;
             const MASK4_UPPER: u32 = 0xc;
             const MASK2_UPPER: u32 = 0x2;
-
             if (number & MASK32_UPPER as $t) != 0 {
                 number >>= 16;
                 n_bits += 16;
@@ -106,7 +105,6 @@ impl UnsignedUtilities for $t {
             const MASK8_UPPER: u64 = 0xf0;
             const MASK4_UPPER: u64 = 0xc;
             const MASK2_UPPER: u64 = 0x2;
-
             if (number & MASK64_UPPER as $t) != 0 {
                 number >>= 32;
                 n_bits += 32;
@@ -139,8 +137,14 @@ impl UnsignedUtilities for $t {
                 n_bits += 1;
             }
         }
-
         n_bits
+    }
+
+    fn ilog2_(v: Self) -> u8 {
+        if v <= 0 {
+            panic!("log2(): value must be positive: {}", v)
+        }
+        Self::bit_length(v) - 1
     }
 
     fn clz(v: Self) -> u8 {
