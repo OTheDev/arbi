@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 #![doc = include_str!("../README.md")]
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
-#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(feature = "nightly", feature(test))]
 extern crate alloc;
 #[cfg(all(feature = "nightly", test))]

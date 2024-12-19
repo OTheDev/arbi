@@ -38,6 +38,7 @@ use core::fmt;
 #[derive(Debug, Copy, Clone)]
 pub struct Base(pub(crate) u8);
 
+// TODO: make this a struct.
 /// Error that occurs when creating a new [`Base`].
 ///
 /// # Examples
@@ -60,6 +61,22 @@ impl fmt::Display for BaseError {
                 write!(f, "Base must be in the range [2, 36]")
             }
         }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for BaseError {}
+
+#[cfg(feature = "std")]
+#[cfg(test)]
+mod std_tests {
+    use super::BaseError;
+    use std::error::Error;
+
+    #[test]
+    fn test_error_trait() {
+        let err: BaseError = BaseError::InvalidBase;
+        assert!(err.source().is_none());
     }
 }
 

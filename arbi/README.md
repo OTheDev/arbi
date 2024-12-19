@@ -19,6 +19,8 @@
 
   This crate is `no_std` and utilizes the [`alloc`](https://doc.rust-lang.org/1.82.0/alloc/index.html) crate for dynamic memory allocation.
 
+  Enable the `std` feature if you need `std::error::Error` implementations for error types (it is not used for other purposes).
+
 - **`forbid(unsafe_code)`**.
 
   Statically guarantees that crate code does not use `unsafe` Rust.

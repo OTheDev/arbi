@@ -47,6 +47,22 @@ impl fmt::Display for ParseError {
     }
 }
 
+#[cfg(feature = "std")]
+impl std::error::Error for ParseError {}
+
+#[cfg(feature = "std")]
+#[cfg(test)]
+mod std_tests {
+    use super::ParseError;
+    use std::error::Error;
+
+    #[test]
+    fn test_error_trait() {
+        let err: ParseError = ParseError::InvalidDigit;
+        assert!(err.source().is_none());
+    }
+}
+
 /// Calculate base ** exp
 const fn pow(base: Digit, exp: usize) -> Digit {
     // (0..exp).fold(1, |acc, _| acc * base)
