@@ -37,23 +37,22 @@ const BASE_DBL_RECIPROCAL: f64 = 1.0 / BASE_DBL;
  *
  *  const upper: usize = 1024 / (Digit::BITS as usize) + 1;
  */
-const fn find_upper() -> usize {
-    let mut dbl: f64 = f64::MAX;
-    let mut x: usize = 1;
-
-    while dbl >= 1.0 {
-        dbl *= BASE_DBL_RECIPROCAL;
-        x += 1;
-    }
-
-    x
-}
-
-const CMP_DBL_SIZE_UPPER: usize = find_upper();
+// Floating-point arithmetic in const requires later rust versions.
+// const fn find_upper() -> usize {
+//     let mut dbl: f64 = f64::MAX;
+//     let mut x: usize = 1;
+//     while dbl >= 1.0 {
+//         dbl *= BASE_DBL_RECIPROCAL;
+//         x += 1;
+//     }
+//     x
+// }
+// const CMP_DBL_SIZE_UPPER: usize = find_upper();
+const CMP_DBL_SIZE_UPPER: usize = 33;
 
 impl Arbi {
     #[allow(dead_code)]
-    fn cmp_abs_double(z: &Self, dbl: f64) -> Ordering {
+    fn cmp_abs_double(z: &Self, mut dbl: f64) -> Ordering {
         if dbl.is_infinite() {
             if dbl < 0.0 {
                 return Ordering::Greater;
@@ -61,9 +60,6 @@ impl Arbi {
                 return Ordering::Less;
             }
         }
-
-        let mut dbl = dbl;
-
         if z.size() == 0 {
             return if dbl > 0.0 {
                 Ordering::Less
@@ -71,24 +67,19 @@ impl Arbi {
                 Ordering::Equal
             };
         }
-
         if z.size() >= CMP_DBL_SIZE_UPPER {
             return Ordering::Greater;
         }
-
         for _ in 1..z.size() {
             // Equiv. to `dbl /= BASE_DBL;`, but multiplication is generally
             // cheaper
             dbl *= BASE_DBL_RECIPROCAL;
         }
-
         if BASE_DBL <= dbl {
             return Ordering::Less;
         }
-
         for digit in z.vec.iter().rev() {
             let cur: Digit = dbl as Digit;
-
             match digit {
                 x if *x < cur => {
                     return Ordering::Less;
@@ -101,7 +92,6 @@ impl Arbi {
                 }
             }
         }
-
         if dbl > 0.0 {
             Ordering::Less
         } else {
