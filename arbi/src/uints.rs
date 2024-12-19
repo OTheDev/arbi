@@ -142,7 +142,7 @@ impl UnsignedUtilities for $t {
 
     fn ilog2_(v: Self) -> u8 {
         if v <= 0 {
-            panic!("log2(): value must be positive: {}", v)
+            panic!("ilog2(): value must be positive: {}", v)
         }
         Self::bit_length(v) - 1
     }
