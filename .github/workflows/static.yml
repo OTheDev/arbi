@@ -43,17 +43,17 @@ jobs:
     - name: cargo-audit
       run: cargo audit
 
-  clippy-rust-1point60:
+  clippy-rust-1point61:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Setup Rust Environment 1.60
+    - name: Setup Rust Environment 1.61
       run: |
-        # Install rustup and Rust 1.60
-        rustup toolchain install 1.60.0
-        rustup default 1.60.0
+        # Install rustup and Rust 1.61
+        rustup toolchain install 1.61.0
+        rustup default 1.61.0
         . "$HOME/.cargo/env"
 
         # Install clippy

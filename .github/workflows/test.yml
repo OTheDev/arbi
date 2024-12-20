@@ -43,7 +43,7 @@ jobs:
       shell: bash
 
   # Test MSRV
-  build-and-test-rust-1point60:
+  build-and-test-rust-1point61:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -52,13 +52,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install Rust 1.60
+    - name: Install Rust 1.61
       run: |
-        rustup toolchain install 1.60.0
-        rustup default 1.60.0
+        rustup toolchain install 1.61.0
+        rustup default 1.61.0
       shell: bash
 
-    - name: Run tests with Rust 1.60
+    - name: Run tests with Rust 1.61
       run: |
         cargo test --release
       shell: bash
