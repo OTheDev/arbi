@@ -96,22 +96,26 @@ impl Arbi {
 
 #[cfg(test)]
 mod tests {
+    use crate::uints::UnsignedUtilities;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
     use crate::{Arbi, BitCount, DDigit, Digit, QDigit};
 
     #[test]
     fn test_digit_boundaries() {
         let a = Arbi::from(Digit::MAX);
-        assert_eq!(a.ilog10(), Digit::MAX.ilog10() as BitCount);
+        assert_eq!(a.ilog10(), Digit::ilog10_(Digit::MAX) as BitCount);
         let a = Arbi::from(Digit::MAX as DDigit + 1);
-        assert_eq!(a.ilog10(), (Digit::MAX as DDigit + 1).ilog10() as BitCount);
+        assert_eq!(
+            a.ilog10(),
+            DDigit::ilog10_(Digit::MAX as DDigit + 1) as BitCount
+        );
 
         let a = Arbi::from(DDigit::MAX);
-        assert_eq!(a.ilog10(), DDigit::MAX.ilog10() as BitCount);
+        assert_eq!(a.ilog10(), DDigit::ilog10_(DDigit::MAX) as BitCount);
         let a = Arbi::from(DDigit::MAX as QDigit + 1);
         assert_eq!(
             a.ilog10(),
-            (DDigit::MAX as QDigit + 1).ilog10() as BitCount
+            QDigit::ilog10_(DDigit::MAX as QDigit + 1) as BitCount
         );
     }
 
@@ -143,15 +147,15 @@ mod tests {
                 continue;
             }
             let a = Arbi::from(r);
-            assert_eq!(a.ilog10(), r.ilog10() as BitCount);
+            assert_eq!(a.ilog10(), Digit::ilog10_(r) as BitCount);
 
             let r = die_ddigit.sample(&mut rng);
             let a = Arbi::from(r);
-            assert_eq!(a.ilog10(), r.ilog10() as BitCount);
+            assert_eq!(a.ilog10(), DDigit::ilog10_(r) as BitCount);
 
             let r = die_qdigit.sample(&mut rng);
             let a = Arbi::from(r);
-            assert_eq!(a.ilog10(), r.ilog10() as BitCount);
+            assert_eq!(a.ilog10(), QDigit::ilog10_(r) as BitCount);
         }
     }
 }

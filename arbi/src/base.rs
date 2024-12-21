@@ -38,6 +38,7 @@ use core::fmt;
 #[derive(Debug, Copy, Clone)]
 pub struct Base(pub(crate) u8);
 
+// TODO: make this a struct.
 /// Error that occurs when creating a new [`Base`].
 ///
 /// # Examples
@@ -63,7 +64,21 @@ impl fmt::Display for BaseError {
     }
 }
 
-impl core::error::Error for BaseError {}
+#[cfg(feature = "std")]
+impl std::error::Error for BaseError {}
+
+#[cfg(feature = "std")]
+#[cfg(test)]
+mod std_tests {
+    use super::BaseError;
+    use std::error::Error;
+
+    #[test]
+    fn test_error_trait() {
+        let err: BaseError = BaseError::InvalidBase;
+        assert!(err.source().is_none());
+    }
+}
 
 impl TryFrom<u8> for Base {
     type Error = BaseError;

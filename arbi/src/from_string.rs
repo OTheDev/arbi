@@ -3,10 +3,11 @@ Copyright 2024 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
+use crate::uints::UnsignedUtilities;
 use crate::Base;
 use crate::{Arbi, Digit};
+use core::fmt;
 use core::str::FromStr;
-use core::{error::Error, fmt};
 
 /// Errors that occur when parsing a string into an [`Arbi`].
 ///
@@ -23,11 +24,10 @@ use core::{error::Error, fmt};
 /// let c = Arbi::from_str_radix("  -   ", 10);
 /// assert!(matches!(c, Err(ParseError::Empty)));
 /// ```
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ParseError {
     /// Invalid digit found for the provided base.
     InvalidDigit,
-
     /// The provided string is empty (after stripping outer whitespace) or no
     /// valid digits for the provided base were found.
     Empty,
@@ -46,7 +46,21 @@ impl fmt::Display for ParseError {
     }
 }
 
-impl Error for ParseError {}
+#[cfg(feature = "std")]
+impl std::error::Error for ParseError {}
+
+#[cfg(feature = "std")]
+#[cfg(test)]
+mod std_tests {
+    use super::ParseError;
+    use std::error::Error;
+
+    #[test]
+    fn test_error_trait() {
+        let err: ParseError = ParseError::InvalidDigit;
+        assert!(err.source().is_none());
+    }
+}
 
 /// Calculate base ** exp
 const fn pow(base: Digit, exp: usize) -> Digit {
@@ -168,7 +182,7 @@ impl Arbi {
         let base_idx = base as usize;
         let BaseMbs { mbs, base_pow_mbs } = configs::BASE_MBS[base_idx];
 
-        x.vec.reserve(usize::div_ceil(n_base, mbs));
+        x.vec.reserve(usize::div_ceil_(n_base, mbs));
 
         let mut dec_iter = start_digit.clone();
         let rem_batch_size = n_base % mbs;
@@ -302,7 +316,7 @@ impl Arbi {
         // Second Pass: Modification
         let base_idx = base as usize;
         let BaseMbs { mbs, base_pow_mbs } = configs::BASE_MBS[base_idx];
-        let estimate = usize::div_ceil(n_base, mbs);
+        let estimate = usize::div_ceil_(n_base, mbs);
 
         if self.vec.capacity() < estimate {
             self.vec.reserve(estimate - self.vec.capacity());

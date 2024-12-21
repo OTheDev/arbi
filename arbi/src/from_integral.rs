@@ -9,6 +9,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 //! - sign-extend if the source is signed
 
 use crate::{Arbi, Digit};
+use core::ops::Shr;
 
 /* !impl_from_integral */
 macro_rules! impl_from_integral {
@@ -62,7 +63,8 @@ impl From<$signed> for Arbi {
         let mut temp: UnsignedT = uvalue;
 
         loop {
-            temp >>= Digit::BITS;
+            // temp >>= Digit::BITS;
+            temp = temp.shr(Digit::BITS); // For MSRV
             if temp == 0 {
                 break;
             }
@@ -75,7 +77,8 @@ impl From<$signed> for Arbi {
         let mut i = 0;
         while uvalue != 0 {
             x.vec[i] = uvalue as Digit;
-            uvalue >>= Digit::BITS;
+            // uvalue >>= Digit::BITS;
+            uvalue = uvalue.shr(Digit::BITS); // For MSRV
             i += 1;
         }
 

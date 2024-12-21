@@ -59,11 +59,13 @@ impl Arbi {
         q.make_zero();
         r.make_zero();
         // (3)
+        #[allow(clippy::unnecessary_cast)]
         for i in ((0 as BitCount)..u.size_bits()).rev() {
             // (3)(I)
             *r <<= 1_usize;
             // (3)(II)
             if u.test_bit(i) {
+                #[allow(clippy::unnecessary_cast)]
                 r.set_bit(0 as BitCount);
             }
             // (3)(III)

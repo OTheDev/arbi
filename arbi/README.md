@@ -3,6 +3,7 @@
 [![github](https://img.shields.io/badge/GitHub-OTheDev/arbi-4467C4?logo=github&labelColor=24292e)](https://github.com/OTheDev/arbi)
 [![docs.rs](https://img.shields.io/docsrs/arbi?color=4467C4&labelColor=24292e&label=Docs)](https://docs.rs/arbi/latest/arbi/)
 ![Crates.io License](https://img.shields.io/crates/l/arbi?color=4467C4&labelColor=24292e&label=License)
+![MSRV](https://img.shields.io/badge/MSRV-1.65-4467C4?logo=rust&labelColor=24292e)
 [![crates.io](https://img.shields.io/crates/d/arbi?color=4467C4&labelColor=24292e&label=Downloads)](https://crates.io/crates/arbi)
 
 # arbi
@@ -18,6 +19,8 @@
 - **`no_std`**.
 
   This crate is `no_std` and utilizes the [`alloc`](https://doc.rust-lang.org/1.82.0/alloc/index.html) crate for dynamic memory allocation.
+
+  Enable the `std` feature if you need `std::error::Error` implementations for error types (it is not used for other purposes).
 
 - **`forbid(unsafe_code)`**.
 

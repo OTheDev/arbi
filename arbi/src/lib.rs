@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 #![doc = include_str!("../README.md")]
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
-#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(feature = "nightly", feature(test))]
 extern crate alloc;
 #[cfg(all(feature = "nightly", test))]
@@ -32,6 +32,7 @@ mod comparisons_integral;
 mod display;
 mod division;
 #[cfg(not(doctest))]
+#[allow(unknown_lints)]
 #[allow(clippy::doc_lazy_continuation)]
 pub mod doc;
 mod exponentiation;
@@ -155,6 +156,7 @@ pub struct Arbi {
 
 impl Arbi {
     /// Base used for the internal representation of the integer.
+    #[allow(clippy::unnecessary_cast)]
     pub const BASE: DDigit = (1 as DDigit) << Digit::BITS;
 
     /// Take away trailing zeros in the internal digit vector until we find the

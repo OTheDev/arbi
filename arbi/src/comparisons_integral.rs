@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use crate::{Arbi, Digit};
 use core::cmp::Ordering;
+use core::ops::Shr;
 
 pub(crate) trait CompareWith<T> {
     fn cmp_with(&self, other: T) -> Ordering;
@@ -60,7 +61,8 @@ impl CompareWith<$signed> for Arbi {
         } else {
             let mut temp_b: UnsignedT = unsigned_b;
             while temp_b != 0 {
-                temp_b >>= Digit::BITS;
+                // temp_b >>= Digit::BITS;
+                temp_b = temp_b.shr(Digit::BITS); // For MSRV
                 n_b_digits += 1;
             }
         }

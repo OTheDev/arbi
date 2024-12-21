@@ -102,10 +102,10 @@ impl Arbi {
                         lo_clone,
                         w[i + j] as DDigit,
                     );
-                    hi += if overflow { 1 } else { 0 };
+                    hi += DDigit::from(overflow);
                     lo_clone = lo;
                     let overflow = DDigit::uadd_overflow(&mut lo, lo_clone, c);
-                    hi += if overflow { 1 } else { 0 };
+                    hi += DDigit::from(overflow);
                     // Collect
                     w[i + j] = lo as Digit; // set w[i + j] <- v
                     c = (hi << Digit::BITS) | (lo >> Digit::BITS); // set c <- u

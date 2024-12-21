@@ -17,6 +17,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 use crate::is_signed::IsSigned;
 use crate::uints::div_ceil_usize;
 use crate::{Arbi, Digit};
+use core::ops::Shl;
 
 /* !impl_to_integral */
 macro_rules! impl_to_integral {
@@ -70,9 +71,9 @@ impl Arbi {
 
             for i in (0..n_digits).rev() {
                 ret = if T_BITS_IS_GT_DIGIT_BITS {
-                    (ret << Digit::BITS) | self.vec[i] as TargetT
+                    (ret.shl(Digit::BITS)) | self.vec[i] as TargetT // shl() used for MSRV
                 } else {
-                    ((ret << Digit::BITS) as Digit | self.vec[i]) as TargetT
+                    (ret.shl(Digit::BITS) as Digit | self.vec[i]) as TargetT // shl() used for MSRV
                 };
             }
         } else {

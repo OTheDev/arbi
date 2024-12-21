@@ -198,6 +198,8 @@ mod tests {
         let _ = one << (Arbi::MAX_BITS + 1);
     }
 
+    // On rustc < 1.65, fails with message, "memory allocation of {isize::MAX as
+    // usize + 1} bytes failed", but in 1.65 (MSRV) and later, does not.
     #[test]
     #[should_panic = "capacity overflow"] // From `Vec`
     fn test_large_shift_panics_max_bits() {

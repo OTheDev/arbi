@@ -5,6 +5,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use crate::{Arbi, Digit};
 
+#[allow(clippy::unnecessary_cast)]
 const BASE_DBL: f64 = 2.0 * ((1 as Digit) << (Digit::BITS - 1)) as f64;
 
 impl Arbi {

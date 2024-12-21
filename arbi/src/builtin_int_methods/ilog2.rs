@@ -17,14 +17,14 @@ impl Arbi {
     ///
     /// let a = Arbi::from(2);
     /// assert_eq!(a.ilog2(), 1);
-    /// assert_eq!(2_i32.ilog2(), 1);
+    /// // assert_eq!(2_i32.ilog2(), 1); // rustc >= 1.67.0
     ///
     /// let b = Arbi::from(123456789_i32);
     /// assert_eq!(b.ilog2(), 26);
-    /// assert_eq!(123456789_i32.ilog2(), 26);
+    /// // assert_eq!(123456789_i32.ilog2(), 26); // rustc >= 1.67.0
     ///
     /// let c = Arbi::from(u128::MAX);
-    /// assert_eq!(c.ilog2(), u128::MAX.ilog2() as BitCount);
+    /// // assert_eq!(c.ilog2(), u128::MAX.ilog2() as BitCount); // rustc >= 1.67.0
     /// ```
     ///
     /// This function will panic if `self` is zero or negative:
@@ -52,20 +52,27 @@ impl Arbi {
 
 #[cfg(test)]
 mod tests {
+    use crate::uints::UnsignedUtilities;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
     use crate::{Arbi, BitCount, DDigit, Digit, QDigit};
 
     #[test]
     fn test_digit_boundaries() {
         let a = Arbi::from(Digit::MAX);
-        assert_eq!(a.ilog2(), Digit::MAX.ilog2() as BitCount);
+        assert_eq!(a.ilog2(), Digit::ilog2_(Digit::MAX) as BitCount);
         let a = Arbi::from(Digit::MAX as DDigit + 1);
-        assert_eq!(a.ilog2(), (Digit::MAX as DDigit + 1).ilog2() as BitCount);
+        assert_eq!(
+            a.ilog2(),
+            DDigit::ilog2_(Digit::MAX as DDigit + 1) as BitCount
+        );
 
         let a = Arbi::from(DDigit::MAX);
-        assert_eq!(a.ilog2(), DDigit::MAX.ilog2() as BitCount);
+        assert_eq!(a.ilog2(), DDigit::ilog2_(DDigit::MAX) as BitCount);
         let a = Arbi::from(DDigit::MAX as QDigit + 1);
-        assert_eq!(a.ilog2(), (DDigit::MAX as QDigit + 1).ilog2() as BitCount);
+        assert_eq!(
+            a.ilog2(),
+            QDigit::ilog2_(DDigit::MAX as QDigit + 1) as BitCount
+        );
     }
 
     #[test]
@@ -93,15 +100,15 @@ mod tests {
         for _ in 0..i16::MAX {
             let r = die_digit.sample(&mut rng);
             let a = Arbi::from(r);
-            assert_eq!(a.ilog2(), r.ilog2() as BitCount);
+            assert_eq!(a.ilog2(), Digit::ilog2_(r) as BitCount);
 
             let r = die_ddigit.sample(&mut rng);
             let a = Arbi::from(r);
-            assert_eq!(a.ilog2(), r.ilog2() as BitCount);
+            assert_eq!(a.ilog2(), DDigit::ilog2_(r) as BitCount);
 
             let r = die_qdigit.sample(&mut rng);
             let a = Arbi::from(r);
-            assert_eq!(a.ilog2(), r.ilog2() as BitCount);
+            assert_eq!(a.ilog2(), QDigit::ilog2_(r) as BitCount);
         }
     }
 }
