@@ -43,7 +43,7 @@ jobs:
       shell: bash
 
   # Test MSRV
-  build-and-test-rust-1point61:
+  build-and-test-rust-1point65:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
