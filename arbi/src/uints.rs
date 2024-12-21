@@ -10,15 +10,12 @@ pub(crate) trait UnsignedUtilities: Sized {
     fn uadd_overflow(r: &mut Self, a: Self, b: Self) -> bool;
     fn usub_overflow(r: &mut Self, a: Self, b: Self) -> bool;
     fn umul_overflow(r: &mut Self, a: Self, b: Self) -> bool;
-
     /// Return the number of bits required to represent a value of type Self,
     /// where Self is an unsigned integral type.
     fn bit_length(value: Self) -> u8;
-
     /// Return the number of leading zero bits in nonzero unsigned integral `v`,
     /// starting from the MSB.
     fn clz(value: Self) -> u8;
-
     /// Any integer with absolute value less than 2 ** 53 can be exactly
     /// represented in an IEEE 754 double. An n-bit unsigned integer can
     /// represent values in the range [0, 2 ** n - 1].
@@ -31,10 +28,10 @@ pub(crate) trait UnsignedUtilities: Sized {
     ///     - `return value <= dbl_max_int;`
     ///     - `[dbl_max_int is 2 ** 53]`
     fn has_double_exact(value: Self) -> bool;
-
     fn div_ceil_(x: Self, y: Self) -> Self;
-
     fn ilog2_(v: Self) -> u8;
+    fn ilog_(v: Self, base: Self) -> u32;
+    fn ilog10_(v: Self) -> u32;
 }
 
 /* !impl_unsigned_utilities */
@@ -70,81 +67,36 @@ impl UnsignedUtilities for $t {
         return if a != 0 { true } else { false } && *r / a != b;
     }
 
-    fn bit_length(mut number: Self) -> u8 {
-        const WIDTH: u8 = <$t>::BITS as u8;
-        let mut n_bits: u8 = 1;
-        if WIDTH == 32 {
-            const MASK32_UPPER: u32 = 0xffff0000;
-            const MASK16_UPPER: u32 = 0xff00;
-            const MASK8_UPPER: u32 = 0xf0;
-            const MASK4_UPPER: u32 = 0xc;
-            const MASK2_UPPER: u32 = 0x2;
-            if (number & MASK32_UPPER as $t) != 0 {
-                number >>= 16;
-                n_bits += 16;
-            }
-            if (number & MASK16_UPPER as $t) != 0 {
-                number >>= 8;
-                n_bits += 8;
-            }
-            if (number & MASK8_UPPER as $t) != 0 {
-                number >>= 4;
-                n_bits += 4;
-            }
-            if (number & MASK4_UPPER as $t) != 0 {
-                number >>= 2;
-                n_bits += 2;
-            }
-            if (number & MASK2_UPPER as $t) != 0 {
-                n_bits += 1;
-            }
-        } else if WIDTH == 64 {
-            const MASK64_UPPER: u64 = 0xffffffff00000000;
-            const MASK32_UPPER: u64 = 0xffff0000;
-            const MASK16_UPPER: u64 = 0xff00;
-            const MASK8_UPPER: u64 = 0xf0;
-            const MASK4_UPPER: u64 = 0xc;
-            const MASK2_UPPER: u64 = 0x2;
-            if (number & MASK64_UPPER as $t) != 0 {
-                number >>= 32;
-                n_bits += 32;
-            }
-            if (number & MASK32_UPPER as $t) != 0 {
-                number >>= 16;
-                n_bits += 16;
-            }
-            if (number & MASK16_UPPER as $t) != 0 {
-                number >>= 8;
-                n_bits += 8;
-            }
-            if (number & MASK8_UPPER as $t) != 0 {
-                number >>= 4;
-                n_bits += 4;
-            }
-            if (number & MASK4_UPPER as $t) != 0 {
-                number >>= 2;
-                n_bits += 2;
-            }
-            if (number & MASK2_UPPER as $t) != 0 {
-                n_bits += 1;
-            }
+    fn bit_length(number: Self) -> u8 {
+        if number == 0 {
+            1
         } else {
-            loop {
-                number >>= 1;
-                if number == 0 {
-                    break;
-                }
-                n_bits += 1;
-            }
+            <$t>::BITS as u8 - number.leading_zeros() as u8
         }
-        n_bits
     }
 
     fn ilog2_(v: Self) -> u8 {
         if v <= 0 {
-            panic!("ilog2(): value must be positive: {}", v)
+            panic!("ilog2_(): value must be positive: {}", v)
         }
         Self::bit_length(v) - 1
+    }
+
+    fn ilog_(v: Self, base: Self) -> u32 {
+        if v < 1 || base < 2 {
+            panic!("ilog_(): value ({}) must be positive and base ({}) >= 2", v, base);
+        }
+        let mut ret = 0;
+        let mut cur = v;
+        while cur >= base {
+            cur /= base;
+            ret += 1;
+        }
+        ret
+    }
+
+    fn ilog10_(v: Self) -> u32 {
+        Self::ilog_(v, 10)
     }
 
     fn clz(v: Self) -> u8 {
@@ -168,8 +120,8 @@ impl UnsignedUtilities for $t {
     /// This function will panic if `rhs` is zero.
     ///
     /// # Examples
-    /// ```
-    /// assert_eq!(u64::div_ceil(9, 5), 2);
+    /// ```ignore
+    /// assert_eq!(u64::div_ceil_(9, 5), 2);
     /// ```
     fn div_ceil_(x: Self, y: Self) -> Self {
         if x == 0 {

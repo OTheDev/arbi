@@ -42,7 +42,7 @@ impl Arbi {
                     return Ordering::Less;
                 }
             }
-            return Ordering::Equal;
+            Ordering::Equal
         }
     }
 
@@ -59,9 +59,9 @@ impl Arbi {
         } else if x.is_negative() && y.is_negative() {
             // x, y < 0
             if x.size() > y.size() {
-                return Ordering::Less;
+                Ordering::Less
             } else if x.size() < y.size() {
-                return Ordering::Greater;
+                Ordering::Greater
             } else {
                 for i in (0..x.size()).rev() {
                     if x.vec[i] < y.vec[i] {
@@ -70,7 +70,7 @@ impl Arbi {
                         return Ordering::Less;
                     }
                 }
-                return Ordering::Equal;
+                Ordering::Equal
             }
         } else {
             // x, y >= 0

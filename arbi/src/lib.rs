@@ -32,6 +32,7 @@ mod comparisons_integral;
 mod display;
 mod division;
 #[cfg(not(doctest))]
+#[allow(unknown_lints)]
 #[allow(clippy::doc_lazy_continuation)]
 pub mod doc;
 mod exponentiation;
@@ -155,6 +156,7 @@ pub struct Arbi {
 
 impl Arbi {
     /// Base used for the internal representation of the integer.
+    #[allow(clippy::unnecessary_cast)]
     pub const BASE: DDigit = (1 as DDigit) << Digit::BITS;
 
     /// Take away trailing zeros in the internal digit vector until we find the

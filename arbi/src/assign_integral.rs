@@ -5,6 +5,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use crate::assign::Assign;
 use crate::{Arbi, Digit};
+use core::ops::Shr;
 
 /* !impl_assign_from_primitive */
 macro_rules! impl_assign_from_primitive {
@@ -40,7 +41,8 @@ impl Assign<$signed> for Arbi {
             let mut temp: UnsignedT = uvalue;
             let mut n_digits: usize = 1;
             loop {
-                temp >>= Digit::BITS;
+                // temp >>= Digit::BITS;
+                temp = temp.shr(Digit::BITS); // For MSRV
                 if temp == 0 {
                     break;
                 }
@@ -51,7 +53,8 @@ impl Assign<$signed> for Arbi {
             let mut i: usize = 0;
             while uvalue != 0 {
                 self.vec[i] = uvalue as Digit;
-                uvalue >>= Digit::BITS;
+                // uvalue >>= Digit::BITS;
+                uvalue = uvalue.shr(Digit::BITS); // For MSRV
                 i += 1;
             }
         }

@@ -4,6 +4,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
 use crate::Digit;
+use core::ops::Shr;
 
 pub(crate) trait ToDigits<const N: usize> {
     type Output;
@@ -33,7 +34,8 @@ impl ToDigits<$digit_size> for $signed_type {
             let mut digits = [0 as Digit; $digit_size];
             for digit in &mut digits {
                 *digit = (value & (Digit::MAX as $unsigned_type)) as Digit;
-                value >>= Digit::BITS;
+                // value >>= Digit::BITS;
+                value = value.shr(Digit::BITS); // For MSRV
             }
             Some(digits)
         }

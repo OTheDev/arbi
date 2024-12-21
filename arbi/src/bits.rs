@@ -59,6 +59,7 @@ impl Arbi {
     /// - \\( O(1) \\) when setting an existing bit.
     /// - \\( O(n) \\) when setting a bit outside the current bit width, as
     ///     this requires resizing.
+    #[allow(clippy::unnecessary_cast)]
     pub fn set_bit(&mut self, i: BitCount) -> &mut Self {
         let digit_idx: usize = (i / Digit::BITS as BitCount) as usize;
         if digit_idx >= self.vec.len() {
@@ -98,6 +99,7 @@ impl Arbi {
     pub fn clear_bit(&mut self, i: BitCount) -> &mut Self {
         let n: usize = self.size();
         let digit_idx: usize = (i / Digit::BITS as BitCount) as usize;
+        #[allow(clippy::unnecessary_cast)]
         if digit_idx < n {
             self.vec[digit_idx] &=
                 !((1 as Digit) << (i % Digit::BITS as BitCount));
@@ -127,6 +129,7 @@ impl Arbi {
     /// - \\( O(1) \\) when inverting an existing bit (i.e. a bit with index in
     ///     `[0, size_bits())`).
     /// - \\( O(n) \\) otherwise.
+    #[allow(clippy::unnecessary_cast)]
     pub fn invert_bit(&mut self, i: BitCount) -> &mut Self {
         let digit_idx: usize = (i / Digit::BITS as BitCount) as usize;
         if digit_idx >= self.vec.len() {
