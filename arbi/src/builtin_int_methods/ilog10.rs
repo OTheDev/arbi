@@ -111,14 +111,11 @@ mod tests {
         );
 
         let a = Arbi::from(DDigit::MAX);
-        assert_eq!(
-            a.ilog10(),
-            BitCount::ilog10_(DDigit::MAX.into()) as BitCount
-        );
+        assert_eq!(a.ilog10(), DDigit::ilog10_(DDigit::MAX) as BitCount);
         let a = Arbi::from(DDigit::MAX as QDigit + 1);
         assert_eq!(
             a.ilog10(),
-            BitCount::ilog10_(DDigit::MAX as QDigit + 1) as BitCount
+            QDigit::ilog10_(DDigit::MAX as QDigit + 1) as BitCount
         );
     }
 
