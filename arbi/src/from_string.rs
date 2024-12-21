@@ -24,11 +24,10 @@ use core::str::FromStr;
 /// let c = Arbi::from_str_radix("  -   ", 10);
 /// assert!(matches!(c, Err(ParseError::Empty)));
 /// ```
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ParseError {
     /// Invalid digit found for the provided base.
     InvalidDigit,
-
     /// The provided string is empty (after stripping outer whitespace) or no
     /// valid digits for the provided base were found.
     Empty,
