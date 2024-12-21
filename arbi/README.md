@@ -3,7 +3,7 @@
 [![github](https://img.shields.io/badge/GitHub-OTheDev/arbi-4467C4?logo=github&labelColor=24292e)](https://github.com/OTheDev/arbi)
 [![docs.rs](https://img.shields.io/docsrs/arbi?color=4467C4&labelColor=24292e&label=Docs)](https://docs.rs/arbi/latest/arbi/)
 ![Crates.io License](https://img.shields.io/crates/l/arbi?color=4467C4&labelColor=24292e&label=License)
-![MSRV](https://img.shields.io/badge/MSRV-1.63-4467C4?logo=rust&labelColor=24292e)
+![MSRV](https://img.shields.io/badge/MSRV-1.65-4467C4?logo=rust&labelColor=24292e)
 [![crates.io](https://img.shields.io/crates/d/arbi?color=4467C4&labelColor=24292e&label=Downloads)](https://crates.io/crates/arbi)
 
 # arbi
