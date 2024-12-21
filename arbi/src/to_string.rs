@@ -110,10 +110,10 @@ impl Arbi {
 
         let mut result = String::new();
         let true_estimate: BitCount =
-            Self::base_length(self, base) + if self.neg { 1 } else { 0 };
+            Self::base_length(self, base) + BitCount::from(self.neg);
         let estimate: usize = if true_estimate > usize::MAX as BitCount {
             let exact =
-                self.size_base_ref(base as u32) + if self.neg { 1 } else { 0 };
+                self.size_base_ref(base as u32) + BitCount::from(self.neg);
             assert!(exact > isize::MAX as BitCount);
             panic!(
                 "Base-{} digit estimation exceeds isize::MAX bytes. Exact = {}",

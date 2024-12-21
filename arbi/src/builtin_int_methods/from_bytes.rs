@@ -33,9 +33,8 @@ impl Arbi {
         }
         let full_chunks = bytes.len() / DIGIT_BYTES;
         let remainder = bytes.len() % DIGIT_BYTES;
-        let mut num = Arbi::with_capacity(
-            full_chunks + if remainder > 0 { 1 } else { 0 },
-        );
+        let mut num =
+            Arbi::with_capacity(full_chunks + usize::from(remainder > 0));
         for chunk in bytes.chunks_exact(DIGIT_BYTES) {
             let digit = Digit::from_le_bytes(chunk.try_into().unwrap());
             num.vec.push(digit);
@@ -75,9 +74,8 @@ impl Arbi {
         }
         let full_chunks = bytes.len() / DIGIT_BYTES;
         let remainder = bytes.len() % DIGIT_BYTES;
-        let mut num = Arbi::with_capacity(
-            full_chunks + if remainder > 0 { 1 } else { 0 },
-        );
+        let mut num =
+            Arbi::with_capacity(full_chunks + usize::from(remainder > 0));
         let full_chunks_iter = bytes.chunks_exact(DIGIT_BYTES);
         for chunk in full_chunks_iter.rev() {
             let digit = Digit::from_be_bytes(chunk.try_into().unwrap());

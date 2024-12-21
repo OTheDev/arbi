@@ -21,7 +21,7 @@ impl Arbi {
         }
         for i in y.len()..max_size {
             temp = self.vec[i].wrapping_add(carry as Digit);
-            carry = if temp < carry as Digit { 1 } else { 0 };
+            carry = u8::from(temp < carry as Digit);
             self.vec[i] = temp;
         }
         self.vec[max_size] = carry as Digit;
@@ -80,7 +80,7 @@ impl Arbi {
         }
         for i in y.len()..self.size() {
             temp = self.vec[i].wrapping_sub(borrow as Digit);
-            borrow = if temp > self.vec[i] { 1 } else { 0 };
+            borrow = u8::from(temp > self.vec[i]);
             self.vec[i] = temp;
         }
         self.trim();
@@ -1244,7 +1244,7 @@ impl Arbi {
             let (digit, borrow_p) =
                 self.vec[i].overflowing_sub(sum as Digit + borrow);
             self.vec[i] = digit;
-            borrow = if borrow_p { 1 } else { 0 };
+            borrow = u32::from(borrow_p);
         }
         self.trim();
         self.neg = false;
