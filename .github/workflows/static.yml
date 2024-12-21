@@ -49,11 +49,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Setup Rust Environment 1.61
+    - name: Setup Rust Environment 1.63
       run: |
-        # Install rustup and Rust 1.61
-        rustup toolchain install 1.61.0
-        rustup default 1.61.0
+        rustup toolchain install 1.63.0
+        rustup default 1.63.0
         . "$HOME/.cargo/env"
 
         # Install clippy

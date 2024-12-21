@@ -52,13 +52,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install Rust 1.61
+    - name: Install Rust 1.63
       run: |
-        rustup toolchain install 1.61.0
-        rustup default 1.61.0
+        rustup toolchain install 1.63.0
+        rustup default 1.63.0
       shell: bash
 
-    - name: Run tests with Rust 1.61
+    - name: Run tests with Rust 1.63
       run: |
         cargo test --release
       shell: bash
