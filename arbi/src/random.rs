@@ -7,8 +7,6 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use crate::uints::UnsignedUtilities;
 use crate::{Arbi, BitCount, Digit};
-use alloc::vec;
-use alloc::vec::Vec;
 use rand::Rng;
 
 /// Trait for generating random `Arbi` integers.
@@ -25,26 +23,9 @@ pub trait RandomArbi {
 // https://docs.rs/rand/latest/rand/trait.Rng.html#generic-usage
 impl<T: Rng + ?Sized> RandomArbi for T {
     fn gen_uarbi(&mut self, bits: BitCount) -> Arbi {
-        let n_digits_ = BitCount::div_ceil_(bits, Digit::BITS as BitCount);
-        let n_digits: usize = n_digits_.try_into().unwrap_or(usize::MAX);
-        // Commented out if using only RngCore
-        // let mut vec = Vec::with_capacity(n_digits);
-        // for _ in 0..n_digits {
-        //     vec.push(self.next_u32());
-        // }
-        let mut vec: Vec<Digit> = vec![0; n_digits];
-        self.fill(&mut vec[..]);
-        let remaining = bits % Digit::BITS as BitCount;
-        if remaining != 0 {
-            if let Some(last_digit) = vec.last_mut() {
-                let mask = Digit::MAX >> (Digit::BITS as BitCount - remaining);
-                *last_digit &= mask;
-            }
-        }
-        let neg = false;
-        let mut result = Arbi { vec, neg };
-        result.trim();
-        result
+        let mut arbi = Arbi::zero();
+        assign_random_uarbi(self, &mut arbi, bits);
+        arbi
     }
 
     fn gen_iarbi(&mut self, bits: BitCount) -> Arbi {
@@ -70,14 +51,41 @@ impl<T: Rng + ?Sized> RandomArbi for T {
         //         return arbi;
         //     }
         // }
+        let mut arbi = self.gen_uarbi(bits);
         loop {
-            let mut arbi = self.gen_uarbi(bits);
             if !arbi.is_zero() {
                 arbi.neg = self.gen::<bool>();
                 return arbi;
             } else if self.gen::<bool>() {
                 return arbi;
+            } else {
+                assign_random_uarbi(self, &mut arbi, bits);
             }
         }
     }
+}
+
+fn assign_random_uarbi<T: Rng + ?Sized>(
+    rng: &mut T,
+    arbi: &mut Arbi,
+    bits: BitCount,
+) {
+    let n_digits_ = BitCount::div_ceil_(bits, Digit::BITS as BitCount);
+    let n_digits: usize = n_digits_.try_into().unwrap_or(usize::MAX);
+    // Commented out if using only RngCore
+    // let mut vec = Vec::with_capacity(n_digits);
+    // for _ in 0..n_digits {
+    //     vec.push(self.next_u32());
+    // }
+    arbi.vec.resize(n_digits, 0);
+    rng.fill(&mut arbi.vec[..]);
+    let remaining = bits % Digit::BITS as BitCount;
+    if remaining != 0 {
+        if let Some(last_digit) = arbi.vec.last_mut() {
+            let mask = Digit::MAX >> (Digit::BITS as BitCount - remaining);
+            *last_digit &= mask;
+        }
+    }
+    arbi.neg = false;
+    arbi.trim();
 }
