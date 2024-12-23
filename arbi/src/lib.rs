@@ -50,6 +50,7 @@ mod multiplication;
 mod negate;
 mod new;
 mod print_internal;
+mod random;
 mod right_shift;
 mod sign;
 mod size;
@@ -67,6 +68,8 @@ pub use base::{Base, BaseError};
 pub use exponentiation::Pow; // No PowAssign implementations yet
 pub use fits::Fits;
 pub use from_string::ParseError;
+#[cfg(feature = "rand")]
+pub use random::RandomArbi;
 
 /// Unsigned integer type representing a base-[`Arbi::BASE`] digit.
 pub type Digit = u32;
