@@ -18,6 +18,13 @@ pub trait RandomArbi {
     /// Generate a random `Arbi` integer in the interval
     /// \\( [-(2^{\text{bits}} - 1), \\; 2^{\text{bits}} - 1] \\).
     fn gen_iarbi(&mut self, bits: BitCount) -> Arbi;
+
+    /// Generate a random `Arbi` integer in the half-open interval
+    /// \\( [\text{lower_incl}, \\; \text{upper_excl})\\).
+    ///
+    /// # Panic
+    /// This function panics if `lower_incl >= upper_excl`.
+    fn gen_arbi_range(&mut self, lower_incl: &Arbi, upper_excl: &Arbi) -> Arbi;
 }
 
 // https://docs.rs/rand/latest/rand/trait.Rng.html#generic-usage
@@ -62,6 +69,17 @@ impl<T: Rng + ?Sized> RandomArbi for T {
                 assign_random_uarbi(self, &mut arbi, bits);
             }
         }
+    }
+
+    fn gen_arbi_range(&mut self, lower_incl: &Arbi, upper_excl: &Arbi) -> Arbi {
+        if lower_incl >= upper_excl {
+            panic!("void range");
+        }
+        if lower_incl.is_zero() {
+            return gen_uarbi_under(self, upper_excl);
+        }
+        let diff = upper_excl - lower_incl;
+        lower_incl + gen_uarbi_under(self, &diff)
     }
 }
 
@@ -118,5 +136,14 @@ mod tests {
         let mut rng = StepRng::new(42, 0);
         let upper_excl = Arbi::zero();
         let _ = gen_uarbi_under(&mut rng, &upper_excl);
+    }
+
+    #[test]
+    #[should_panic(expected = "void range")]
+    fn test_gen_arbi_range_where_range_is_invalid() {
+        let mut rng = StepRng::new(42, 0);
+        let lower_incl = Arbi::zero();
+        let upper_excl = Arbi::from(-1000);
+        let _ = rng.gen_arbi_range(&lower_incl, &upper_excl);
     }
 }
