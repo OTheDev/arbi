@@ -31,6 +31,6 @@ rand = { version = "0.8.5", features = ["std_rng"] }
 rustdoc-args = ["--html-in-header", "./doc/header.html"]
 
 [features]
-std = [] # for core::error::Error implementations only
+std = [] # for std::error::Error implementations only
 nightly = [] # for nightly bench, dev only
 rand = ["dep:rand"] # for random number generation

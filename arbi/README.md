@@ -12,9 +12,10 @@
 
 ## Features
 
-- **No dependencies**.
+- **No dependencies** by default.
 
-  Empty dependencies section in `Cargo.toml`.
+  If you need to generate random arbitrary integers, enable the `rand` feature,
+  which depends on the [rand](https://docs.rs/rand/latest/rand/) crate.
 
 - **`no_std`**.
 
