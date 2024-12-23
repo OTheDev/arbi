@@ -89,3 +89,34 @@ fn assign_random_uarbi<T: Rng + ?Sized>(
     arbi.neg = false;
     arbi.trim();
 }
+
+#[allow(dead_code)]
+/// Return a random `Arbi` integer in [0, upper_excl).
+///
+/// # Panic
+/// Panics if `upper_excl` is zero.
+fn gen_uarbi_under<T: Rng + ?Sized>(rng: &mut T, upper_excl: &Arbi) -> Arbi {
+    if upper_excl.is_zero() {
+        panic!("empty range")
+    }
+    let bits = upper_excl.size_bits();
+    let mut random_arbi = rng.gen_uarbi(bits);
+    while upper_excl <= &random_arbi {
+        assign_random_uarbi(rng, &mut random_arbi, bits);
+    }
+    random_arbi
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::rngs::mock::StepRng;
+
+    #[test]
+    #[should_panic(expected = "empty range")]
+    fn test_gen_uarbi_under_where_upper_is_zero() {
+        let mut rng = StepRng::new(42, 0);
+        let upper_excl = Arbi::zero();
+        let _ = gen_uarbi_under(&mut rng, &upper_excl);
+    }
+}
