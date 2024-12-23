@@ -97,7 +97,7 @@ fn assign_random_uarbi<T: Rng + ?Sized>(
 /// Panics if `upper_excl` is zero.
 fn gen_uarbi_under<T: Rng + ?Sized>(rng: &mut T, upper_excl: &Arbi) -> Arbi {
     if upper_excl.is_zero() {
-        panic!("upper_excl must not be zero")
+        panic!("void range")
     }
     let bits = upper_excl.size_bits();
     let mut random_arbi = rng.gen_uarbi(bits);
@@ -113,7 +113,7 @@ mod tests {
     use rand::rngs::mock::StepRng;
 
     #[test]
-    #[should_panic(expected = "upper_excl must not be zero")]
+    #[should_panic(expected = "void range")]
     fn test_gen_uarbi_under_where_upper_is_zero() {
         let mut rng = StepRng::new(42, 0);
         let upper_excl = Arbi::zero();
