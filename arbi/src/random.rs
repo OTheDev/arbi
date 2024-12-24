@@ -154,4 +154,18 @@ mod tests {
         let upper_excl = Arbi::from(-1000);
         let _ = rng.gen_arbi_range(&lower_incl, &upper_excl);
     }
+
+    #[test]
+    #[should_panic(expected = "capacity overflow")]
+    fn test_gen_uarbi_bits_panics_if_max_bits_exceeded() {
+        let mut rng = StepRng::new(42, 1);
+        let _ = rng.gen_uarbi(Arbi::MAX_BITS + 1);
+    }
+
+    #[test]
+    #[should_panic(expected = "capacity overflow")]
+    fn test_gen_iarbi_bits_panics_if_max_bits_exceeded() {
+        let mut rng = StepRng::new(42, 1);
+        let _ = rng.gen_iarbi(Arbi::MAX_BITS + 1);
+    }
 }
