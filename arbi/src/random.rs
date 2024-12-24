@@ -33,6 +33,13 @@ pub trait RandomArbi {
     /// # Panic
     /// Panics if `lower_incl >= upper_excl`.
     fn gen_arbi_range(&mut self, lower_incl: &Arbi, upper_excl: &Arbi) -> Arbi;
+
+    /// Generate a random `Arbi` integer in the half-open interval
+    /// \\( [0, \\; \text{upper_excl})\\).
+    ///
+    /// # Panic
+    /// Panics if `upper_excl` is zero.
+    fn gen_uarbi_under(&mut self, upper_excl: &Arbi) -> Arbi;
 }
 
 // https://docs.rs/rand/latest/rand/trait.Rng.html#generic-usage
@@ -84,10 +91,22 @@ impl<T: Rng + ?Sized> RandomArbi for T {
             panic!("void range");
         }
         if lower_incl.is_zero() {
-            return gen_uarbi_under(self, upper_excl);
+            return self.gen_uarbi_under(upper_excl);
         }
         let diff = upper_excl - lower_incl;
-        lower_incl + gen_uarbi_under(self, &diff)
+        lower_incl + self.gen_uarbi_under(&diff)
+    }
+
+    fn gen_uarbi_under(&mut self, upper_excl: &Arbi) -> Arbi {
+        if upper_excl.is_zero() {
+            panic!("void range")
+        }
+        let bits = upper_excl.size_bits();
+        let mut random_arbi = self.gen_uarbi(bits);
+        while upper_excl <= &random_arbi {
+            assign_random_uarbi(self, &mut random_arbi, bits);
+        }
+        random_arbi
     }
 }
 
@@ -116,23 +135,6 @@ fn assign_random_uarbi<T: Rng + ?Sized>(
     arbi.trim();
 }
 
-#[allow(dead_code)]
-/// Return a random `Arbi` integer in [0, upper_excl).
-///
-/// # Panic
-/// Panics if `upper_excl` is zero.
-fn gen_uarbi_under<T: Rng + ?Sized>(rng: &mut T, upper_excl: &Arbi) -> Arbi {
-    if upper_excl.is_zero() {
-        panic!("void range")
-    }
-    let bits = upper_excl.size_bits();
-    let mut random_arbi = rng.gen_uarbi(bits);
-    while upper_excl <= &random_arbi {
-        assign_random_uarbi(rng, &mut random_arbi, bits);
-    }
-    random_arbi
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -143,7 +145,7 @@ mod tests {
     fn test_gen_uarbi_under_where_upper_is_zero() {
         let mut rng = StepRng::new(42, 0);
         let upper_excl = Arbi::zero();
-        let _ = gen_uarbi_under(&mut rng, &upper_excl);
+        let _ = rng.gen_uarbi_under(&upper_excl);
     }
 
     #[test]
