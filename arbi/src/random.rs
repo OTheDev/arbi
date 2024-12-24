@@ -170,4 +170,18 @@ mod tests {
         let mut rng = StepRng::new(42, 1);
         let _ = rng.gen_iarbi(Arbi::MAX_BITS + 1);
     }
+
+    #[test]
+    fn test_gen_uarbi_is_zero_if_bits_is_zero() {
+        let mut rng = StepRng::new(42, 1);
+        let a = rng.gen_uarbi(0);
+        assert_eq!(a, 0);
+    }
+
+    #[test]
+    fn test_gen_iarbi_is_zero_if_bits_is_zero() {
+        let mut rng = StepRng::new(42, 1);
+        let a = rng.gen_iarbi(0);
+        assert_eq!(a, 0);
+    }
 }
