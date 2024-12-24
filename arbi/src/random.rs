@@ -139,6 +139,8 @@ fn assign_random_uarbi<T: Rng + ?Sized>(
 mod tests {
     use super::*;
     use rand::rngs::mock::StepRng;
+    use rand::rngs::StdRng;
+    use rand::SeedableRng;
 
     #[test]
     #[should_panic(expected = "void range")]
@@ -197,5 +199,104 @@ mod tests {
         let mut rng = StepRng::new(42, 1);
         let a = rng.gen_uarbi_under(&Arbi::from(1));
         assert_eq!(a, 0);
+    }
+
+    #[test]
+    fn test_gen_uarbi_repeated() {
+        let mut rng = StdRng::seed_from_u64(42);
+        let mid = Arbi::from_str_radix(
+            "3138550867693340381917894711603833208051177722232017256447",
+            10,
+        )
+        .unwrap();
+        let mut num_above = 0;
+        let mut num_below = 0;
+        for _ in 0..i16::MAX {
+            let arbi = rng.gen_uarbi(192);
+            assert!(arbi >= Arbi::zero());
+            assert!(arbi.size_bits() <= 192);
+            if arbi > mid {
+                num_above += 1;
+            } else if arbi < mid {
+                num_below += 1;
+            }
+        }
+        let ratio = num_above as f64 / num_below as f64;
+        assert!(0.95 < ratio && ratio < 1.05);
+    }
+
+    #[test]
+    fn test_gen_iarbi_repeated() {
+        let mut rng = StdRng::seed_from_u64(42);
+        let mid = 0;
+        let mut num_above = 0;
+        let mut num_below = 0;
+        for _ in 0..i16::MAX {
+            let arbi = rng.gen_iarbi(256);
+            assert!(arbi.size_bits() <= 256);
+            if arbi > mid {
+                num_above += 1;
+            } else if arbi < mid {
+                num_below += 1;
+            }
+        }
+        let ratio = num_above as f64 / num_below as f64;
+        assert!(0.95 < ratio && ratio < 1.05);
+    }
+
+    #[test]
+    fn test_gen_uarbi_under_repeated() {
+        let mut rng = StdRng::seed_from_u64(42);
+        let upper_excl = Arbi::from_str_radix(
+            // 2**256 - 1
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            16,
+        )
+        .unwrap();
+        let mid = upper_excl.clone() >> 1;
+        let mut num_above = 0;
+        let mut num_below = 0;
+        for _ in 0..i16::MAX {
+            let arbi = rng.gen_uarbi_under(&upper_excl);
+            assert!(arbi >= 0 && arbi < upper_excl);
+            if arbi > mid {
+                num_above += 1;
+            } else if arbi < mid {
+                num_below += 1;
+            }
+        }
+        let ratio = num_above as f64 / num_below as f64;
+        assert!(0.95 < ratio && ratio < 1.05);
+    }
+
+    #[test]
+    fn test_gen_arbi_range_repeated() {
+        let mut rng = StdRng::seed_from_u64(42);
+        // -(2**256 - 1)
+        let lower = Arbi::from_str_radix(
+            "-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            16,
+        )
+        .unwrap();
+        // 2**256 - 1
+        let upper = Arbi::from_str_radix(
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            16,
+        )
+        .unwrap();
+        let mid = 0;
+        let mut num_above = 0;
+        let mut num_below = 0;
+        for _ in 0..i16::MAX {
+            let arbi = rng.gen_arbi_range(&lower, &upper);
+            assert!(arbi >= lower && arbi < upper);
+            if arbi > mid {
+                num_above += 1;
+            } else if arbi < mid {
+                num_below += 1;
+            }
+        }
+        let ratio = num_above as f64 / num_below as f64;
+        assert!(0.95 < ratio && ratio < 1.05);
     }
 }
