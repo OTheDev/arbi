@@ -184,4 +184,18 @@ mod tests {
         let a = rng.gen_iarbi(0);
         assert_eq!(a, 0);
     }
+
+    #[test]
+    fn test_gen_arbi_range_is_zero_for_0_to_1() {
+        let mut rng = StepRng::new(42, 1);
+        let a = rng.gen_arbi_range(&Arbi::ZERO, &Arbi::from(1));
+        assert_eq!(a, 0);
+    }
+
+    #[test]
+    fn test_gen_uarbi_under_is_zero_for_1_upperbound() {
+        let mut rng = StepRng::new(42, 1);
+        let a = rng.gen_uarbi_under(&Arbi::from(1));
+        assert_eq!(a, 0);
+    }
 }
