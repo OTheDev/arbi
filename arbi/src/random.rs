@@ -213,7 +213,7 @@ mod tests {
         let mut num_below = 0;
         for _ in 0..i16::MAX {
             let arbi = rng.gen_uarbi(192);
-            assert!(arbi >= Arbi::zero());
+            assert!(arbi >= 0);
             assert!(arbi.size_bits() <= 192);
             if arbi > mid {
                 num_above += 1;
