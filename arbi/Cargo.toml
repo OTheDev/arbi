@@ -6,7 +6,7 @@ categories = [
     "mathematics",
     "no-std",
 ]
-description = "Arbitrary precision integer."
+description = "Arbitrary Precision Integer"
 edition = "2021"
 keywords = [
     "arbitrary-precision",
@@ -22,13 +22,17 @@ version = "0.4.1"
 rust-version = "1.65"
 
 [dependencies]
+rand = { version = "0.8.5", optional = true }
 
 [dev-dependencies]
 rand = { version = "0.8.5", features = ["std_rng"] }
 
 [package.metadata.docs.rs]
-rustdoc-args = ["--html-in-header", "./doc/header.html"]
+# RUSTDOCFLAGS="--html-in-header ./arbi/doc/header.html --cfg docsrs" cargo +nightly doc --no-deps --all-features
+rustdoc-args = ["--html-in-header", "./doc/header.html", "--cfg", "docsrs"]
+all-features = true
 
 [features]
-std = []
+std = [] # for std::error::Error implementations only
 nightly = [] # for nightly bench, dev only
+rand = ["dep:rand"] # for random number generation

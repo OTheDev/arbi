@@ -35,7 +35,7 @@ jobs:
         cargo install cargo-audit
 
     - name: clippy
-      run: cargo clippy -- -D warnings
+      run: cargo clippy --features "std,rand" -- -D warnings
 
     - name: rustfmt
       run: cargo fmt -- --check
@@ -59,4 +59,4 @@ jobs:
         rustup component add clippy
 
     - name: clippy
-      run: cargo clippy -- -D warnings
+      run: cargo clippy --features "std,rand" -- -D warnings
