@@ -11,19 +11,27 @@ use rand::Rng;
 
 /// Trait for generating random `Arbi` integers.
 pub trait RandomArbi {
-    /// Generate a random `Arbi` integer in the interval
+    /// Generate a random `Arbi` integer in the closed interval
     /// \\( [0, 2^{\text{bits}} - 1] \\).
+    ///
+    /// # Panic
+    /// Panics if `Vec`'s maximum capacity is exceeded, i.e. `bits` exceeds
+    /// [`Arbi::MAX_BITS`] (or if the allocator reports allocation failure).
     fn gen_uarbi(&mut self, bits: BitCount) -> Arbi;
 
-    /// Generate a random `Arbi` integer in the interval
+    /// Generate a random `Arbi` integer in the closed interval
     /// \\( [-(2^{\text{bits}} - 1), \\; 2^{\text{bits}} - 1] \\).
+    ///
+    /// # Panic
+    /// Panics if `Vec`'s maximum capacity is exceeded, i.e. `bits` exceeds
+    /// [`Arbi::MAX_BITS`] (or if the allocator reports allocation failure).
     fn gen_iarbi(&mut self, bits: BitCount) -> Arbi;
 
     /// Generate a random `Arbi` integer in the half-open interval
     /// \\( [\text{lower_incl}, \\; \text{upper_excl})\\).
     ///
     /// # Panic
-    /// This function panics if `lower_incl >= upper_excl`.
+    /// Panics if `lower_incl >= upper_excl`.
     fn gen_arbi_range(&mut self, lower_incl: &Arbi, upper_excl: &Arbi) -> Arbi;
 }
 

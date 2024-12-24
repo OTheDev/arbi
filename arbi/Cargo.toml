@@ -28,7 +28,9 @@ rand = { version = "0.8.5", optional = true }
 rand = { version = "0.8.5", features = ["std_rng"] }
 
 [package.metadata.docs.rs]
-rustdoc-args = ["--html-in-header", "./doc/header.html"]
+# RUSTDOCFLAGS="--html-in-header ./arbi/doc/header.html --cfg docsrs" cargo +nightly doc --no-deps --all-features
+rustdoc-args = ["--html-in-header", "./doc/header.html", "--cfg", "docsrs"]
+all-features = true
 
 [features]
 std = [] # for std::error::Error implementations only

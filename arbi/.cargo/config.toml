@@ -1,2 +1,5 @@
 [build]
-rustdocflags = [ "--html-in-header", "./arbi/doc/header.html" ]
+rustdocflags = [
+    "--cfg", "docsrs",
+    "--html-in-header", "./arbi/doc/header.html"
+]

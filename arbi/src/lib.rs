@@ -4,6 +4,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
 #![doc = include_str!("../README.md")]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -69,6 +70,7 @@ pub use exponentiation::Pow; // No PowAssign implementations yet
 pub use fits::Fits;
 pub use from_string::ParseError;
 #[cfg(feature = "rand")]
+#[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
 pub use random::RandomArbi;
 
 /// Unsigned integer type representing a base-[`Arbi::BASE`] digit.
