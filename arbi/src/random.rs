@@ -63,16 +63,6 @@ impl<T: Rng + ?Sized> RandomArbi for T {
         // be 1/2^{bits} > 0.5/2^{bits}. Consequently, an adjustment is needed
         // to ensure zero is not more likely than each possible positive or
         // negative value.
-        // Commented out if using only RngCore
-        // loop {
-        //     let mut arbi = self.gen_uarbi(bits);
-        //     if !arbi.is_zero() {
-        //         arbi.neg = self.next_u32() % 2 == 0;
-        //         return arbi;
-        //     } else if self.next_u32() % 2 == 0 {
-        //         return arbi;
-        //     }
-        // }
         let mut arbi = self.gen_uarbi(bits);
         loop {
             if !arbi.is_zero() {
@@ -117,11 +107,6 @@ fn assign_random_uarbi<T: Rng + ?Sized>(
 ) {
     let n_digits_ = BitCount::div_ceil_(bits, Digit::BITS as BitCount);
     let n_digits: usize = n_digits_.try_into().unwrap_or(usize::MAX);
-    // Commented out if using only RngCore
-    // let mut vec = Vec::with_capacity(n_digits);
-    // for _ in 0..n_digits {
-    //     vec.push(self.next_u32());
-    // }
     arbi.vec.resize(n_digits, 0);
     rng.fill(&mut arbi.vec[..]);
     let remaining = bits % Digit::BITS as BitCount;
