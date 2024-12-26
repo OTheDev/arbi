@@ -13,7 +13,7 @@ use rand::Rng;
 
 #[derive(Debug, Clone)]
 pub struct UniformArbi {
-    // Instead of the following representation, we could store lo, hi instead.
+    // Instead of the following representation, we could just store lo, hi.
     // However, that approach leads to more memory allocations.
     lower: Arbi,
     delta: Arbi,
