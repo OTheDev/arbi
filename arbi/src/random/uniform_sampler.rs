@@ -155,7 +155,7 @@ mod test_uniform_sampler {
         let mut num_below = 0;
         for _ in 0..(i16::MAX >> 1) {
             let arbi = uniform.sample(&mut rng);
-            assert!(arbi >= lower && arbi < upper);
+            assert!(arbi >= lower && arbi <= upper);
             if arbi > mid {
                 num_above += 1;
             } else if arbi < mid {
@@ -209,5 +209,49 @@ mod test_uniform_sampler {
         }
         let ratio = num_above as f64 / num_below as f64;
         assert!(0.95 < ratio && ratio < 1.05);
+    }
+
+    #[test]
+    fn test_uniform_small() {
+        let mut rng = StdRng::seed_from_u64(42);
+
+        let lower = Arbi::from(1);
+        let upper = Arbi::from(4);
+
+        let uniform = Uniform::new(&lower, &upper);
+        let mut values_sampled = std::collections::HashSet::new();
+
+        for _ in 0..5000 {
+            let arbi = uniform.sample(&mut rng);
+            assert!(arbi >= lower && arbi < upper);
+            values_sampled.insert(arbi.wrapping_to_i32());
+        }
+
+        assert_eq!(values_sampled.len(), 3);
+        assert!(values_sampled.contains(&1));
+        assert!(values_sampled.contains(&2));
+        assert!(values_sampled.contains(&3));
+    }
+
+    #[test]
+    fn test_uniform_inclusive_small() {
+        let mut rng = StdRng::seed_from_u64(42);
+
+        let lower = Arbi::from(1);
+        let upper = Arbi::from(3);
+
+        let uniform = Uniform::new_inclusive(&lower, &upper);
+        let mut values_sampled = std::collections::HashSet::new();
+
+        for _ in 0..5000 {
+            let arbi = uniform.sample(&mut rng);
+            assert!(arbi >= lower && arbi <= upper);
+            values_sampled.insert(arbi.wrapping_to_i32());
+        }
+
+        assert_eq!(values_sampled.len(), 3);
+        assert!(values_sampled.contains(&1));
+        assert!(values_sampled.contains(&2));
+        assert!(values_sampled.contains(&3));
     }
 }
