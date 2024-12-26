@@ -3,8 +3,6 @@ Copyright 2024 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-#![cfg(feature = "rand")]
-
 use crate::uints::UnsignedUtilities;
 use crate::{Arbi, BitCount, Digit};
 use rand::Rng;
