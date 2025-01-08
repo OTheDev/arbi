@@ -173,6 +173,7 @@ impl Arbi {
         let digit_idx: usize = (i / Digit::BITS as BitCount)
             .try_into()
             .unwrap_or(usize::MAX);
+        #[allow(clippy::useless_conversion)]
         let m = Digit::from(1u32) << (i % Digit::BITS as BitCount);
         if !self.is_negative() {
             if digit_idx >= self.size() {
@@ -187,6 +188,7 @@ impl Arbi {
             let (f_digit_idx, f_bit_idx, f) = self.first_nonzero_bit();
             match i.cmp(&f) {
                 Ordering::Less => {
+                    #[allow(clippy::useless_conversion)]
                     let f_mask = Digit::from(1u32) << f_bit_idx;
                     // Clear bit f
                     self.vec[f_digit_idx] &= !f_mask;
@@ -228,6 +230,7 @@ impl Arbi {
     /// a.clear_bit(13);
     /// assert_eq!(a, 4152);
     /// ```
+    #[allow(clippy::useless_conversion)]
     pub fn clear_bit(&mut self, i: BitCount) -> &mut Self {
         let digit_idx: usize = (i / Digit::BITS as BitCount)
             .try_into()
@@ -300,11 +303,12 @@ impl Arbi {
             let digit_idx: usize = (i / Digit::BITS as BitCount)
                 .try_into()
                 .unwrap_or(usize::MAX);
+            #[allow(clippy::useless_conversion)]
+            let m = Digit::from(1u32) << (i % Digit::BITS as BitCount);
             if digit_idx >= self.size() {
                 self.vec.resize(digit_idx.saturating_add(1), 0);
             }
-            self.vec[digit_idx] ^=
-                Digit::from(1u32) << (i % Digit::BITS as BitCount);
+            self.vec[digit_idx] ^= m;
             self.trim();
             self
         } else if self.test_bit(i) {
