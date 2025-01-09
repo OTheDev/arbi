@@ -150,9 +150,8 @@ impl Arbi {
                 Ordering::Less => false,
                 Ordering::Equal => true,
                 Ordering::Greater => {
-                    !(((self.vec[digit_idx] >> (i % Digit::BITS as BitCount))
-                        & 1)
-                        != 0)
+                    ((self.vec[digit_idx] >> (i % Digit::BITS as BitCount)) & 1)
+                        == 0
                 }
             }
         }
