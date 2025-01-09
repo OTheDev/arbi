@@ -14,16 +14,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  rust-stable-clippy-fmt-audit:
+  rust-stable-clippy-audit-fmt:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - run: |
-        rustup update stable && rustup override set stable
-        rustup component add clippy
-        cargo install cargo-audit
+    - run: rustup update stable && rustup override set stable
     - run: cargo clippy --features "std,rand" -- -D warnings
-    - run: cargo audit
+    - run: |
+        cargo install cargo-audit
+        cargo audit
     - name: rustfmt (nightly)
       run: |
         rustup toolchain install nightly
