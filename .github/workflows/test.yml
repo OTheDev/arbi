@@ -6,59 +6,32 @@ on:
     paths:
       - 'arbi/**'
       - 'examples/**'
-
   pull_request:
     branches: [ main ]
     paths:
       - 'arbi/**'
       - 'examples/**'
-
   workflow_dispatch:
 
 jobs:
-  build-and-test:
+  rust-stable-build-and-test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-
     steps:
     - uses: actions/checkout@v4
+    - run: rustup update stable && rustup override set stable
+    - run: cargo build --verbose
+    - run: cargo test --verbose --features "std,rand"
 
-    - name: Install Rust
-      run: |
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-      shell: bash
-
-    - name: Run tests
-      run: |
-        cargo test --release --features "std,rand"
-
-        # # Run examples
-        # for example in examples/*; do
-        #   if [ -f "$example/Cargo.toml" ]; then
-        #     cargo run --release --manifest-path "$example/Cargo.toml"
-        #   fi
-        # done
-      shell: bash
-
-  # Test MSRV
-  build-and-test-rust-1point65:
+  rust-1point65-build-and-test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-
     steps:
     - uses: actions/checkout@v4
-
-    - name: Install Rust 1.65
-      run: |
-        rustup toolchain install 1.65.0
-        rustup default 1.65.0
-      shell: bash
-
-    - name: Run tests with Rust 1.65
-      run: |
-        cargo test --release --features "std,rand"
-      shell: bash
+    - run: rustup toolchain install 1.65.0 && rustup override set 1.65.0
+    - run: cargo build --verbose
+    - run: cargo test --verbose --features "std,rand"

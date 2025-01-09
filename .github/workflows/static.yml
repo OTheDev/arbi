@@ -6,57 +6,34 @@ on:
     paths:
       - 'arbi/**'
       - 'examples/**'
-
   pull_request:
     branches: [ main ]
     paths:
       - 'arbi/**'
       - 'examples/**'
-
   workflow_dispatch:
 
 jobs:
-  lint-and-audit:
+  rust-stable-clippy-audit-fmt:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
-
-    - name: Setup Rust Environment
-      run: |
-        # Install rustup
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        . "$HOME/.cargo/env"
-
-        # Install clippy and rustfmt
-        rustup component add clippy rustfmt
-
-        # Install cargo-audit
+    - run: rustup update stable && rustup override set stable
+    - run: cargo clippy --features "std,rand" -- -D warnings
+    - run: |
         cargo install cargo-audit
+        cargo audit
+    - name: rustfmt (nightly)
+      run: |
+        rustup toolchain install nightly
+        rustup component add rustfmt --toolchain nightly
+        cargo +nightly fmt -- --check
 
-    - name: clippy
-      run: cargo clippy --features "std,rand" -- -D warnings
-
-    - name: rustfmt
-      run: cargo fmt -- --check
-
-    - name: cargo-audit
-      run: cargo audit
-
-  clippy-rust-1point65:
+  rust-1point65-clippy:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
-
-    - name: Setup Rust Environment 1.65
-      run: |
-        rustup toolchain install 1.65.0
-        rustup default 1.65.0
-        . "$HOME/.cargo/env"
-
-        # Install clippy
+    - run: |
+        rustup toolchain install 1.65.0 && rustup override set 1.65.0
         rustup component add clippy
-
-    - name: clippy
-      run: cargo clippy --features "std,rand" -- -D warnings
+    - run: cargo clippy --features "std,rand" -- -D warnings

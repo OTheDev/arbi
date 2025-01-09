@@ -34,5 +34,5 @@ all-features = true
 
 [features]
 std = [] # for std::error::Error implementations only
-nightly = [] # for nightly bench, dev only
 rand = ["dep:rand"] # for random number generation
+nightly = [] # for nightly bench, dev only
