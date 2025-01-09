@@ -65,6 +65,9 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 //  CLEAR
 //      A' = A  [It's already cleared, no change needed]
 //
+//  INVERT
+//      Bit j is 0 ==> same as setting bit j.
+//
 // -----------------------------------------------------------------------------
 // Case 2: j = f
 // -----------------------------------------------------------------------------
@@ -87,6 +90,9 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 //          (1) Clear bit f
 //          (2) Add 1 to bit field with indices > f: (f, inf).
 //
+//  INVERT
+//      Bit j is 1 ==> same as clearing bit j.
+//
 // -----------------------------------------------------------------------------
 // Case 3: j > f
 // -----------------------------------------------------------------------------
@@ -102,6 +108,9 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 //      Clearing a bit in "~bits" is equivalent to setting it in "bits". Thus
 //
 //      A' = A | (1 << j)
+//
+// INVERT
+//      XOR. TODO.
 
 use crate::{Arbi, BitCount, Digit};
 use core::cmp::Ordering;
@@ -289,6 +298,7 @@ impl Arbi {
         self
     }
 
+    /* TODO: for the negative case, we can avoid using self.test_bit() */
     /// Toggle bit `i` of the two's complement representation (with sign
     /// extension) of this integer.
     ///
