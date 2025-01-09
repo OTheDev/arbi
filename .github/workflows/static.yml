@@ -20,13 +20,15 @@ jobs:
     - uses: actions/checkout@v4
     - run: |
         rustup update stable && rustup override set stable
-        rustup component add clippy rustfmt
+        rustup component add clippy
         cargo install cargo-audit
     - run: cargo clippy --features "std,rand" -- -D warnings
-    - run: |
-        rustup toolchain install nightly
-        cargo +nightly fmt -- --check
     - run: cargo audit
+    - name: rustfmt (nightly)
+      run: |
+        rustup toolchain install nightly
+        rustup component add rustfmt --toolchain nightly
+        cargo +nightly fmt -- --check
 
   rust-1point65-clippy:
     runs-on: ubuntu-latest
