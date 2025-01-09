@@ -18,4 +18,4 @@ mod reverse_bits;
 mod signum;
 mod swap_bytes;
 mod to_bytes;
-mod trailing_ones;
+mod trailing_ones_and_zeros;

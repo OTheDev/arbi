@@ -3,7 +3,7 @@ Copyright 2024 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-use crate::{Arbi, Digit};
+use crate::{Arbi, BitCount, Digit};
 
 impl Arbi {
     /// Returns the number of trailing ones in the binary representation of the
@@ -12,29 +12,47 @@ impl Arbi {
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    ///
     /// let zero = Arbi::zero();
     /// assert_eq!(zero.trailing_ones(), 0);
-    ///
     /// let a = Arbi::from(u128::MAX);
     /// assert_eq!(a.trailing_ones(), 128);
-    ///
     /// let b = Arbi::from(u128::MAX - 1);
     /// assert_eq!(b.trailing_ones(), 0);
     /// ```
     ///
-    /// ## Complexity
+    /// # Complexity
     /// \\( O(n) \\)
-    pub fn trailing_ones(&self) -> u128 {
-        let mut sum = 0_u128;
-        for x in self.vec.iter() {
-            let trailing_ones = x.trailing_ones() as u128;
-            sum += trailing_ones;
-            if trailing_ones != Digit::BITS as u128 {
-                break;
-            }
+    pub fn trailing_ones(&self) -> BitCount {
+        let first_nonmax =
+            self.vec.iter().position(|&digit| digit != Digit::MAX);
+        if let Some(idx) = first_nonmax {
+            self.vec[idx].trailing_ones() as BitCount
+                + idx as BitCount * Digit::BITS as BitCount
+        } else {
+            self.size() as BitCount * Digit::BITS as BitCount
         }
-        sum
+    }
+
+    /// If the integer is nonzero, returns the number of trailing zeros in the
+    /// binary representation of `self`. Otherwise, returns `None`.
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::Arbi;
+    /// let zero = Arbi::zero();
+    /// assert_eq!(zero.trailing_zeros(), None);
+    /// let a = Arbi::from(0xFFFFFFFF00000000u64);
+    /// assert_eq!(a.trailing_zeros(), Some(32));
+    /// ```
+    ///
+    /// # Complexity
+    /// \\( O(n) \\)
+    pub fn trailing_zeros(&self) -> Option<BitCount> {
+        let first_nonzero = self.vec.iter().position(|&digit| digit != 0)?;
+        Some(
+            self.vec[first_nonzero].trailing_zeros() as BitCount
+                + first_nonzero as BitCount * Digit::BITS as BitCount,
+        )
     }
 }
 
@@ -42,7 +60,7 @@ impl Arbi {
 mod tests {
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
     use crate::{Arbi, Assign};
-    use crate::{DDigit, Digit, QDigit};
+    use crate::{BitCount, DDigit, Digit, QDigit};
 
     #[test]
     fn smoke() {
@@ -55,7 +73,15 @@ mod tests {
             let digit_arbi = Arbi::from(digit);
             assert_eq!(
                 digit_arbi.trailing_ones(),
-                digit.trailing_ones() as u128
+                digit.trailing_ones() as BitCount
+            );
+            assert_eq!(
+                digit_arbi.trailing_zeros(),
+                if digit == 0 {
+                    None
+                } else {
+                    Some(digit.trailing_zeros() as BitCount)
+                }
             );
 
             let ddigit = die_dd.sample(&mut rng);
@@ -63,6 +89,14 @@ mod tests {
             assert_eq!(
                 ddigit_arbi.trailing_ones(),
                 ddigit.trailing_ones() as u128
+            );
+            assert_eq!(
+                ddigit_arbi.trailing_zeros(),
+                if ddigit == 0 {
+                    None
+                } else {
+                    Some(ddigit.trailing_zeros() as BitCount)
+                }
             );
         }
     }
