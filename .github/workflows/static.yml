@@ -23,7 +23,9 @@ jobs:
         rustup component add clippy rustfmt
         cargo install cargo-audit
     - run: cargo clippy --features "std,rand" -- -D warnings
-    - run: cargo +nightly fmt -- --check
+    - run: |
+        rustup toolchain install nightly
+        cargo +nightly fmt -- --check
     - run: cargo audit
 
   rust-1point65-clippy:
