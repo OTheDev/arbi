@@ -142,15 +142,19 @@ impl Arbi {
         let digit_idx = (i / Digit::BITS as BitCount) as usize;
         if self.size() <= digit_idx {
             self.is_negative()
+        } else if !self.is_negative() {
+            ((self.vec[digit_idx] >> (i % Digit::BITS as BitCount)) & 1) != 0
         } else {
-            let mut digit = self.vec[digit_idx];
-            if self.is_negative() {
-                digit = digit.wrapping_neg();
-                if self.vec[..digit_idx].iter().any(|&dig| dig != 0) {
-                    digit = digit.wrapping_sub(1);
+            let (_, _, f) = self.first_nonzero_bit();
+            match i.cmp(&f) {
+                Ordering::Less => false,
+                Ordering::Equal => true,
+                Ordering::Greater => {
+                    !(((self.vec[digit_idx] >> (i % Digit::BITS as BitCount))
+                        & 1)
+                        != 0)
                 }
             }
-            ((digit >> (i % Digit::BITS as BitCount)) & 1) != 0
         }
     }
 
