@@ -55,8 +55,7 @@ impl Arbi {
             if self.vec[0].trailing_zeros() != 0 {
                 return Some(0);
             } else if self.vec[0] == 1 && self.size() == 1 {
-                // -1add
-                return None;
+                return None; // -1
             }
             let mut digit = self.vec[0].wrapping_sub(1);
             let mut idx = 0;
