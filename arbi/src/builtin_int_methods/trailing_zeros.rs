@@ -35,39 +35,61 @@ mod tests {
     use crate::Arbi;
     use crate::{BitCount, DDigit, Digit};
 
+    macro_rules! assert_trailing_zeros {
+        ($value:expr) => {
+            let arbi = Arbi::from($value);
+            assert_eq!(
+                arbi.trailing_zeros(),
+                if $value == 0 {
+                    None
+                } else {
+                    Some(BitCount::from($value.trailing_zeros()))
+                }
+            );
+        };
+    }
+
+    macro_rules! assert_trailing_zeros_from_digits {
+        ($digits:expr) => {
+            let arbi = Arbi::from_digits($digits, true);
+            assert_eq!(
+                arbi.trailing_zeros(),
+                if arbi.is_zero() {
+                    None
+                } else {
+                    Some(BitCount::from(
+                        arbi.wrapping_to_i128().trailing_zeros(),
+                    ))
+                }
+            );
+        };
+    }
+
     #[test]
-    fn smoke() {
+    fn test_smoke() {
         let (mut rng, _) = get_seedable_rng();
         let die_d = get_uniform_die(Digit::MIN, Digit::MAX);
-        let die_dd = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
 
+        let die_dd = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
         for _ in 0..i16::MAX {
             let digit = die_d.sample(&mut rng);
-            let digit_arbi = Arbi::from(digit);
-            assert_eq!(
-                digit_arbi.trailing_zeros(),
-                if digit == 0 {
-                    None
-                } else {
-                    Some(digit.trailing_zeros() as BitCount)
-                }
-            );
-
             let ddigit = die_dd.sample(&mut rng);
-            let ddigit_arbi = Arbi::from(ddigit);
-            assert_eq!(
-                ddigit_arbi.trailing_zeros(),
-                if ddigit == 0 {
-                    None
-                } else {
-                    Some(ddigit.trailing_zeros() as BitCount)
-                }
-            );
+
+            assert_trailing_zeros!(digit);
+            assert_trailing_zeros!(ddigit);
+
+            assert_trailing_zeros_from_digits!(vec![0, digit]);
+            assert_trailing_zeros_from_digits!(vec![
+                0,
+                ddigit as Digit,
+                (ddigit >> Digit::BITS) as Digit
+            ]);
+            assert_trailing_zeros_from_digits!(vec![0, 0, digit]);
         }
     }
 
     #[test]
-    fn special() {
+    fn test_special() {
         let zero = Arbi::zero();
         assert_eq!(zero.trailing_zeros(), None);
 
@@ -82,5 +104,17 @@ mod tests {
             one.trailing_zeros(),
             Some(1_i32.trailing_zeros() as BitCount)
         );
+    }
+
+    #[test]
+    fn test_powers_of_two() {
+        for i in 0..128 {
+            let power_of_two = 1u128 << i;
+            let arbi = Arbi::from(power_of_two);
+            assert_eq!(
+                arbi.trailing_zeros(),
+                Some(BitCount::from(power_of_two.trailing_zeros()))
+            );
+        }
     }
 }
