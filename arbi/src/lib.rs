@@ -201,4 +201,45 @@ impl Arbi {
             neg: arbi.neg,
         }
     }
+
+    // TODO: make from_digits(), from_slice(), ... type functions public, once
+    // names have been decided.
+
+    /// Return a new `Arbi` integer with magnitude given by `digits` (least
+    /// significant digits first).
+    ///
+    /// No memory allocation occurs.
+    #[allow(dead_code)]
+    pub(crate) fn from_digits(digits: Vec<Digit>, is_negative: bool) -> Self {
+        let mut arbi = Arbi {
+            neg: is_negative,
+            vec: digits,
+        };
+        arbi.trim();
+        arbi
+    }
+
+    /// Return a new `Arbi` integer with magnitude given by `digits` (least
+    /// significant digits first).
+    #[allow(dead_code)]
+    pub(crate) fn from_slice(digits: &[Digit], is_negative: bool) -> Self {
+        let mut arbi = Arbi {
+            neg: is_negative,
+            vec: digits.to_vec(),
+        };
+        arbi.trim();
+        arbi
+    }
+
+    /// Assign from a slice of `digits` representing the magnitude.
+    ///
+    /// No memory allocation occurs if the original internal digit vector has
+    /// enough capacity to store `digits`.
+    #[allow(dead_code)]
+    pub(crate) fn assign_slice(&mut self, digits: &[Digit], is_negative: bool) {
+        self.vec.clear();
+        self.vec.extend_from_slice(digits);
+        self.neg = is_negative;
+        self.trim();
+    }
 }
