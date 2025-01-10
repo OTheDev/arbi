@@ -7,7 +7,8 @@ use crate::{Arbi, BitCount, Digit};
 
 impl Arbi {
     /// If the integer is nonzero, returns the number of trailing zeros in the
-    /// binary representation of `self`. Otherwise, returns `None`.
+    /// binary representation (two's complement) of `self`. Otherwise, returns
+    /// `None`.
     ///
     /// # Examples
     /// ```
