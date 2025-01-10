@@ -19,3 +19,4 @@ mod signum;
 mod swap_bytes;
 mod to_bytes;
 mod trailing_ones;
+mod trailing_zeros;
