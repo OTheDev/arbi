@@ -32,28 +32,6 @@ impl Arbi {
             self.size() as BitCount * Digit::BITS as BitCount
         }
     }
-
-    /// If the integer is nonzero, returns the number of trailing zeros in the
-    /// binary representation of `self`. Otherwise, returns `None`.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    /// let zero = Arbi::zero();
-    /// assert_eq!(zero.trailing_zeros(), None);
-    /// let a = Arbi::from(0xFFFFFFFF00000000u64);
-    /// assert_eq!(a.trailing_zeros(), Some(32));
-    /// ```
-    ///
-    /// # Complexity
-    /// \\( O(n) \\)
-    pub fn trailing_zeros(&self) -> Option<BitCount> {
-        let first_nonzero = self.vec.iter().position(|&digit| digit != 0)?;
-        Some(
-            self.vec[first_nonzero].trailing_zeros() as BitCount
-                + first_nonzero as BitCount * Digit::BITS as BitCount,
-        )
-    }
 }
 
 #[cfg(test)]
@@ -75,28 +53,12 @@ mod tests {
                 digit_arbi.trailing_ones(),
                 digit.trailing_ones() as BitCount
             );
-            assert_eq!(
-                digit_arbi.trailing_zeros(),
-                if digit == 0 {
-                    None
-                } else {
-                    Some(digit.trailing_zeros() as BitCount)
-                }
-            );
 
             let ddigit = die_dd.sample(&mut rng);
             let ddigit_arbi = Arbi::from(ddigit);
             assert_eq!(
                 ddigit_arbi.trailing_ones(),
                 ddigit.trailing_ones() as u128
-            );
-            assert_eq!(
-                ddigit_arbi.trailing_zeros(),
-                if ddigit == 0 {
-                    None
-                } else {
-                    Some(ddigit.trailing_zeros() as BitCount)
-                }
             );
         }
     }
