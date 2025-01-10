@@ -41,7 +41,7 @@ mod tests {
     use crate::{BitCount, DDigit, Digit, QDigit};
 
     #[test]
-    fn smoke() {
+    fn test_smoke() {
         let (mut rng, _) = get_seedable_rng();
         let die_d = get_uniform_die(Digit::MIN, Digit::MAX);
         let die_dd = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
@@ -64,7 +64,29 @@ mod tests {
     }
 
     #[test]
-    fn boundaries() {
+    fn test_ones_sequence() {
+        // 1, 11, 111, ...
+        // j = 1: 2^1 - 1 = 1 (0b1)
+        // j = 2: 2^2 - 1 = 3 (0b11)
+        // j = 3: 2^3 - 1 = 7 (0b111)
+        // .
+        // j = k: 2^k - 1 has binary representation 0b{k ones}
+        for j in 1..u128::BITS {
+            let ones = (1u128 << j) - 1;
+            let arbi = Arbi::from(ones);
+            assert_eq!(arbi.trailing_ones(), BitCount::from(j));
+
+            let zeros = !ones;
+            let arbi = Arbi::from(zeros);
+            assert_eq!(arbi.trailing_ones(), 0);
+        }
+
+        let arbi = Arbi::from(u128::MAX);
+        assert_eq!(arbi.trailing_ones(), BitCount::from(u128::BITS));
+    }
+
+    #[test]
+    fn test_special() {
         let zero = Arbi::zero();
         assert_eq!(zero.trailing_ones(), 0_u32.trailing_ones() as u128);
 
