@@ -6,8 +6,8 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 use crate::{Arbi, BitCount};
 
 impl Arbi {
-    /// If this integer is nonnegative, returns the number of ones in the binary
-    /// representation of `self`. Otherwise, returns `None`.
+    /// If this integer is nonnegative, returns the number of ones in its binary
+    /// representation. Otherwise, returns `None`.
     ///
     /// # Examples
     /// ```
@@ -37,7 +37,7 @@ impl Arbi {
 
     #[inline]
     pub(crate) fn count_ones_abs(&self) -> BitCount {
-        self.vec.iter().map(|x| x.count_ones() as u128).sum()
+        self.vec.iter().map(|x| x.count_ones() as BitCount).sum()
     }
 }
 
@@ -45,28 +45,42 @@ impl Arbi {
 mod tests {
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
     use crate::{Arbi, Assign};
-    use crate::{BitCount, DDigit, Digit, QDigit};
+    use crate::{BitCount, DDigit, Digit, QDigit, SDDigit, SDigit, SQDigit};
+
+    macro_rules! assert_count_ones {
+        ($value:expr) => {
+            #[allow(unused_comparisons)] // for unsigned types
+            {
+                let value = $value;
+                assert_eq!(
+                    Arbi::from(value).count_ones(),
+                    if value >= 0 {
+                        Some(BitCount::from(value.count_ones()))
+                    } else {
+                        None
+                    }
+                );
+            }
+        };
+    }
 
     #[test]
     fn test_smoke() {
         let (mut rng, _) = get_seedable_rng();
         let die_d = get_uniform_die(Digit::MIN, Digit::MAX);
         let die_dd = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
+        let die_qd = get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+        let die_sd = get_uniform_die(SDigit::MIN, SDigit::MAX);
+        let die_sdd = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
+        let die_sqd = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
 
         for _ in 0..i16::MAX {
-            let digit = die_d.sample(&mut rng);
-            let digit_arbi = Arbi::from(digit);
-            assert_eq!(
-                digit_arbi.count_ones(),
-                Some(BitCount::from(digit.count_ones()))
-            );
-
-            let ddigit = die_dd.sample(&mut rng);
-            let ddigit_arbi = Arbi::from(ddigit);
-            assert_eq!(
-                ddigit_arbi.count_ones(),
-                Some(BitCount::from(ddigit.count_ones()))
-            );
+            assert_count_ones!(die_d.sample(&mut rng));
+            assert_count_ones!(die_dd.sample(&mut rng));
+            assert_count_ones!(die_qd.sample(&mut rng));
+            assert_count_ones!(die_sd.sample(&mut rng));
+            assert_count_ones!(die_sdd.sample(&mut rng));
+            assert_count_ones!(die_sqd.sample(&mut rng));
         }
     }
 
@@ -102,7 +116,7 @@ mod tests {
         a.assign(DDigit::MAX);
         assert_eq!(
             a.count_ones(),
-            Some(BitCount::from(DDigit::MAX.count_ones() as u128))
+            Some(BitCount::from(DDigit::MAX.count_ones()))
         );
 
         a.assign(DDigit::MAX as QDigit + 1);
