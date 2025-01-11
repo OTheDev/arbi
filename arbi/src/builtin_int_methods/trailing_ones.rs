@@ -19,22 +19,11 @@ impl Arbi {
     /// assert_eq!(Arbi::from(u128::MAX).trailing_ones(), Some(128));
     /// assert_eq!(Arbi::from(u128::MAX - 1).trailing_ones(), Some(0));
     ///
-    /// // negative one
+    /// // negative
     /// assert_eq!(Arbi::from(-1).trailing_ones(), None);
-    ///
-    /// // negative (but not -1)
-    /// assert_eq!(
-    ///     Arbi::from((-1_i128 << 1) ^ i128::MAX).trailing_ones(),
-    ///     Some(1)
-    /// );
-    /// assert_eq!(
-    ///     Arbi::from((-1_i128 << 2) ^ i128::MAX).trailing_ones(),
-    ///     Some(2)
-    /// );
-    /// assert_eq!(
-    ///     Arbi::from((-1_i128 << 126) ^ i128::MAX).trailing_ones(),
-    ///     Some(126)
-    /// );
+    /// assert_eq!(Arbi::from(-7).trailing_ones(), Some(1));
+    /// assert_eq!(Arbi::from(-5).trailing_ones(), Some(2));
+    /// assert_eq!(Arbi::from(-121).trailing_ones(), Some(3));
     /// ```
     ///
     /// # Complexity
@@ -81,28 +70,48 @@ impl Arbi {
 mod tests {
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
     use crate::{Arbi, Assign};
-    use crate::{BitCount, DDigit, Digit, QDigit};
+    use crate::{BitCount, DDigit, Digit, QDigit, SDDigit, SDigit, SQDigit};
+
+    macro_rules! test_uniform_die {
+        ($die:expr, $rng:expr, unsigned) => {{
+            let val = $die.sample($rng);
+            let arbi = Arbi::from(val);
+            assert_eq!(
+                arbi.trailing_ones(),
+                Some(BitCount::from(val.trailing_ones()))
+            );
+        }};
+        ($die:expr, $rng:expr) => {{
+            let val = $die.sample($rng);
+            let arbi = Arbi::from(val);
+            assert_eq!(
+                arbi.trailing_ones(),
+                if val == -1 {
+                    None
+                } else {
+                    Some(BitCount::from(val.trailing_ones()))
+                }
+            );
+        }};
+    }
 
     #[test]
     fn test_smoke() {
         let (mut rng, _) = get_seedable_rng();
         let die_d = get_uniform_die(Digit::MIN, Digit::MAX);
         let die_dd = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
+        let die_qd = get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+        let die_sd = get_uniform_die(SDigit::MIN, SDigit::MAX);
+        let die_sdd = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
+        let die_sqd = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
 
         for _ in 0..i16::MAX {
-            let digit = die_d.sample(&mut rng);
-            let digit_arbi = Arbi::from(digit);
-            assert_eq!(
-                digit_arbi.trailing_ones(),
-                Some(BitCount::from(digit.trailing_ones()))
-            );
-
-            let ddigit = die_dd.sample(&mut rng);
-            let ddigit_arbi = Arbi::from(ddigit);
-            assert_eq!(
-                ddigit_arbi.trailing_ones(),
-                Some(BitCount::from(ddigit.trailing_ones()))
-            );
+            test_uniform_die!(die_d, &mut rng, unsigned);
+            test_uniform_die!(die_dd, &mut rng, unsigned);
+            test_uniform_die!(die_qd, &mut rng, unsigned);
+            test_uniform_die!(die_sd, &mut rng);
+            test_uniform_die!(die_sdd, &mut rng);
+            test_uniform_die!(die_sqd, &mut rng);
         }
     }
 
@@ -150,7 +159,7 @@ mod tests {
     }
 
     #[test]
-    fn test_special() {
+    fn test_special_nonnegative() {
         let zero = Arbi::zero();
         assert_eq!(zero.trailing_ones(), Some(0_u32.trailing_ones() as u128));
 
