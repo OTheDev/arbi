@@ -161,39 +161,45 @@ mod tests {
     #[test]
     fn test_special_nonnegative() {
         let zero = Arbi::zero();
-        assert_eq!(zero.trailing_ones(), Some(0_u32.trailing_ones() as u128));
+        assert_eq!(
+            zero.trailing_ones(),
+            Some(BitCount::from(0_u32.trailing_ones()))
+        );
 
         let mut a = Arbi::from(Digit::MAX - 1);
         assert_eq!(
             a.trailing_ones(),
-            Some((Digit::MAX - 1).trailing_ones() as u128)
+            Some(BitCount::from((Digit::MAX - 1).trailing_ones()))
         );
 
         a.assign(Digit::MAX);
-        assert_eq!(a.trailing_ones(), Some(Digit::MAX.trailing_ones() as u128));
+        assert_eq!(
+            a.trailing_ones(),
+            Some(BitCount::from(Digit::MAX.trailing_ones()))
+        );
 
         a.incr();
         assert_eq!(
             a.trailing_ones(),
-            Some((Digit::MAX as DDigit + 1).trailing_ones() as u128)
+            Some(BitCount::from((Digit::MAX as DDigit + 1).trailing_ones()))
         );
 
         a.assign(DDigit::MAX - 1);
         assert_eq!(
             a.trailing_ones(),
-            Some((DDigit::MAX - 1).trailing_ones() as u128)
+            Some(BitCount::from((DDigit::MAX - 1).trailing_ones()))
         );
 
         a.assign(DDigit::MAX);
         assert_eq!(
             a.trailing_ones(),
-            Some(DDigit::MAX.trailing_ones() as u128)
+            Some(BitCount::from(DDigit::MAX.trailing_ones()))
         );
 
         a.assign(DDigit::MAX as QDigit + 1);
         assert_eq!(
             a.trailing_ones(),
-            Some((DDigit::MAX as QDigit + 1).trailing_ones() as u128)
+            Some(BitCount::from((DDigit::MAX as QDigit + 1).trailing_ones()))
         );
     }
 }
