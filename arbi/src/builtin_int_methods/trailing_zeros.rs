@@ -6,17 +6,15 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 use crate::{Arbi, BitCount, Digit};
 
 impl Arbi {
-    /// If the integer is nonzero, returns the number of trailing zeros in the
+    /// If this integer is nonzero, returns the number of trailing zeros in the
     /// binary representation (two's complement) of `self`. Otherwise, returns
     /// `None`.
     ///
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    /// let zero = Arbi::zero();
-    /// assert_eq!(zero.trailing_zeros(), None);
-    /// let a = Arbi::from(0xFFFFFFFF00000000u64);
-    /// assert_eq!(a.trailing_zeros(), Some(32));
+    /// assert_eq!(Arbi::zero().trailing_zeros(), None);
+    /// assert_eq!(Arbi::from(0xFFFFFFFF00000000u64).trailing_zeros(), Some(32));
     /// ```
     ///
     /// # Complexity
