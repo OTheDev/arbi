@@ -88,7 +88,7 @@ impl Arbi {
             // Add 1 to magnitude
             let mut carry: Digit = 1;
             for digit in self.vec.iter_mut() {
-                *digit += carry;
+                *digit = digit.wrapping_add(carry);
                 carry = Digit::from(*digit == 0);
                 if carry == 0 {
                     break;
