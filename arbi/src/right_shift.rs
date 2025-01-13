@@ -1,14 +1,7 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
-
-//! From ISO/IEC 2020 (C++), "[t]he value of `E1 >> E2` is `E1/2^{E2}, rounded
-//! down. [Note: E1 is right-shifted E2 bit positions. Right-shift on signed
-//! integral types is an arithmetic right shift, which performs sign-extension.
-//! —end note]".
-//!
-//! In Rust, >> is also an arithmetic right shift on signed integer types.
 
 use crate::{Arbi, BitCount, Digit};
 use core::ops::{Shr, ShrAssign};
@@ -18,12 +11,12 @@ impl Arbi {
         debug_assert!(!digits.is_empty());
         debug_assert!((1..Digit::BITS).contains(&bits));
 
-        let compl_bits = Digit::BITS - bits;
+        let com_bits = Digit::BITS - bits;
 
-        let out = digits[0] << compl_bits;
+        let out = digits[0] << com_bits;
         let mut shifted = digits[0] >> bits;
         for i in 1..digits.len() {
-            digits[i - 1] = shifted | (digits[i] << compl_bits);
+            digits[i - 1] = shifted | (digits[i] << com_bits);
             shifted = digits[i] >> bits;
         }
         digits[digits.len() - 1] = shifted;
@@ -230,19 +223,16 @@ mod test_arithmetic_rshift {
     }
 }
 
-/* !impl_shr_unsigned_integral */
-macro_rules! impl_shr_unsigned_integral {
-    // NOTE: bitcount must be an unsigned type with width <= that of BitCount
+/* !impl_shr_integral */
+macro_rules! impl_shr_integral {
     ($($bitcount:ty => ($rshift_name:ident, $rshift_name_inplace:ident, $ubitcount:ty, $test:ident)),*) => {
         $(
 
 impl Arbi {
-    fn $rshift_name_inplace(&mut self, n_bits: $bitcount) {
-        #[allow(unused_comparisons)]
-        if n_bits < 0 {
-            panic!("Only nonnegative shifts are supported");
-        }
-        self.arithmetic_rshift(BitCount::try_from(n_bits).unwrap());
+    #[allow(unused_comparisons)]
+    fn $rshift_name_inplace(&mut self, bits: $bitcount) {
+        assert!(bits >= 0, "Only nonnegative shifts are supported");
+        self.arithmetic_rshift(bits.try_into().unwrap_or(BitCount::MAX));
     }
 }
 
@@ -258,14 +248,8 @@ impl Arbi {
 /// \\]
 /// where \\( x \\) is the big integer.
 ///
-/// The right-hand-side (RHS) of a right shift operation can be a value of type:
-/// - `BitCount`
-/// - `usize`
-/// - `u32`
-/// - `i32`
-///
-/// Although `i32` is supported (for convenience), please note that negative RHS
-/// values cause a panic.
+/// The right-hand-side (RHS) of a right shift operation can be a nonnegative
+/// value of any primitive integer type.
 ///
 /// # Panics
 /// Panics if `rhs` is negative.
@@ -302,7 +286,6 @@ impl Arbi {
 /// \\( O(n) \\)
 impl Shr<$bitcount> for &Arbi {
     type Output = Arbi;
-
     fn shr(self, rhs: $bitcount) -> Self::Output {
         let mut ret = self.clone();
         Arbi::$rshift_name_inplace(&mut ret, rhs);
@@ -313,7 +296,6 @@ impl Shr<$bitcount> for &Arbi {
 /// See [`impl Shr<u128> for &Arbi`](#impl-Shr<u128>-for-%26Arbi).
 impl Shr<$bitcount> for Arbi {
     type Output = Arbi;
-
     fn shr(mut self, rhs: $bitcount) -> Self::Output {
         Self::$rshift_name_inplace(&mut self, rhs);
         self
@@ -337,7 +319,6 @@ impl ShrAssign<&$bitcount> for Arbi {
 /// See [`impl Shr<u128> for &Arbi`](#impl-Shr<u128>-for-%26Arbi).
 impl<'a> Shr<&'a $bitcount> for &Arbi {
     type Output = Arbi;
-
     fn shr(self, rhs: &'a $bitcount) -> Self::Output {
         let mut ret = self.clone();
         Arbi::$rshift_name_inplace(&mut ret, *rhs);
@@ -466,11 +447,17 @@ mod $test {
         )*
     };
 }
-/* impl_shr_unsigned_integral! */
+/* impl_shr_integral! */
 
-impl_shr_unsigned_integral!(
-    BitCount => (rshift_bitcount, rshift_bitcount_inplace, BitCount, test_bitcount),
+impl_shr_integral!(
+    u128 => (rshift_u128, rshift_u128_inplace, u128, test_u128),
+    i128 => (rshift_i128, rshift_i128_inplace, i128, test_i128),
     usize => (rshift_usize, rshift_usize_inplace, usize, test_usize),
+    isize => (rshift_isize, rshift_isize_inplace, isize, test_isize),
     u32 => (rshift_u32, rshift_u32_inplace, u32, test_u32),
-    i32 => (rshift_i32, rshift_i32_inplace, u32, test_i32)
+    i32 => (rshift_i32, rshift_i32_inplace, u32, test_i32),
+    u16 => (rshift_u16, rshift_u16_inplace, u16, test_u16),
+    i16 => (rshift_i16, rshift_i16_inplace, u16, test_i16),
+    u8 => (rshift_u8, rshift_u8_inplace, u8, test_u8),
+    i8 => (rshift_i8, rshift_i8_inplace, u8, test_i8)
 );

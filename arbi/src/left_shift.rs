@@ -1,74 +1,81 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
-
-//! From ISO/IEC 2020 (C++), "\[t\]he value of `E1 << E2` is the unique value
-//! congruent to `E1 * 2^{E2}` modulo `2^{N}` , where `N` is the width of the
-//! type of the result... E1 is left-shifted E2 bit positions; vacated bits are
-//! zero-filled."
-//!
-//! This is consistent with Rust's built-in behavior for left-shifting by an
-//! unsigned integer value.
 
 use crate::{Arbi, BitCount, Digit};
 use core::ops::{Shl, ShlAssign};
 
-/* !impl_shl_unsigned_integral */
-macro_rules! impl_shl_unsigned_integral {
-    // NOTE: bitcount must be an unsigned type with width <= that of BitCount
-    ($($bitcount:ty => ($lshift_name:ident, $lshift_name_inplace:ident, $ubitcount:ty)),*) => {
+impl Arbi {
+    pub(crate) fn dslice_lshift_inplace(
+        digits: &mut [Digit],
+        start_idx: usize,
+        size: usize,
+        bit_shift: u32,
+    ) -> Digit {
+        debug_assert!(size > 0);
+        debug_assert!(digits.len() >= start_idx.saturating_add(size));
+        debug_assert!((1..Digit::BITS).contains(&bit_shift));
+        let com_bit_shift = Digit::BITS - bit_shift;
+        let shifted_out = digits[size - 1] >> com_bit_shift;
+        let mut lower = digits[size - 1];
+        let mut upper = lower << bit_shift;
+        for i in (1..size).rev() {
+            lower = digits[i - 1];
+            digits[start_idx + i] = upper | (lower >> com_bit_shift);
+            upper = lower << bit_shift;
+        }
+        digits[start_idx] = upper;
+        shifted_out
+    }
+
+    /// Shift `self` left by `bits` bits.
+    /// Equivalent to `self` * (2 ** bits).
+    pub(crate) fn lshift(&mut self, bits: BitCount) {
+        if self.is_zero() {
+            return;
+        }
+        assert!(bits <= Arbi::MAX_BITS, "capacity overflow");
+        let dig_shift = (bits / Digit::BITS as BitCount)
+            .try_into()
+            .unwrap_or(usize::MAX);
+        let bit_shift = (bits % Digit::BITS as BitCount) as u32;
+        let old_size = self.size();
+        let new_size = old_size
+            .saturating_add(dig_shift)
+            .saturating_add(usize::from(bit_shift != 0));
+        self.vec.resize(new_size, 0);
+        if bit_shift == 0 {
+            self.vec.copy_within(0..old_size, dig_shift);
+        } else {
+            self.vec[dig_shift + old_size] = Self::dslice_lshift_inplace(
+                &mut self.vec,
+                dig_shift,
+                old_size,
+                bit_shift,
+            );
+        }
+        self.vec[..dig_shift].fill(0);
+        self.trim();
+    }
+}
+
+/* !impl_shl_integral */
+macro_rules! impl_shl_integral {
+    ($($bitcount:ty => ($lshift_name:ident, $lshift_name_inplace:ident)),*) => {
         $(
 
 impl Arbi {
-    fn $lshift_name_inplace(&mut self, n_bits: $bitcount) {
-        #[allow(unused_comparisons)]
-        if n_bits < 0 {
-            panic!("Only nonnegative shifts are supported");
-        }
-        let n_bits: $ubitcount = n_bits as $ubitcount;
-        if n_bits as BitCount > Arbi::MAX_BITS {
-            panic!("capacity overflow!");
-        }
-        if self.is_zero() || n_bits == 0 {
-            return;
-        }
-        let digit_shift: usize = (n_bits / Digit::BITS as $ubitcount) as usize;
-        let bit_shift: usize =
-            (n_bits % Digit::BITS as $ubitcount) as usize;
-        let compl_bit_shift = Digit::BITS as usize - bit_shift;
-        let size_self = self.size();
-        let size_result =
-            size_self + digit_shift + if bit_shift > 0 { 1 } else { 0 };
-        if size_result < size_self {
-            panic!("Result size exceeds SIZE_MAX");
-        }
-        self.vec.resize(size_result, 0);
-        if digit_shift > 0 {
-            for i in (0..size_self).rev() {
-                self.vec[i + digit_shift] = self.vec[i];
-            }
-            for i in 0..digit_shift {
-                self.vec[i] = 0;
-            }
-        }
-        if bit_shift > 0 {
-            let mut carry = 0;
-            for i in digit_shift..size_result {
-                let temp = self.vec[i];
-                self.vec[i] = (temp << bit_shift) | carry;
-                carry = temp >> compl_bit_shift;
-            }
-            assert!(carry == 0);
-        }
-        self.trim();
+    #[allow(unused_comparisons)]
+    fn $lshift_name_inplace(&mut self, bits: $bitcount) {
+        assert!(bits >= 0, "Only nonnegative shifts are supported");
+        self.lshift(bits.try_into().unwrap_or(BitCount::MAX));
     }
 }
 
 /// See [`Shl<u128> for &Arbi`](#impl-Shl<u128>-for-%26Arbi).
 impl Shl<$bitcount> for Arbi {
     type Output = Arbi;
-
     fn shl(mut self, rhs: $bitcount) -> Arbi {
         self.$lshift_name_inplace(rhs);
         self
@@ -94,17 +101,11 @@ impl ShlAssign<$bitcount> for Arbi {
 /// This is consistent with Rust's built-in behavior for left-shifting integers
 /// by an unsigned integer value.
 ///
-/// The right-hand-side (RHS) of a left shift operation can be a value of type:
-/// - `BitCount`
-/// - `usize`
-/// - `u32`
-/// - `i32`
-///
-/// While `i32` is supported, please note that negative RHS values cause a
-/// panic.
+/// The right-hand-side (RHS) of a left shift operation can be a nonnegative
+/// value of any primitive integer type.
 ///
 /// # Panics
-/// - Panics if `rhs` is an `i32` and its value is negative.
+/// - Panics if `rhs` is negative.
 /// - Panics if the result of the operation exceeds `Vec`'s limits.
 ///
 /// # Examples
@@ -145,11 +146,10 @@ impl ShlAssign<$bitcount> for Arbi {
 /// let _ = Arbi::one() << Arbi::MAX_BITS;
 /// ```
 ///
-/// ## Complexity
+/// # Complexity
 /// \\( O(n) \\)
 impl Shl<$bitcount> for &Arbi {
     type Output = Arbi;
-
     fn shl(self, rhs: $bitcount) -> Arbi {
         let mut ret = self.clone();
         ret.$lshift_name_inplace(rhs);
@@ -160,7 +160,6 @@ impl Shl<$bitcount> for &Arbi {
 /// See [`Shl<u128> for &Arbi`](#impl-Shl<u128>-for-%26Arbi).
 impl<'a> Shl<&'a $bitcount> for Arbi {
     type Output = Arbi;
-
     fn shl(mut self, rhs: &'a $bitcount) -> Arbi {
         self.$lshift_name_inplace(*rhs);
         self
@@ -177,13 +176,19 @@ impl<'a> ShlAssign<&'a $bitcount> for Arbi {
         )*
     };
 }
-/* impl_shl_unsigned_integral! */
+/* impl_shl_integral! */
 
-impl_shl_unsigned_integral!(
-    BitCount => (lshift_bitcount, lshift_bitcount_inplace, BitCount),
-    usize => (lshift_usize, lshift_usize_inplace, usize),
-    u32 => (lshift_u32, lshift_u32_inplace, u32),
-    i32 => (lshift_i32, lshift_i32_inplace, u32)
+impl_shl_integral!(
+    u128 => (lshift_u128, lshift_u128_inplace),
+    i128 => (lshift_i128, lshift_i128_inplace),
+    usize => (lshift_usize, lshift_usize_inplace),
+    isize => (lshift_isize, lshift_isize_inplace),
+    u32 => (lshift_u32, lshift_u32_inplace),
+    i32 => (lshift_i32, lshift_i32_inplace),
+    u16 => (lshift_u16, lshift_u16_inplace),
+    i16 => (lshift_i16, lshift_i16_inplace),
+    u8 => (lshift_u8, lshift_u8_inplace),
+    i8 => (lshift_i8, lshift_i8_inplace)
 );
 
 #[cfg(test)]
@@ -192,7 +197,7 @@ mod tests {
     use crate::{BitCount, DDigit};
 
     #[test]
-    #[should_panic = "capacity overflow!"] // Internal guard
+    #[should_panic = "capacity overflow"] // Internal guard
     fn test_large_shift_panics_more_than_max_bits() {
         let one = Arbi::one();
         let _ = one << (Arbi::MAX_BITS + 1);
