@@ -122,11 +122,11 @@ macro_rules! impl_shr_integral {
 /// Panics if `rhs` is negative.
 ///
 /// # Note
-/// Currently, when right-shifting a reference to an `Arbi` (`&Arbi`), the
-/// operation involves cloning the `Arbi` integer, which incurs memory
-/// allocation. To avoid these allocations, prefer using the in-place
-/// right-shift operator `>>=` on a mutable reference (`&mut Arbi`), or the
-/// move-based right-shift operator `>>` on an `Arbi` instance.
+/// When right-shifting a reference to an `Arbi` (`&Arbi`), the operation
+/// involves cloning the `Arbi` integer, which incurs memory allocation. To
+/// avoid these allocations, prefer using the in-place right-shift operator
+/// `>>=` on a mutable reference (`&mut Arbi`), or the move-based right-shift
+/// operator `>>` on an `Arbi` instance.
 ///
 /// # Examples
 /// ```
@@ -153,23 +153,39 @@ macro_rules! impl_shr_integral {
 /// \\( O(n) \\)
 impl Shr<$bitcount> for &Arbi {
     type Output = Arbi;
-    fn shr(self, rhs: $bitcount) -> Self::Output {
+    fn shr(self, rhs: $bitcount) -> Arbi {
         let mut ret = self.clone();
         ret >>= rhs;
         ret
     }
 }
 
-/// See [`impl Shr<u128> for &Arbi`](#impl-Shr<u128>-for-%26Arbi).
+/// See, for example, [`impl Shr<u32> for &Arbi`](#impl-Shr<u32>-for-%26Arbi).
+impl<'a> Shr<&'a $bitcount> for &Arbi {
+    type Output = Arbi;
+    fn shr(self, rhs: &'a $bitcount) -> Arbi {
+        self >> *rhs
+    }
+}
+
+/// See, for example, [`impl Shr<u32> for &Arbi`](#impl-Shr<u32>-for-%26Arbi).
 impl Shr<$bitcount> for Arbi {
     type Output = Arbi;
-    fn shr(mut self, rhs: $bitcount) -> Self::Output {
+    fn shr(mut self, rhs: $bitcount) -> Arbi {
         self >>= rhs;
         self
     }
 }
 
-/// See [`impl Shr<u128> for &Arbi`](#impl-Shr<u128>-for-%26Arbi).
+/// See, for example, [`impl Shr<u32> for &Arbi`](#impl-Shr<u32>-for-%26Arbi).
+impl Shr<&$bitcount> for Arbi {
+    type Output = Arbi;
+    fn shr(self, rhs: &$bitcount) -> Arbi {
+        self >> *rhs
+    }
+}
+
+/// See, for example, [`impl Shr<u32> for &Arbi`](#impl-Shr<u32>-for-%26Arbi).
 impl ShrAssign<$bitcount> for Arbi {
     #[allow(unused_comparisons)]
     fn shr_assign(&mut self, rhs: $bitcount) {
@@ -178,18 +194,10 @@ impl ShrAssign<$bitcount> for Arbi {
     }
 }
 
-/// See [`impl Shr<u128> for &Arbi`](#impl-Shr<u128>-for-%26Arbi).
+/// See, for example, [`impl Shr<u32> for &Arbi`](#impl-Shr<u32>-for-%26Arbi).
 impl ShrAssign<&$bitcount> for Arbi {
     fn shr_assign(&mut self, rhs: &$bitcount) {
         *self >>= *rhs;
-    }
-}
-
-/// See [`impl Shr<u128> for &Arbi`](#impl-Shr<u128>-for-%26Arbi).
-impl<'a> Shr<&'a $bitcount> for &Arbi {
-    type Output = Arbi;
-    fn shr(self, rhs: &'a $bitcount) -> Self::Output {
-        self >> *rhs
     }
 }
 

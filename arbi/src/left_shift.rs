@@ -65,24 +65,6 @@ macro_rules! impl_shl_integral {
     ($($bitcount:ty),*) => {
         $(
 
-/// See [`Shl<u128> for &Arbi`](#impl-Shl<u128>-for-%26Arbi).
-impl Shl<$bitcount> for Arbi {
-    type Output = Arbi;
-    fn shl(mut self, rhs: $bitcount) -> Arbi {
-        self <<= rhs;
-        self
-    }
-}
-
-/// See [`Shl<u128> for &Arbi`](#impl-Shl<u128>-for-%26Arbi).
-impl ShlAssign<$bitcount> for Arbi {
-    #[allow(unused_comparisons)]
-    fn shl_assign(&mut self, rhs: $bitcount) {
-        assert!(rhs >= 0, "Only nonnegative shifts are supported");
-        self.lshift(rhs.try_into().unwrap_or(BitCount::MAX));
-    }
-}
-
 /// Return an `Arbi` integer representing this integer left-shifted `shift` bit
 /// positions with vacated bits zero-filled.
 ///
@@ -91,9 +73,6 @@ impl ShlAssign<$bitcount> for Arbi {
 ///     x \times 2^{\text{shift}}
 /// \\]
 /// where \\( x \\) is the big integer.
-///
-/// This is consistent with Rust's built-in behavior for left-shifting integers
-/// by an unsigned integer value.
 ///
 /// The right-hand-side (RHS) of a left shift operation can be a nonnegative
 /// value of any primitive integer type.
@@ -151,18 +130,43 @@ impl Shl<$bitcount> for &Arbi {
     }
 }
 
-/// See [`Shl<u128> for &Arbi`](#impl-Shl<u128>-for-%26Arbi).
-impl<'a> Shl<&'a $bitcount> for Arbi {
+/// See, for example, [`Shl<u32> for &Arbi`](#impl-Shl<u32>-for-%26Arbi).
+impl<'a> Shl<&'a $bitcount> for &Arbi {
     type Output = Arbi;
-    fn shl(mut self, rhs: &'a $bitcount) -> Arbi {
-        self <<= *rhs;
+    fn shl(self, rhs: &'a $bitcount) -> Arbi {
+        self << *rhs
+    }
+}
+
+/// See, for example, [`Shl<u32> for &Arbi`](#impl-Shl<u32>-for-%26Arbi).
+impl Shl<$bitcount> for Arbi {
+    type Output = Arbi;
+    fn shl(mut self, rhs: $bitcount) -> Arbi {
+        self <<= rhs;
         self
     }
 }
 
-/// See [`Shl<u128> for &Arbi`](#impl-Shl<u128>-for-%26Arbi).
-impl<'a> ShlAssign<&'a $bitcount> for Arbi {
-    fn shl_assign(&mut self, rhs: &'a $bitcount) {
+/// See, for example, [`Shl<u32> for &Arbi`](#impl-Shl<u32>-for-%26Arbi).
+impl Shl<&$bitcount> for Arbi {
+    type Output = Arbi;
+    fn shl(self, rhs: &$bitcount) -> Arbi {
+        self << *rhs
+    }
+}
+
+/// See, for example, [`Shl<u32> for &Arbi`](#impl-Shl<u32>-for-%26Arbi).
+impl ShlAssign<$bitcount> for Arbi {
+    #[allow(unused_comparisons)]
+    fn shl_assign(&mut self, rhs: $bitcount) {
+        assert!(rhs >= 0, "Only nonnegative shifts are supported");
+        self.lshift(rhs.try_into().unwrap_or(BitCount::MAX));
+    }
+}
+
+/// See, for example, [`Shl<u32> for &Arbi`](#impl-Shl<u32>-for-%26Arbi).
+impl ShlAssign<&$bitcount> for Arbi {
+    fn shl_assign(&mut self, rhs: &$bitcount) {
         *self <<= *rhs
     }
 }
