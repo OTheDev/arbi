@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
@@ -13,8 +13,6 @@ extern crate alloc;
 #[cfg(all(feature = "nightly", test))]
 extern crate test;
 
-#[allow(unused_imports)]
-use alloc::string::String;
 use alloc::vec::Vec;
 
 mod add;
@@ -47,6 +45,7 @@ mod is_odd_is_even;
 mod is_signed;
 mod is_zero;
 mod left_shift;
+mod macros;
 mod multiplication;
 mod negate;
 mod new;
