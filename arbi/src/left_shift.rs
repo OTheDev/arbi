@@ -3,6 +3,7 @@ Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
+use crate::macros::for_all_integers;
 use crate::{Arbi, BitCount, Digit};
 use core::ops::{Shl, ShlAssign};
 
@@ -35,7 +36,6 @@ impl Arbi {
         if self.is_zero() {
             return;
         }
-        assert!(bits <= Arbi::MAX_BITS, "capacity overflow");
         let dig_shift = (bits / Digit::BITS as BitCount)
             .try_into()
             .unwrap_or(usize::MAX);
@@ -62,30 +62,24 @@ impl Arbi {
 
 /* !impl_shl_integral */
 macro_rules! impl_shl_integral {
-    ($($bitcount:ty => ($lshift_name:ident, $lshift_name_inplace:ident)),*) => {
+    ($($bitcount:ty),*) => {
         $(
-
-impl Arbi {
-    #[allow(unused_comparisons)]
-    fn $lshift_name_inplace(&mut self, bits: $bitcount) {
-        assert!(bits >= 0, "Only nonnegative shifts are supported");
-        self.lshift(bits.try_into().unwrap_or(BitCount::MAX));
-    }
-}
 
 /// See [`Shl<u128> for &Arbi`](#impl-Shl<u128>-for-%26Arbi).
 impl Shl<$bitcount> for Arbi {
     type Output = Arbi;
     fn shl(mut self, rhs: $bitcount) -> Arbi {
-        self.$lshift_name_inplace(rhs);
+        self <<= rhs;
         self
     }
 }
 
 /// See [`Shl<u128> for &Arbi`](#impl-Shl<u128>-for-%26Arbi).
 impl ShlAssign<$bitcount> for Arbi {
+    #[allow(unused_comparisons)]
     fn shl_assign(&mut self, rhs: $bitcount) {
-        self.$lshift_name_inplace(rhs);
+        assert!(rhs >= 0, "Only nonnegative shifts are supported");
+        self.lshift(rhs.try_into().unwrap_or(BitCount::MAX));
     }
 }
 
@@ -152,7 +146,7 @@ impl Shl<$bitcount> for &Arbi {
     type Output = Arbi;
     fn shl(self, rhs: $bitcount) -> Arbi {
         let mut ret = self.clone();
-        ret.$lshift_name_inplace(rhs);
+        ret <<= rhs;
         ret
     }
 }
@@ -161,7 +155,7 @@ impl Shl<$bitcount> for &Arbi {
 impl<'a> Shl<&'a $bitcount> for Arbi {
     type Output = Arbi;
     fn shl(mut self, rhs: &'a $bitcount) -> Arbi {
-        self.$lshift_name_inplace(*rhs);
+        self <<= *rhs;
         self
     }
 }
@@ -169,7 +163,7 @@ impl<'a> Shl<&'a $bitcount> for Arbi {
 /// See [`Shl<u128> for &Arbi`](#impl-Shl<u128>-for-%26Arbi).
 impl<'a> ShlAssign<&'a $bitcount> for Arbi {
     fn shl_assign(&mut self, rhs: &'a $bitcount) {
-        self.$lshift_name_inplace(*rhs)
+        *self <<= *rhs
     }
 }
 
@@ -178,30 +172,12 @@ impl<'a> ShlAssign<&'a $bitcount> for Arbi {
 }
 /* impl_shl_integral! */
 
-impl_shl_integral!(
-    u128 => (lshift_u128, lshift_u128_inplace),
-    i128 => (lshift_i128, lshift_i128_inplace),
-    usize => (lshift_usize, lshift_usize_inplace),
-    isize => (lshift_isize, lshift_isize_inplace),
-    u32 => (lshift_u32, lshift_u32_inplace),
-    i32 => (lshift_i32, lshift_i32_inplace),
-    u16 => (lshift_u16, lshift_u16_inplace),
-    i16 => (lshift_i16, lshift_i16_inplace),
-    u8 => (lshift_u8, lshift_u8_inplace),
-    i8 => (lshift_i8, lshift_i8_inplace)
-);
+for_all_integers!(impl_shl_integral);
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::{BitCount, DDigit};
-
-    #[test]
-    #[should_panic = "capacity overflow"] // Internal guard
-    fn test_large_shift_panics_more_than_max_bits() {
-        let one = Arbi::one();
-        let _ = one << (Arbi::MAX_BITS + 1);
-    }
 
     // On rustc < 1.65, fails with message, "memory allocation of {isize::MAX as
     // usize + 1} bytes failed", but in 1.65 (MSRV) and later, does not.
