@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
@@ -333,7 +333,7 @@ impl Arbi {
 }
 
 #[cfg(test)]
-mod tests {
+mod tests_random {
     use super::*;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
     use crate::{BitCount, DDigit, Digit, QDigit, SDDigit, SDigit, SQDigit};
@@ -365,484 +365,49 @@ mod tests {
         v
     }
 
-    #[test]
-    fn test_clear_set_invert_bit_smoke() {
-        let (mut rng, _) = get_seedable_rng();
-        let die_digit = get_uniform_die(0, Digit::MAX);
-        let die_ddigit = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        let die_qdigit =
-            get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
-
-        for _ in 0..i16::MAX {
-            let mut r = die_digit.sample(&mut rng);
-            let mut a = Arbi::from(r);
-            let die = get_uniform_die(1, a.size_bits() - 1);
-            let i = die.sample(&mut rng);
-            a.clear_bit(i);
-            r &= !((1 as Digit) << i);
-            assert_eq!(a, r);
-            a.set_bit(i);
-            r |= (1 as Digit) << (i as BitCount);
-            assert_eq!(a, r);
-            a.invert_bit(i);
-            r ^= (1 as Digit) << (i as BitCount);
-            assert_eq!(a, r);
-
-            let mut r = die_ddigit.sample(&mut rng);
-            let mut a = Arbi::from(r);
-            let die = get_uniform_die(1, a.size_bits() - 1);
-            let i = die.sample(&mut rng);
-            a.clear_bit(i);
-            r &= !((1 as DDigit) << i);
-            assert_eq!(a, r);
-            a.set_bit(i);
-            r |= (1 as DDigit) << (i as BitCount);
-            assert_eq!(a, r);
-            a.invert_bit(i);
-            r ^= (1 as DDigit) << (i as BitCount);
-            assert_eq!(a, r);
-
-            let mut r = die_qdigit.sample(&mut rng);
-            let mut a = Arbi::from(r);
-            let die = get_uniform_die(1, a.size_bits() - 1);
-            let i = die.sample(&mut rng);
-            a.clear_bit(i);
-            r &= !((1 as QDigit) << i);
-            assert_eq!(a, r);
-            a.set_bit(i);
-            r |= (1 as QDigit) << (i as BitCount);
-            assert_eq!(a, r);
-            a.invert_bit(i);
-            r ^= (1 as QDigit) << (i as BitCount);
-            assert_eq!(a, r);
-        }
-    }
-
-    #[test]
-    fn test_clear_bit() {
-        assert_eq!(Arbi::zero().set_bit(0), 1);
-        assert_eq!(Arbi::from(10).set_bit(2), 14);
-
-        for i in 0..=53 {
-            let mut a = Arbi::from(2.0_f64.powi(i as i32));
-            a.clear_bit(i as BitCount);
-            assert_eq!(a, 0);
-        }
-    }
-
-    #[test]
-    fn test_set_and_test_bit() {
-        assert_eq!(Arbi::zero().set_bit(0), 1);
-        assert_eq!(Arbi::from(10).set_bit(2), 14);
-
-        for i in 0..=53 {
-            let mut a = Arbi::zero();
-            a.set_bit(i as BitCount);
-            assert_eq!(a, (2.0_f64.powi(i as i32)));
-            assert!(a.test_bit(i as BitCount));
-        }
-    }
-
-    #[test]
-    fn test_test_bit() {
-        // Zero
-        let x = Arbi::zero();
-        assert_eq!(x.test_bit(0), false);
-        assert_eq!(x.test_bit(42040), false);
-
-        // One
-        let x = Arbi::one();
-        assert_eq!(x.test_bit(0), true);
-        for i in 1..256 {
-            assert_eq!(x.test_bit(i), false);
-        }
-
-        // 1010 (MSB is the 1)
-        let x = Arbi::from(10);
-        assert_eq!(x.test_bit(0), false);
-        assert_eq!(x.test_bit(1), true);
-        assert_eq!(x.test_bit(2), false);
-        assert_eq!(x.test_bit(3), true);
-        for i in 4..256 {
-            assert_eq!(x.test_bit(i), false);
-        }
-
-        // Powers of Two
-        let mut one = Arbi::one();
-        one <<= 1_usize;
-        for i in 1..65000 {
-            assert_eq!(one.test_bit(i - 1), false);
-            assert_eq!(one.test_bit(i), true, "Failure at i = {}", i);
-            assert_eq!(one.test_bit(i + 1), false);
-            one <<= 1_usize;
-        }
-    }
-
-    #[test]
-    fn test_test_bit_negative_single_digit() {
-        // Negative one
-        let x = Arbi::neg_one();
-        for i in 0..256 {
-            assert_eq!(x.test_bit(i), true);
-        }
-
-        // 110
-        let x = Arbi::from(-2);
-        assert_eq!(x.test_bit(0), false);
-        assert_eq!(x.test_bit(1), true);
-        for i in 2..256 {
-            assert_eq!(x.test_bit(i), true);
-        }
-
-        // 101
-        let x = Arbi::from(-3);
-        assert_eq!(x.test_bit(0), true);
-        assert_eq!(x.test_bit(1), false);
-        for i in 2..256 {
-            assert_eq!(x.test_bit(i), true);
-        }
-
-        // 1011
-        let x = Arbi::from(-5);
-        assert_eq!(x.test_bit(0), true);
-        assert_eq!(x.test_bit(1), true);
-        assert_eq!(x.test_bit(2), false);
-        for i in 3..256 {
-            assert_eq!(x.test_bit(i), true);
-        }
-    }
-
-    #[test]
-    fn test_test_bit_negative_multiple_digits() {
-        // 10110010000011110000011100100110110000101111000100110001110110111
-        let v = -11232524694493961289_i128;
-        let x = Arbi::from(v);
-        for i in 0u32..128u32 {
-            assert_eq!(
-                x.test_bit(i as BitCount),
-                test_i128_bit(v, i),
-                "Failed for value {} at index {}",
-                v,
-                i
-            );
-        }
-    }
-
-    macro_rules! test_bit_value {
-        ($rng:expr, $die:expr) => {
-            let v = $die.sample(&mut $rng) as i128;
-            let x = Arbi::from(v);
-            for i in 0..i128::BITS {
-                assert_eq!(
-                    x.test_bit(i as BitCount),
-                    test_i128_bit(v, i),
-                    "Failed for value {} at index {}",
-                    v,
-                    i
-                );
-            }
-        };
-    }
-
-    #[test]
-    fn test_test_bit_negative_smoke() {
-        let (mut rng, _) = get_seedable_rng();
-        let die_sdigit = get_uniform_die(SDigit::MIN, SDigit::MAX);
-        let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
-        let die_sqdigit = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
-        for _ in 0..i16::MAX {
-            test_bit_value!(rng, die_sdigit);
-            test_bit_value!(rng, die_sddigit);
-            test_bit_value!(rng, die_sqdigit);
-        }
-    }
-
-    macro_rules! test_arbi_variants_test {
-        ($die_digit:expr, $rng:expr, $( $vec:expr ),* ) => {
-            $(
-                let arbi = Arbi {
-                    vec: $vec,
-                    neg: true,
-                };
-                let v = match arbi.checked_to_i128() {
-                    Some(v) => v,
-                    None => continue,
-                };
-                for i in 0..(i128::BITS - 1) {
-                    let x = Arbi::from(v);
-                    assert_eq!(
-                        x.test_bit(i as BitCount),
-                        test_i128_bit(v, i),
-                        "Failed for value {} at index {}",
-                        v,
-                        i
-                    );
-                }
-            )*
-        };
-    }
-
-    #[test]
-    fn test_test_bit_branch() {
-        let arbi = Arbi {
-            vec: vec![0, 0, 583274041, 681312275],
-            neg: true,
-        };
-        let val = arbi.checked_to_i128().unwrap();
-        assert_eq!(val, -53979119657422662756390826147269574656_i128);
-        let idx = 32;
-        assert_eq!(arbi.test_bit(idx), test_i128_bit(val, idx as u32));
-
-        let (mut rng, _) = get_seedable_rng();
-        let die_digit = get_uniform_die(Digit::MIN, Digit::MAX);
-        for _ in 0..1000 {
-            test_arbi_variants_test!(
-                die_digit,
-                rng,
-                vec![
-                    0,
-                    die_digit.sample(&mut rng),
-                    die_digit.sample(&mut rng),
-                    die_digit.sample(&mut rng),
-                ],
-                vec![
-                    0,
-                    0,
-                    die_digit.sample(&mut rng),
-                    die_digit.sample(&mut rng),
-                ],
-                vec![0, 0, 0, die_digit.sample(&mut rng)]
-            );
-        }
-    }
-
-    macro_rules! test_set_bit_value {
+    macro_rules! test_bit_ops_for_type {
         ($rng:expr, $die:expr) => {
             let v = $die.sample(&mut $rng) as i128;
             for i in 0..(i128::BITS - 1) {
+                // Test
+                let x = Arbi::from(v);
+                assert_eq!(
+                    x.test_bit(i as BitCount),
+                    test_i128_bit(v, i),
+                    "test_bit failed for value {} at index {}",
+                    v,
+                    i
+                );
+
+                // Set
                 let mut x = Arbi::from(v);
                 x.set_bit(i as BitCount);
                 assert_eq!(
                     x,
                     set_i128_bit(v, i),
-                    "Failed for value {} at index {}",
+                    "set_bit failed for value {} at index {}",
                     v,
                     i
                 );
-            }
-        };
-    }
 
-    #[test]
-    fn test_set_bit_negative_smoke() {
-        let (mut rng, _) = get_seedable_rng();
-        let die_sdigit = get_uniform_die(SDigit::MIN, SDigit::MAX);
-        let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
-        let die_sqdigit = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
-        for _ in 0..i16::MAX {
-            test_set_bit_value!(rng, die_sdigit);
-            test_set_bit_value!(rng, die_sddigit);
-            test_set_bit_value!(rng, die_sqdigit);
-        }
-    }
-
-    #[test]
-    fn test_set_bit_ordering_greater_branch() {
-        let val = -4866991881022244489_i128;
-        let mut arbi = Arbi::from(val);
-        let idx = 32;
-        assert_eq!(arbi.set_bit(idx), set_i128_bit(val, idx as u32));
-    }
-
-    #[test]
-    fn test_set_bit_ordering_equal_branch() {
-        let val = -1407405570_i128;
-        let mut arbi = Arbi::from(val);
-        let idx = 0;
-        assert_eq!(arbi.set_bit(idx), set_i128_bit(val, idx as u32));
-    }
-
-    macro_rules! test_arbi_variants {
-        ($die_digit:expr, $rng:expr, $( $vec:expr ),* ) => {
-            $(
-                let arbi = Arbi {
-                    vec: $vec,
-                    neg: true,
-                };
-                let v = match arbi.checked_to_i128() {
-                    Some(v) => v,
-                    None => continue,
-                };
-                for i in 0..(i128::BITS - 1) {
-                    let mut x = Arbi::from(v);
-                    x.set_bit(i as BitCount);
-                    assert_eq!(
-                        x,
-                        set_i128_bit(v, i),
-                        "Failed for value {} at index {}",
-                        v,
-                        i
-                    );
-                }
-            )*
-        };
-    }
-
-    #[test]
-    fn test_set_bit_ordering_less_branch() {
-        let mut arbi = Arbi {
-            vec: vec![0, 0, 583274041, 681312275],
-            neg: true,
-        };
-        let val = arbi.checked_to_i128().unwrap();
-        assert_eq!(val, -53979119657422662756390826147269574656_i128);
-        let idx = 32;
-        assert_eq!(arbi.set_bit(idx), set_i128_bit(val, idx as u32));
-
-        let (mut rng, _) = get_seedable_rng();
-        let die_digit = get_uniform_die(Digit::MIN, Digit::MAX);
-        for _ in 0..1000 {
-            test_arbi_variants!(
-                die_digit,
-                rng,
-                vec![
-                    0,
-                    die_digit.sample(&mut rng),
-                    die_digit.sample(&mut rng),
-                    die_digit.sample(&mut rng),
-                ],
-                vec![
-                    0,
-                    0,
-                    die_digit.sample(&mut rng),
-                    die_digit.sample(&mut rng),
-                ],
-                vec![0, 0, 0, die_digit.sample(&mut rng)]
-            );
-        }
-    }
-
-    macro_rules! test_clear_bit_value {
-        ($rng:expr, $die:expr) => {
-            let v = $die.sample(&mut $rng) as i128;
-            for i in 0..(i128::BITS - 1) {
+                // Clear
                 let mut x = Arbi::from(v);
                 x.clear_bit(i as BitCount);
                 assert_eq!(
                     x,
                     clear_i128_bit(v, i),
-                    "Failed for value {} at index {}",
+                    "clear_bit failed for value {} at index {}",
                     v,
                     i
                 );
-            }
-        };
-    }
 
-    #[test]
-    fn test_clear_bit_negative_smoke() {
-        let (mut rng, _) = get_seedable_rng();
-        let die_sdigit = get_uniform_die(SDigit::MIN, SDigit::MAX);
-        let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
-        let die_sqdigit = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
-        for _ in 0..i16::MAX {
-            test_clear_bit_value!(rng, die_sdigit);
-            test_clear_bit_value!(rng, die_sddigit);
-            test_clear_bit_value!(rng, die_sqdigit);
-        }
-    }
-
-    macro_rules! test_arbi_variants_clear {
-        ($die_digit:expr, $rng:expr, $( $vec:expr ),* ) => {
-            $(
-                let arbi = Arbi {
-                    vec: $vec,
-                    neg: true,
-                };
-                let v = match arbi.checked_to_i128() {
-                    Some(v) => v,
-                    None => continue,
-                };
-                for i in 0..(i128::BITS - 1) {
-                    let mut x = Arbi::from(v);
-                    x.clear_bit(i as BitCount);
-                    assert_eq!(
-                        x,
-                        clear_i128_bit(v, i),
-                        "Failed for value {} at index {}",
-                        v,
-                        i
-                    );
-                }
-            )*
-        };
-    }
-
-    #[test]
-    fn test_clear_bit_branch() {
-        let mut arbi = Arbi {
-            vec: vec![0, 0, 583274041, 681312275],
-            neg: true,
-        };
-        let val = arbi.checked_to_i128().unwrap();
-        assert_eq!(val, -53979119657422662756390826147269574656_i128);
-        let idx = 32;
-        assert_eq!(arbi.clear_bit(idx), clear_i128_bit(val, idx as u32));
-
-        let (mut rng, _) = get_seedable_rng();
-        let die_digit = get_uniform_die(Digit::MIN, Digit::MAX);
-        for _ in 0..1000 {
-            test_arbi_variants_clear!(
-                die_digit,
-                rng,
-                vec![
-                    0,
-                    die_digit.sample(&mut rng),
-                    die_digit.sample(&mut rng),
-                    die_digit.sample(&mut rng),
-                ],
-                vec![
-                    0,
-                    0,
-                    die_digit.sample(&mut rng),
-                    die_digit.sample(&mut rng),
-                ],
-                vec![0, 0, 0, die_digit.sample(&mut rng)]
-            );
-        }
-    }
-
-    #[test]
-    fn test_clear_bit_b() {
-        // l
-        let val = -53979119657422662756390826147269574656_i128;
-        let mut arbi = Arbi::from(val);
-        let idx = 32;
-        assert_eq!(arbi.clear_bit(idx), clear_i128_bit(val, idx as u32));
-
-        // e
-        let val = -2123323316_i128;
-        let mut arbi = Arbi::from(val);
-        let idx = 0;
-        assert_eq!(arbi.clear_bit(idx), clear_i128_bit(val, idx as u32));
-
-        // g
-        let val = -4271208378563570_i128;
-        let mut arbi = Arbi::from(val);
-        let idx = 0;
-        assert_eq!(arbi.clear_bit(idx), clear_i128_bit(val, idx as u32));
-    }
-
-    macro_rules! test_invert_bit_value {
-        ($rng:expr, $die:expr) => {
-            let v = $die.sample(&mut $rng) as i128;
-            for i in 0..(i128::BITS - 1) {
+                // Invert
                 let mut x = Arbi::from(v);
                 x.invert_bit(i as BitCount);
                 assert_eq!(
                     x,
                     invert_i128_bit(v, i),
-                    "Failed for value {} at index {}",
+                    "invert_bit failed for value {} at index {}",
                     v,
                     i
                 );
@@ -851,36 +416,74 @@ mod tests {
     }
 
     #[test]
-    fn test_invert_bit_negative_smoke() {
+    fn test_bit_operations_smoke() {
         let (mut rng, _) = get_seedable_rng();
+        let die_digit = get_uniform_die(0, Digit::MAX);
+        let die_ddigit = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
+        let die_qdigit =
+            get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
         let die_sdigit = get_uniform_die(SDigit::MIN, SDigit::MAX);
         let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
         let die_sqdigit = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+
         for _ in 0..i16::MAX {
-            test_invert_bit_value!(rng, die_sdigit);
-            test_invert_bit_value!(rng, die_sddigit);
-            test_invert_bit_value!(rng, die_sqdigit);
+            test_bit_ops_for_type!(rng, die_digit);
+            test_bit_ops_for_type!(rng, die_ddigit);
+            test_bit_ops_for_type!(rng, die_qdigit);
+            test_bit_ops_for_type!(rng, die_sdigit);
+            test_bit_ops_for_type!(rng, die_sddigit);
+            test_bit_ops_for_type!(rng, die_sqdigit);
         }
     }
 
-    macro_rules! test_arbi_variants_invert {
-        ($die_digit:expr, $rng:expr, $( $vec:expr ),* ) => {
+    macro_rules! test_arbi_trailing_zeros_all_ops {
+        ($die_digit:expr, $rng:expr, $($vec:expr),* ) => {
             $(
-                let arbi = Arbi {
-                    vec: $vec,
-                    neg: true,
-                };
+                let arbi = Arbi::from_digits($vec, true);
                 let v = match arbi.checked_to_i128() {
                     Some(v) => v,
                     None => continue,
                 };
                 for i in 0..(i128::BITS - 1) {
+                    // Test
+                    let x = Arbi::from(v);
+                    assert_eq!(
+                        x.test_bit(i as BitCount),
+                        test_i128_bit(v, i),
+                        "test_bit failed for value {} at index {}",
+                        v,
+                        i
+                    );
+
+                    // Set
+                    let mut x = Arbi::from(v);
+                    x.set_bit(i as BitCount);
+                    assert_eq!(
+                        x,
+                        set_i128_bit(v, i),
+                        "set_bit failed for value {} at index {}",
+                        v,
+                        i
+                    );
+
+                    // Clear
+                    let mut x = Arbi::from(v);
+                    x.clear_bit(i as BitCount);
+                    assert_eq!(
+                        x,
+                        clear_i128_bit(v, i),
+                        "clear_bit failed for value {} at index {}",
+                        v,
+                        i
+                    );
+
+                    // Invert
                     let mut x = Arbi::from(v);
                     x.invert_bit(i as BitCount);
                     assert_eq!(
                         x,
                         invert_i128_bit(v, i),
-                        "Failed for value {} at index {}",
+                        "invert_bit failed for value {} at index {}",
                         v,
                         i
                     );
@@ -890,21 +493,11 @@ mod tests {
     }
 
     #[test]
-    fn test_invert_bit_branch() {
-        let mut arbi = Arbi {
-            vec: vec![0, 0, 583274041, 681312275],
-            neg: true,
-        };
-        let val = arbi.checked_to_i128().unwrap();
-        assert_eq!(arbi, val);
-        let idx = 32;
-        arbi.invert_bit(idx);
-        assert_eq!(arbi, invert_i128_bit(val, idx as u32));
-
+    fn test_arbi_trailing_zeros() {
         let (mut rng, _) = get_seedable_rng();
         let die_digit = get_uniform_die(Digit::MIN, Digit::MAX);
         for _ in 0..1000 {
-            test_arbi_variants_invert!(
+            test_arbi_trailing_zeros_all_ops!(
                 die_digit,
                 rng,
                 vec![
