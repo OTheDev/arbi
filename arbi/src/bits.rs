@@ -333,9 +333,9 @@ impl Arbi {
 }
 
 #[cfg(test)]
-mod tests_random {
-    use super::*;
+mod tests {
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
+    use crate::Arbi;
     use crate::{BitCount, DDigit, Digit, QDigit, SDDigit, SDigit, SQDigit};
 
     fn test_i128_bit(v: i128, i: u32) -> bool {
@@ -365,85 +365,13 @@ mod tests_random {
         v
     }
 
-    macro_rules! test_bit_ops_for_type {
-        ($rng:expr, $die:expr) => {
-            let v = $die.sample(&mut $rng) as i128;
-            for i in 0..(i128::BITS - 1) {
-                // Test
-                let x = Arbi::from(v);
-                assert_eq!(
-                    x.test_bit(i as BitCount),
-                    test_i128_bit(v, i),
-                    "test_bit failed for value {} at index {}",
-                    v,
-                    i
-                );
+    #[cfg(test)]
+    mod random {
+        use super::*;
 
-                // Set
-                let mut x = Arbi::from(v);
-                x.set_bit(i as BitCount);
-                assert_eq!(
-                    x,
-                    set_i128_bit(v, i),
-                    "set_bit failed for value {} at index {}",
-                    v,
-                    i
-                );
-
-                // Clear
-                let mut x = Arbi::from(v);
-                x.clear_bit(i as BitCount);
-                assert_eq!(
-                    x,
-                    clear_i128_bit(v, i),
-                    "clear_bit failed for value {} at index {}",
-                    v,
-                    i
-                );
-
-                // Invert
-                let mut x = Arbi::from(v);
-                x.invert_bit(i as BitCount);
-                assert_eq!(
-                    x,
-                    invert_i128_bit(v, i),
-                    "invert_bit failed for value {} at index {}",
-                    v,
-                    i
-                );
-            }
-        };
-    }
-
-    #[test]
-    fn test_bit_operations_smoke() {
-        let (mut rng, _) = get_seedable_rng();
-        let die_digit = get_uniform_die(0, Digit::MAX);
-        let die_ddigit = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        let die_qdigit =
-            get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
-        let die_sdigit = get_uniform_die(SDigit::MIN, SDigit::MAX);
-        let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
-        let die_sqdigit = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
-
-        for _ in 0..i16::MAX {
-            test_bit_ops_for_type!(rng, die_digit);
-            test_bit_ops_for_type!(rng, die_ddigit);
-            test_bit_ops_for_type!(rng, die_qdigit);
-            test_bit_ops_for_type!(rng, die_sdigit);
-            test_bit_ops_for_type!(rng, die_sddigit);
-            test_bit_ops_for_type!(rng, die_sqdigit);
-        }
-    }
-
-    macro_rules! test_arbi_trailing_zeros_all_ops {
-        ($die_digit:expr, $rng:expr, $($vec:expr),* ) => {
-            $(
-                let arbi = Arbi::from_digits($vec, true);
-                let v = match arbi.checked_to_i128() {
-                    Some(v) => v,
-                    None => continue,
-                };
+        macro_rules! test_bit_ops_for_type {
+            ($rng:expr, $die:expr) => {
+                let v = $die.sample(&mut $rng) as i128;
                 for i in 0..(i128::BITS - 1) {
                     // Test
                     let x = Arbi::from(v);
@@ -488,32 +416,160 @@ mod tests_random {
                         i
                     );
                 }
-            )*
-        };
+            };
+        }
+
+        #[test]
+        fn test_bit_operations_smoke() {
+            let (mut rng, _) = get_seedable_rng();
+            let die_digit = get_uniform_die(0, Digit::MAX);
+            let die_ddigit =
+                get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
+            let die_qdigit =
+                get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+            let die_sdigit = get_uniform_die(SDigit::MIN, SDigit::MAX);
+            let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
+            let die_sqdigit = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+
+            for _ in 0..i16::MAX {
+                test_bit_ops_for_type!(rng, die_digit);
+                test_bit_ops_for_type!(rng, die_ddigit);
+                test_bit_ops_for_type!(rng, die_qdigit);
+                test_bit_ops_for_type!(rng, die_sdigit);
+                test_bit_ops_for_type!(rng, die_sddigit);
+                test_bit_ops_for_type!(rng, die_sqdigit);
+            }
+        }
+
+        macro_rules! test_arbi_trailing_zeros_all_ops {
+            ($die_digit:expr, $rng:expr, $($vec:expr),* ) => {
+                $(
+                    let arbi = Arbi::from_digits($vec, true);
+                    let v = match arbi.checked_to_i128() {
+                        Some(v) => v,
+                        None => continue,
+                    };
+                    for i in 0..(i128::BITS - 1) {
+                        // Test
+                        let x = Arbi::from(v);
+                        assert_eq!(
+                            x.test_bit(i as BitCount),
+                            test_i128_bit(v, i),
+                            "test_bit failed for value {} at index {}",
+                            v,
+                            i
+                        );
+
+                        // Set
+                        let mut x = Arbi::from(v);
+                        x.set_bit(i as BitCount);
+                        assert_eq!(
+                            x,
+                            set_i128_bit(v, i),
+                            "set_bit failed for value {} at index {}",
+                            v,
+                            i
+                        );
+
+                        // Clear
+                        let mut x = Arbi::from(v);
+                        x.clear_bit(i as BitCount);
+                        assert_eq!(
+                            x,
+                            clear_i128_bit(v, i),
+                            "clear_bit failed for value {} at index {}",
+                            v,
+                            i
+                        );
+
+                        // Invert
+                        let mut x = Arbi::from(v);
+                        x.invert_bit(i as BitCount);
+                        assert_eq!(
+                            x,
+                            invert_i128_bit(v, i),
+                            "invert_bit failed for value {} at index {}",
+                            v,
+                            i
+                        );
+                    }
+                )*
+            };
+        }
+
+        #[test]
+        fn test_arbi_trailing_zeros() {
+            let (mut rng, _) = get_seedable_rng();
+            let die_digit = get_uniform_die(Digit::MIN, Digit::MAX);
+            for _ in 0..1000 {
+                test_arbi_trailing_zeros_all_ops!(
+                    die_digit,
+                    rng,
+                    vec![
+                        0,
+                        die_digit.sample(&mut rng),
+                        die_digit.sample(&mut rng),
+                        die_digit.sample(&mut rng),
+                    ],
+                    vec![
+                        0,
+                        0,
+                        die_digit.sample(&mut rng),
+                        die_digit.sample(&mut rng),
+                    ],
+                    vec![0, 0, 0, die_digit.sample(&mut rng)]
+                );
+            }
+        }
     }
 
-    #[test]
-    fn test_arbi_trailing_zeros() {
-        let (mut rng, _) = get_seedable_rng();
-        let die_digit = get_uniform_die(Digit::MIN, Digit::MAX);
-        for _ in 0..1000 {
-            test_arbi_trailing_zeros_all_ops!(
-                die_digit,
-                rng,
-                vec![
-                    0,
-                    die_digit.sample(&mut rng),
-                    die_digit.sample(&mut rng),
-                    die_digit.sample(&mut rng),
-                ],
-                vec![
-                    0,
-                    0,
-                    die_digit.sample(&mut rng),
-                    die_digit.sample(&mut rng),
-                ],
-                vec![0, 0, 0, die_digit.sample(&mut rng)]
-            );
+    #[cfg(test)]
+    mod spec_test_bit {
+        use super::*;
+
+        fn check_test_bit(v: i128, i: u32) {
+            let a = Arbi::from(v);
+            assert_eq!(a.test_bit(i as BitCount), test_i128_bit(v, i));
+        }
+
+        #[test]
+        fn test_test_bit_size_lte_digit_idx_positive() {
+            // 1 digit
+            check_test_bit(2794480102, 32);
+            // > 1 digit
+            check_test_bit(3213823657745546596, 64);
+        }
+
+        #[test]
+        fn test_test_bit_size_lte_digit_idx_negative() {
+            // 1 digit
+            check_test_bit(-1094350350, 32);
+            // > 1 digit
+            check_test_bit(-1445413578913102255, 64);
+        }
+
+        #[test]
+        fn test_test_bit_size_gt_digit_idx_positive() {
+            // 1 digit
+            check_test_bit(4142986110, 0);
+            // > 1 digit
+            check_test_bit(12328930459554309820, 1);
+        }
+
+        #[test]
+        fn test_test_bit_size_gt_digit_idx_negative_ordering_less() {
+            check_test_bit(-8358488063644604456, 0);
+        }
+
+        #[test]
+        fn test_test_bit_size_gt_digit_idx_negative_ordering_equal() {
+            check_test_bit(-278205108, 2);
+        }
+
+        #[test]
+        fn test_test_bit_size_gt_digit_idx_negative_ordering_greater() {
+            check_test_bit(-1630333990, 2);
+            check_test_bit(-145885073049663941, 33);
         }
     }
 }
