@@ -615,4 +615,105 @@ mod tests {
             check_set_bit(-79104890842846643010291851066536361984, 33);
         }
     }
+
+    #[cfg(test)]
+    mod spec_invert_bit {
+        use super::*;
+
+        fn check_invert_bit(v: i128, i: u32) {
+            let mut a = Arbi::from(v);
+            a.invert_bit(i as BitCount);
+            assert_eq!(a, invert_i128_bit(v, i));
+        }
+
+        #[test]
+        fn test_invert_bit_nonnegative_digit_idx_gte_size() {
+            check_invert_bit(3169162174, 35);
+            check_invert_bit(5297922818921732749, 64);
+        }
+
+        #[test]
+        fn test_invert_bit_nonnegative_digit_idx_lt_size() {
+            check_invert_bit(3220136555740037207, 0);
+            check_invert_bit(9577613604812561155, 35);
+        }
+
+        // TODO: for now, negative cases can be covered by the tests for test,
+        // set, and clear bit as invert bit is currently implemented in
+        // terms of them.
+    }
+
+    #[cfg(test)]
+    mod spec_clear_bit {
+        use super::*;
+
+        fn check_clear_bit(v: i128, i: u32) {
+            let mut a = Arbi::from(v);
+            a.clear_bit(i as BitCount);
+            assert_eq!(a, clear_i128_bit(v, i));
+        }
+
+        #[test]
+        fn test_clear_bit_nonnegative_digit_idx_lt_size() {
+            check_clear_bit(8165514632630324252, 35);
+            check_clear_bit(4207883224, 0);
+            check_clear_bit(1983355790, 1);
+        }
+
+        #[test]
+        fn test_clear_bit_nonnegative_digit_idx_gte_size() {
+            check_clear_bit(4227601892, 32);
+            check_clear_bit(1656726456, 33);
+        }
+
+        #[test]
+        fn test_clear_bit_negative_digit_idx_gte_size() {
+            check_clear_bit(-1312369833, 33);
+            check_clear_bit(-2064297443, 32);
+            check_clear_bit(-1131893546, 66);
+            check_clear_bit(-8608514187077909673, 66);
+        }
+
+        #[test]
+        fn test_clear_bit_negative_ordering_less() {
+            check_clear_bit(-18965961268936630417225958052012752896, 66);
+            check_clear_bit(-121952855773553855296845216926711967744, 11);
+        }
+
+        #[test]
+        fn test_clear_bit_negative_ordering_greater() {
+            check_clear_bit(-1264686768109554377, 11);
+            check_clear_bit(-5329284535033871352930409852495790005, 34);
+        }
+
+        #[test]
+        fn test_clear_bit_negative_ordering_equal() {
+            // No carry propagation
+            check_clear_bit(-143140054817892714756379615631696199680, 64);
+            check_clear_bit(-42682086721719978017573039099164491776, 32);
+            check_clear_bit(-7101851680573794725778516826707998950, 1);
+            check_clear_bit(-0b11110000000000000000000000000000000000000, 37);
+
+            // TODO: Generally speaking, the randomized testing above touches
+            // all code branches. More specific randomized testing for this
+            // branch should probably be added, as these had to be specially
+            // contrived.
+            // With carry propagation (twice)
+            check_clear_bit(-0b11111111111111111111111111111111, 0);
+            check_clear_bit(-0b11111111111111111111111111111110, 1);
+            check_clear_bit(-0b11111111111111111111111111111100, 2);
+            check_clear_bit(-0b11111111111111111111111111111000, 3);
+            check_clear_bit(-0b11111111111111111111111111110000, 4);
+            check_clear_bit(-0b11111111111111111111111111100000, 5);
+
+            // With carry propagation (once)
+            check_clear_bit(-0b111111111111111111111111111111111111111111111111111111111111111111111110, 1);
+            check_clear_bit(-0b111111111111111111111111111111111111111111111111111111111111111111111100, 2);
+            check_clear_bit(-0b111111111111111111111111111111111111111111111111111111111111111111111000, 3);
+            check_clear_bit(-0b111111111111111111111111111111111111111111111111111111111111111111110000, 4);
+            check_clear_bit(-0b111111111111111111111111111111111111111111111111111111111111111111100000, 5);
+            check_clear_bit(-0b111111111111111110000000000000000000000000000000000000000000000000000000, 55);
+            check_clear_bit(-0b111111111111111100000000000000000000000000000000000000000000000000000000, 56);
+        }
+    }
 }
