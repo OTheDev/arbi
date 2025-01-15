@@ -254,20 +254,21 @@ extension).
 - Bitwise complement: `!`.
 - Bitwise AND, OR, and XOR: `&`, `|`, `^`, `&=`, `|=`, `^=`.
 
-Test or set a bit at a specified index (zero-based) on the absolute value of an
+Test, set, clear, or invert (i.e. toggle) a bit at a specified index on the
+two's complement representation (with sign extension) of an
 [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html) integer:
 - [`Arbi::test_bit()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.test_bit)
 - [`Arbi::set_bit()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.set_bit)
+- [`Arbi::clear_bit()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.clear_bit)
+- [`Arbi::invert_bit()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.invert_bit)
 
 Obtain the number of bits needed to represent the absolute value of an [`Arbi`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html)
 integer using [`Arbi::size_bits()`](https://docs.rs/arbi/latest/arbi/struct.Arbi.html#method.size_bits):
 
 ```rust
 use arbi::Arbi;
-
 let mut a = Arbi::zero();
 assert_eq!(a.size_bits(), 0);
-
 a.incr(); // 1
 assert_eq!(a.size_bits(), 1);
 a.incr(); // 10
