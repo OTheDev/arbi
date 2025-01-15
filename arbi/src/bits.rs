@@ -534,25 +534,19 @@ mod tests {
 
         #[test]
         fn test_test_bit_size_lte_digit_idx_positive() {
-            // 1 digit
             check_test_bit(2794480102, 32);
-            // > 1 digit
             check_test_bit(3213823657745546596, 64);
         }
 
         #[test]
         fn test_test_bit_size_lte_digit_idx_negative() {
-            // 1 digit
             check_test_bit(-1094350350, 32);
-            // > 1 digit
             check_test_bit(-1445413578913102255, 64);
         }
 
         #[test]
         fn test_test_bit_size_gt_digit_idx_positive() {
-            // 1 digit
             check_test_bit(4142986110, 0);
-            // > 1 digit
             check_test_bit(12328930459554309820, 1);
         }
 
@@ -570,6 +564,55 @@ mod tests {
         fn test_test_bit_size_gt_digit_idx_negative_ordering_greater() {
             check_test_bit(-1630333990, 2);
             check_test_bit(-145885073049663941, 33);
+        }
+    }
+
+    #[cfg(test)]
+    mod spec_set_bit {
+        use super::*;
+
+        fn check_set_bit(v: i128, i: u32) {
+            let mut a = Arbi::from(v);
+            a.set_bit(i as BitCount);
+            assert_eq!(a, set_i128_bit(v, i));
+        }
+
+        #[test]
+        fn test_set_bit_nonnegative_digit_idx_gte_size() {
+            check_set_bit(231225232, 32);
+            check_set_bit(1117149505875380525, 64);
+        }
+
+        #[test]
+        fn test_set_bit_nonnegative_digit_idx_lt_size() {
+            check_set_bit(3624511275, 0);
+            check_set_bit(1731705162, 11);
+        }
+
+        #[test]
+        fn test_set_bit_negative_digit_idx_gte_size() {
+            check_set_bit(-5195882671383705216, 64);
+        }
+
+        #[test]
+        fn test_set_bit_negative_ordering_less() {
+            check_set_bit(-66142783587514876610185198462355676004, 0);
+            check_set_bit(-65062158611235322364225102006062153728, 0);
+            check_set_bit(-135942508526365600474330669961831251968, 32);
+            check_set_bit(-38035140290876007155503263883093606400, 64);
+            check_set_bit(-135942508526365600437437181814412148736, 32);
+            check_set_bit(-113029729128887551475283106339106062336, 35);
+        }
+
+        #[test]
+        fn test_set_bit_negative_ordering_greater() {
+            check_set_bit(-42118996697395892268090367623661261034, 2);
+        }
+
+        #[test]
+        fn test_set_bit_negative_ordering_equal() {
+            check_set_bit(-2131484967, 0);
+            check_set_bit(-79104890842846643010291851066536361984, 33);
         }
     }
 }
