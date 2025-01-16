@@ -123,8 +123,8 @@ All equality and comparison operators are supported `==`, `!=`, `<`, `<=`, `>`,
 `>=`.
 
 Comparisons with floating-point values are designed to be consistent with IEEE
-754. See[`PartialOrd<f64> for Arbi`] for a description of the semantics of
-comparing an [`Arbi`] to a floating-point value.
+754. See [`PartialOrd<f64> for Arbi`](Arbi#impl-PartialOrd<f64>-for-Arbi) for a
+description of the semantics of comparing an [`Arbi`] to a floating-point value.
 
 ```rust
 use arbi::{Arbi, Assign};
@@ -169,7 +169,7 @@ an [`Arbi`]
  - [`Arbi::from_str_radix()`]
  - [`Arbi::from_str_base()`]
  - `Arbi::from_str()` (same as `from_str_base()` but assumes base `10` and
-   needs `core::str::FromStr` in scope).
+   needs [`core::str::FromStr`] in scope).
 
 Assign any string containing the base-`base` representation of an integer to
 an [`Arbi`].
