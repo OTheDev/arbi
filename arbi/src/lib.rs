@@ -30,10 +30,9 @@ mod comparisons_double;
 mod comparisons_integral;
 mod display;
 mod division;
-#[cfg(not(doctest))]
 #[allow(unknown_lints)]
 #[allow(clippy::doc_lazy_continuation)]
-pub mod doc;
+pub mod docs;
 mod exponentiation;
 mod fits;
 mod floor;

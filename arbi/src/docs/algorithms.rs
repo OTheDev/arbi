@@ -1,8 +1,9 @@
-//! Extended documentation.
-//!
-//! Currently, this only includes notes on some of the algorithms used.
+/*
+Copyright 2024-2025 Owain Davies
+SPDX-License-Identifier: Apache-2.0 OR MIT
+*/
 
-//! # Algorithms
+//! Includes notes on some of the algorithms employed.
 
 //! ## Addition
 //! Knuth Algorithm A (Vol. 2, 4.3.1, p. 266)
