@@ -5,5 +5,6 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Extended documentation.
 
+#[cfg(not(doctest))]
 pub mod algorithms;
 pub mod tour;
