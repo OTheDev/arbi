@@ -1,0 +1,37 @@
+name: Examples
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'arbi/**'
+      - 'examples/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'arbi/**'
+      - 'examples/**'
+  workflow_dispatch:
+
+jobs:
+    examples:
+        name: Test Examples
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v4
+        - run: |
+            rustup update stable && rustup override set stable
+            rustup toolchain install nightly
+            rustup component add rustfmt --toolchain nightly
+        - run: |
+            set -e
+            for example in examples/*/; do
+                echo "Processing $example"
+                cd $example
+                cargo clippy -- -D warnings
+                cargo +nightly fmt -- --check
+                cargo check --verbose
+                cargo build --verbose
+                cargo run --verbose
+                cd ../..
+            done
