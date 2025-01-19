@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
@@ -23,7 +23,7 @@ impl Arbi {
     /// let mut a = Arbi::from(Digit::MAX);
     /// assert_eq!(a.size(), 1);
     ///
-    /// a.incr();
+    /// a += 1;
     /// assert_eq!(a.size(), 2);
     /// ```
     ///
@@ -48,7 +48,7 @@ impl Arbi {
     ///
     /// let mut a = Arbi::from(Digit::MAX);
     /// assert_eq!(a.size_bits(), Digit::BITS as BitCount);
-    /// a.incr();
+    /// a += 1;
     /// assert_eq!(a.size_bits(), Digit::BITS as BitCount + 1);
     /// ```
     ///

@@ -243,11 +243,11 @@ integer using [`Arbi::size_bits()`]:
 use arbi::Arbi;
 let mut a = Arbi::zero();
 assert_eq!(a.size_bits(), 0);
-a.incr(); // 1
+a += 1; // 1
 assert_eq!(a.size_bits(), 1);
-a.incr(); // 10
+a += 1; // 10
 assert_eq!(a.size_bits(), 2);
-a.incr(); // 11
+a += 1; // 11
 assert_eq!(a.size_bits(), 2);
 ```
 
@@ -287,26 +287,6 @@ assert_eq!(a.to_f64(), -987654321.0);
 let b = Arbi::from(1_u64 << 32);
 assert_ne!((&b).pow(31_usize).to_f64(), f64::INFINITY);
 assert_eq!((&b).pow(32_usize).to_f64(), f64::INFINITY);
-```
-
-## Increment/Decrement
-
-Increment or decrement an [`Arbi`] integer in-place by one using the
-[`Arbi::incr()`] and [`Arbi::decr()`] methods (`+=` and `-=` can also be used).
-
-```rust
-use arbi::Arbi;
-
-let mut a = Arbi::zero();
-
-a.incr();
-assert_eq!(a, 1);
-
-a.decr();
-assert_eq!(a, 0);
-
-a.decr();
-assert_eq!(a, -1);
 ```
 
 ## Exponentiation

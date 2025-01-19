@@ -101,7 +101,7 @@ mod tests {
             Some(BitCount::from(Digit::MAX.count_ones()))
         );
 
-        a.incr();
+        a += 1;
         assert_eq!(
             a.count_ones(),
             Some(BitCount::from((Digit::MAX as DDigit + 1).count_ones()))

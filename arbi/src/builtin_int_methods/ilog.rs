@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
@@ -78,7 +78,7 @@ impl Arbi {
     pub fn ilog_mut(&mut self, base: u32) -> BitCount {
         Self::check_ilog_args(self, base);
         let ret = self.size_base_mut(base) - 1;
-        self.decr();
+        *self -= 1;
         ret
     }
 

@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
@@ -403,7 +403,7 @@ impl Not for Arbi {
 
     fn not(mut self) -> Self::Output {
         self.negate_mut();
-        self.decr();
+        self -= 1;
         self
     }
 }
@@ -436,7 +436,7 @@ impl Not for &Arbi {
     fn not(self) -> Self::Output {
         let mut ret = self.clone();
         ret.negate_mut();
-        ret.decr();
+        ret -= 1;
         ret
     }
 }

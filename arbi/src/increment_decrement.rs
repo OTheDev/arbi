@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
@@ -11,11 +11,14 @@ impl Arbi {
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    ///
     /// let mut x = Arbi::from(987654321);
     /// x.incr();
     /// assert_eq!(x, 987654322);
     /// ```
+    #[deprecated(
+        since = "0.6.1",
+        note = "Please use `x += 1` instead. This will be removed in 0.7.0."
+    )]
     pub fn incr(&mut self) -> &mut Self {
         if self.neg {
             Self::decrement_abs(self);
@@ -33,10 +36,14 @@ impl Arbi {
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    ///
     /// let mut x = Arbi::from(987654321);
     /// x.decr();
     /// assert_eq!(x, 987654320);
+    /// ```
+    #[deprecated(
+        since = "0.6.1",
+        note = "Please use `x -= 1` instead. This will be removed in 0.7.0."
+    )]
     pub fn decr(&mut self) -> &mut Self {
         if self.neg {
             Self::increment_abs(self);
@@ -113,6 +120,7 @@ impl Arbi {
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use super::*;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};

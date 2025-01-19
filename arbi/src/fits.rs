@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
@@ -55,12 +55,9 @@ impl Arbi {
     /// # Examples
     /// ```
     /// use arbi::{Arbi, Fits};
-    ///
     /// let mut x = Arbi::from(255);
     /// assert!(x.fits::<u8>());
-    ///
-    /// x.incr();
-    ///
+    /// x += 1;
     /// assert!(!x.fits::<u8>());
     /// ```
     pub fn fits<T: Fits<T>>(&self) -> bool {
