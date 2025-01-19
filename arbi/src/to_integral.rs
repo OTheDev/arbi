@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
@@ -123,7 +123,7 @@ impl Arbi {
     /// use arbi::Arbi;
     /// let mut x = Arbi::from(u8::MAX);
     /// assert!(x.fits_u8());
-    /// x.incr();
+    /// x += 1;
     /// assert!(!x.fits_u8());
     /// ```
     pub fn $fits(&self) -> bool {

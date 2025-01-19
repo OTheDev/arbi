@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
@@ -45,7 +45,7 @@ impl UniformSampler for UniformArbi {
         let hi_b: &Arbi = hi_incl.borrow();
         assert!(lo_b <= hi_b);
         let mut hi = hi_b.clone();
-        hi.incr();
+        hi += 1;
         UniformArbi {
             lower: lo_b.clone(),
             delta: hi - lo_b,

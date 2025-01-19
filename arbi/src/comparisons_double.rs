@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
@@ -262,14 +262,13 @@ mod tests {
 
         // Boundary around max_double
         assert_eq!(&max_double_mut, MAX_DOUBLE);
-        max_double_mut.incr();
+        max_double_mut += 1;
         assert!(&max_double_mut > MAX_DOUBLE);
-        max_double_mut.decr();
-        max_double_mut.decr();
+        max_double_mut -= 2;
         assert!(&max_double_mut < MAX_DOUBLE);
         assert_eq!(Arbi::from(-MAX_DOUBLE), -MAX_DOUBLE);
-        assert!(Arbi::from(-&max_double).incr() > &mut -MAX_DOUBLE);
-        assert!(Arbi::from(-&max_double).decr() < &mut -MAX_DOUBLE);
+        assert!(Arbi::from(-&max_double) + 1 > -MAX_DOUBLE);
+        assert!(Arbi::from(-&max_double) - 1 < -MAX_DOUBLE);
 
         /* IEEE 754: NaN compared to another floating point number x (where x
          * can be finite, an infinite, or NaN) evaluates to false with >=, <=,

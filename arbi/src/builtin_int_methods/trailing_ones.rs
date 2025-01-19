@@ -178,7 +178,7 @@ mod tests {
             Some(BitCount::from(Digit::MAX.trailing_ones()))
         );
 
-        a.incr();
+        a += 1;
         assert_eq!(
             a.trailing_ones(),
             Some(BitCount::from((Digit::MAX as DDigit + 1).trailing_ones()))
