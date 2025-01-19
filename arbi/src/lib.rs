@@ -28,7 +28,6 @@ mod capacity;
 mod comparisons;
 mod comparisons_double;
 mod comparisons_integral;
-mod display;
 mod division;
 #[allow(unknown_lints)]
 #[allow(clippy::doc_lazy_continuation)]
@@ -36,6 +35,7 @@ pub mod docs;
 mod exponentiation;
 mod fits;
 mod floor;
+mod fmt;
 mod from_double;
 mod from_integral;
 mod from_string;

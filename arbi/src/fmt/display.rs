@@ -1,23 +1,22 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-use crate::{Arbi, Base};
-use core::fmt::{self, Display};
+use crate::{base::DEC, Arbi};
+use core::fmt;
 
 /// Outputs the base-10 (decimal) representation of an `Arbi` integer.
 ///
 /// # Examples
 /// ```
 /// use arbi::Arbi;
-///
-/// let a = Arbi::from(12345);
-/// assert_eq!(format!("{}", a), "12345");
+/// assert_eq!(format!("{}", Arbi::from(12345)), "12345");
+/// assert_eq!(format!("{}", Arbi::from(-12345)), "-12345");
 /// ```
-impl Display for Arbi {
+impl fmt::Display for Arbi {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_string_base(Base::try_from(10).unwrap()))
+        write!(f, "{}", self.to_string_base(DEC))
     }
 }
 
