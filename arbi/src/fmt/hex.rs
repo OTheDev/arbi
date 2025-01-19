@@ -11,7 +11,7 @@ use core::fmt;
 /// # Examples
 /// ```
 /// use arbi::Arbi;
-/// let mut a = Arbi::from(12648430);
+/// let mut a = Arbi::from(0xC0FFEE);
 ///
 /// assert_eq!(format!("{:x}", a), "c0ffee");
 /// assert_eq!(format!("{:#x}", a), "0xc0ffee");
@@ -37,7 +37,7 @@ impl fmt::LowerHex for Arbi {
 /// # Examples
 /// ```
 /// use arbi::Arbi;
-/// let mut a = Arbi::from(12648430);
+/// let mut a = Arbi::from(0xC0FFEE);
 ///
 /// assert_eq!(format!("{:X}", a), "C0FFEE");
 /// assert_eq!(format!("{:#X}", a), "0xC0FFEE");

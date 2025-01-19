@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 use crate::{base::Base, Arbi};
 use core::fmt;
 
+mod binary;
 mod display;
 mod hex;
 mod octal;
