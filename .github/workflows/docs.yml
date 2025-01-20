@@ -37,6 +37,10 @@ jobs:
         run: |
           mkdir -p "pr-${{ github.event.pull_request.number }}"
           cp -r target/doc/* "pr-${{ github.event.pull_request.number }}/"
+          echo "Content of PR directory:"
+          ls -la "pr-${{ github.event.pull_request.number }}"
+          echo "Checking for index.html:"
+          find "pr-${{ github.event.pull_request.number }}" -name index.html
           
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -56,10 +60,14 @@ jobs:
         with:
           script: |
             console.log('PR Number:', context.payload.pull_request.number);
-            const url = `${{ steps.deployment.outputs.page_url }}pr-${context.payload.pull_request.number}/index.html`;
+            console.log('Repository:', context.repo.owner + '/' + context.repo.name);
+            
+            // Get deployment URL without trailing slash if present
+            const baseUrl = '${{ steps.deployment.outputs.page_url }}'.replace(/\/$/, '');
+            const url = `${baseUrl}/pr-${context.payload.pull_request.number}/index.html`;
+            
             await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.name,
+              ...context.repo,
               issue_number: context.payload.pull_request.number,
               body: `📚 Documentation preview is ready!\nView it here: ${url}`
             });
