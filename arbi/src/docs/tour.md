@@ -305,15 +305,34 @@ assert_eq!(
 );
 ```
 
-## Display
+## Display/Formatting
 
-The [`core::fmt::Display`] implementation uses the base-10 representation of the
-[`Arbi`] integer and by extension, so does `Arbi::to_string()`.
+`core::fmt`'s [`Display`](Arbi#impl-Display-for-Arbi) trait is implemented for
+`Arbi` integers, which uses its base-10 representation and by extension, so does
+`Arbi::to_string()`.
 
 ```rust
 use arbi::Arbi;
+let a = Arbi::from(-12345);
+assert_eq!(format!("{a}"), "-12345");
+assert_eq!(a.to_string(), "-12345");
+```
 
-let a = Arbi::from(12345);
-assert_eq!(format!("{}", a), "12345");
-assert_eq!(a.to_string(), "12345");
+`core::fmt`'s [`LowerHex`](Arbi#impl-LowerHex-for-Arbi), [`UpperHex`](Arbi#impl-UpperHex-for-Arbi),
+[`Octal`](Arbi#impl-Octal-for-Arbi), and [`Binary`](Arbi#impl-Binary-for-Arbi)
+traits are also implemented. Thus, `x`, `X`, `o`, and `b` formatting are
+supported, with an optional `#` flag for `0x`, `0o`, or `0b` prefixes.
+
+In these cases, the formatted output of an `Arbi`
+integer consists of a `-` prefix for negative values, followed optionally by
+`0x`, `0o`, or `0b` prefixes when the `#` flag is used, and then the magnitude
+in the specified base.
+
+For example:
+
+```rust
+use arbi::Arbi;
+let a = Arbi::from(-0xC0FFEE);
+assert_eq!(format!("{a:x}"), "-c0ffee");
+assert_eq!(format!("{a:#x}"), "-0xc0ffee");
 ```

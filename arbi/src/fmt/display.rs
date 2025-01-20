@@ -11,8 +11,12 @@ use core::fmt;
 /// # Examples
 /// ```
 /// use arbi::Arbi;
-/// assert_eq!(format!("{}", Arbi::from(12345)), "12345");
-/// assert_eq!(format!("{}", Arbi::from(-12345)), "-12345");
+/// let a = Arbi::from(12345);
+/// assert_eq!(format!("{a}"), "12345");
+/// let b = Arbi::from(-12345);
+/// assert_eq!(format!("{b}"), "-12345");
+/// let zero = Arbi::zero();
+/// assert_eq!(format!("{zero}"), "0");
 /// ```
 impl fmt::Display for Arbi {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

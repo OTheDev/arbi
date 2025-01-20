@@ -11,21 +11,18 @@ use core::fmt;
 /// # Examples
 /// ```
 /// use arbi::Arbi;
+///
 /// let mut a = Arbi::from(0xC0FFEE);
-///
-/// assert_eq!(format!("{:b}", a), "110000001111111111101110");
-/// assert_eq!(format!("{:#b}", a), "0b110000001111111111101110");
-///
+/// assert_eq!(format!("{a:b}"), "110000001111111111101110");
+/// assert_eq!(format!("{a:#b}"), "0b110000001111111111101110");
 /// a.negate_mut();
+/// assert_eq!(format!("{a:b}"), "-110000001111111111101110");
+/// assert_eq!(format!("{a:#b}"), "-0b110000001111111111101110");
 ///
-/// assert_eq!(format!("{:b}", a), "-110000001111111111101110");
-/// assert_eq!(format!("{:#b}", a), "-0b110000001111111111101110");
+/// let zero = Arbi::zero();
+/// assert_eq!(format!("{zero:b}"), "0");
+/// assert_eq!(format!("{zero:#b}"), "0b0");
 /// ```
-///
-/// # Note
-/// Unlike primitive signed integers which use two's complement representation,
-/// negative `Arbi` integers are formatted with their magnitude and a `-` prefix
-/// (along with `0b` if `#` is specified).
 impl fmt::Binary for Arbi {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.fmt_base(f, BIN, "0b", true)

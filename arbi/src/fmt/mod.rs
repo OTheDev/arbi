@@ -12,6 +12,8 @@ mod hex;
 mod octal;
 
 impl Arbi {
+    /// Helper for the implementations of `core::fmt`'s `LowerHex`, `UpperHex`,
+    /// `Octal`, and `Binary` traits.
     fn fmt_base(
         &self,
         f: &mut fmt::Formatter<'_>,
