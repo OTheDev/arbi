@@ -35,8 +35,8 @@ jobs:
       - name: Prepare PR-specific path
         if: github.event_name == 'pull_request'
         run: |
-          mkdir -p "pr-${{ github.event.pull_request.number }}"
-          cp -r target/doc/* "pr-${{ github.event.pull_request.number }}/"
+          mkdir -p "pr-${{ github.event.number }}"
+          mv target/doc "pr-${{ github.event.number }}/doc"
           
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -44,7 +44,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'pr-${{ github.event.pull_request.number }}'
+          path: '.'
           
       - name: Deploy to GitHub Pages
         id: deployment
@@ -55,13 +55,10 @@ jobs:
         if: github.event_name == 'pull_request'
         with:
           script: |
-            console.log('PR Number:', context.payload.pull_request.number);
-            console.log('Repository:', context.repo.owner + '/' + context.repo.name);
-            
-            const url = `${{ steps.deployment.outputs.page_url }}pr-${context.payload.pull_request.number}/arbi/index.html`;
-            
-            await github.rest.issues.createComment({
-              ...context.repo,
-              issue_number: context.payload.pull_request.number,
+            const url = `${{ steps.deployment.outputs.page_url }}pr-${{ github.event.number }}/doc/arbi/index.html`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.name,
               body: `📚 Documentation preview is ready!\nView it here: ${url}`
             });
