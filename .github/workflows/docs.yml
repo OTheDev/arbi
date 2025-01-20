@@ -56,9 +56,8 @@ jobs:
         with:
           script: |
             const url = `${{ steps.deployment.outputs.page_url }}pr-${{ github.event.number }}/doc/arbi/index.html`;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.name,
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.payload.pull_request.number,
               body: `📚 Documentation preview is ready!\nView it here: ${url}`
             });
