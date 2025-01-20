@@ -58,7 +58,7 @@ jobs:
             const url = `${{ steps.deployment.outputs.page_url }}pr-${{ github.event.number }}/doc/arbi/index.html`;
             const timestamp = new Date().toISOString();
             const commit_hash = context.payload.pull_request.head.sha;
-            const message = `📚 Documentation preview is ready!\nView it here: ${url}\n\n_Last updated: ${timestamp}_\n_Commit: ${commit_hash}_`;
+            const message = `📚 Documentation preview: ${url}\n\n_Last updated: ${timestamp}_\n_Commit: ${commit_hash}_`;
             
             // Look for an existing documentation preview comment.
             const comments = await github.rest.issues.listComments({
@@ -67,23 +67,25 @@ jobs:
               issue_number: context.payload.pull_request.number,
             });
             const doc_comment = comments.data.find(comment => 
-              comment.body.includes('📚 Documentation preview is ready!')
+              comment.body.includes('📚 Documentation preview')
             );
+
+            const comment_params = {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: message
+            };
             
             if (doc_comment) {
               // If a comment exists, update the existing one.
               await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                ...comment_params,
                 comment_id: doc_comment.id,
-                body: message
               });
             } else {
               // If no comment exists, create a new one.
               await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                ...comment_params,
                 issue_number: context.payload.pull_request.number,
-                body: message
               });
             }
