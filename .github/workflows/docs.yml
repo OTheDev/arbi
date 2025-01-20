@@ -35,10 +35,8 @@ jobs:
       - name: Prepare PR-specific path
         if: github.event_name == 'pull_request'
         run: |
-          mv target/doc/* .
           mkdir -p "pr-${{ github.event.pull_request.number }}"
-          mv arbi "pr-${{ github.event.pull_request.number }}"
-          mv *.* "pr-${{ github.event.pull_request.number }}"
+          cp -r target/doc/* "pr-${{ github.event.pull_request.number }}/"
           
       - name: Setup Pages
         uses: actions/configure-pages@v4
