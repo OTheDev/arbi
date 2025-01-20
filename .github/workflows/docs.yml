@@ -12,6 +12,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  pull-requests: write
 
 jobs:
   build-deploy-docs:
@@ -30,14 +31,20 @@ jobs:
       - name: Build Documentation
         run: |
           RUSTDOCFLAGS="--html-in-header ./arbi/doc/header.html --cfg docsrs" cargo +nightly doc --no-deps --all-features
-
+          
+      - name: Prepare PR-specific path
+        if: github.event_name == 'pull_request'
+        run: |
+          mkdir -p "pr-${{ github.event.number }}"
+          mv target/doc "pr-${{ github.event.number }}/doc"
+          
       - name: Setup Pages
         uses: actions/configure-pages@v4
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'target/doc'
+          path: '.'
           
       - name: Deploy to GitHub Pages
         id: deployment
@@ -48,7 +55,7 @@ jobs:
         if: github.event_name == 'pull_request'
         with:
           script: |
-            const url = `${{ steps.deployment.outputs.page_url }}arbi/index.html`;
+            const url = `${{ steps.deployment.outputs.page_url }}pr-${{ github.event.number }}/doc/arbi/index.html`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
