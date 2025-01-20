@@ -56,7 +56,7 @@ jobs:
         with:
           script: |
             console.log('PR Number:', context.payload.pull_request.number);
-            console.log('Event number:', context.event.number);
+            console.log('Event number:', github.event.number);
 
             const url = `${{ steps.deployment.outputs.page_url }}pr-${{ github.event.number }}/doc/arbi/index.html`;
             await github.rest.issues.createComment({
