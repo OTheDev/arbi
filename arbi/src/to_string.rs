@@ -85,24 +85,22 @@ impl Arbi {
         }
     }
 
-    /// Return a [`String`] containing the base-`base` representation of the
-    /// integer, where `base` must be an integer in \\( [2, 36] \\).
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::{Arbi, Base};
-    ///
-    /// let b10 = Base::try_from(10).unwrap();
-    ///
-    /// let a = Arbi::from(123456789);
-    /// let s = a.to_string_base(b10);
-    /// assert_eq!(s, "123456789");
-    /// ```
-    pub fn to_string_base(&self, base: Base) -> String {
+    pub(crate) fn to_string_base_(
+        &self,
+        base: Base,
+        lowercase: bool,
+    ) -> String {
         let base: usize = base.value() as usize;
         assert!((2..=36).contains(&base));
 
-        const BASE_DIGITS: &str = "0123456789abcdefghijklmnopqrstuvwxyz";
+        const BASE_DIGITS_LOWER: &str = "0123456789abcdefghijklmnopqrstuvwxyz";
+        const BASE_DIGITS_UPPER: &str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        let base_digits = if lowercase {
+            BASE_DIGITS_LOWER
+        } else {
+            BASE_DIGITS_UPPER
+        };
 
         if self.size() == 0 {
             return "0".into();
@@ -151,7 +149,7 @@ impl Arbi {
                 remainder /= base as Digit;
 
                 result.push(
-                    BASE_DIGITS.chars().nth(current_digit as usize).unwrap(),
+                    base_digits.chars().nth(current_digit as usize).unwrap(),
                 );
             }
         }
@@ -161,6 +159,23 @@ impl Arbi {
         }
 
         result.chars().rev().collect::<String>()
+    }
+
+    /// Return a [`String`] containing the base-`base` representation of the
+    /// integer, where `base` must be an integer in \\( [2, 36] \\).
+    ///
+    /// # Examples
+    /// ```
+    /// use arbi::{
+    ///     base::{DEC, HEX},
+    ///     Arbi,
+    /// };
+    /// assert_eq!(Arbi::from(123456789).to_string_base(DEC), "123456789");
+    /// assert_eq!(Arbi::from(123456789).to_string_base(HEX), "75bcd15");
+    /// assert_eq!(Arbi::from(-123456789).to_string_base(HEX), "-75bcd15");
+    /// ```
+    pub fn to_string_base(&self, base: Base) -> String {
+        self.to_string_base_(base, true)
     }
 
     /// Equivalent to [`Arbi::to_string_base()`], but panics if the base is
