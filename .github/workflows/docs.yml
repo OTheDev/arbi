@@ -1,0 +1,57 @@
+name: Documentation
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'arbi/**'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-deploy-docs:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Rust
+        run: |
+          rustup toolchain install nightly
+          rustup override set nightly
+          
+      - name: Build Documentation
+        run: |
+          RUSTDOCFLAGS="--html-in-header ./arbi/doc/header.html --cfg docsrs" cargo +nightly doc --no-deps --all-features
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'target/doc'
+          
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        
+      - name: Comment PR
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const url = `${{ steps.deployment.outputs.page_url }}arbi/index.html`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              body: `📚 Documentation preview is ready!\nView it here: ${url}`
+            });
