@@ -7,11 +7,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 pub(crate) const fn max_digits<T>() -> usize {
     use crate::uints::div_ceil_usize;
     use crate::Digit;
-
-    div_ceil_usize(
-        core::mem::size_of::<T>().checked_mul(8).unwrap(),
-        Digit::BITS as usize,
-    )
+    div_ceil_usize(core::mem::size_of::<T>() * 8, Digit::BITS as usize)
 }
 
 #[cfg(test)]
