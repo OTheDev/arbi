@@ -3,7 +3,7 @@ Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-use crate::macros::for_all_integers;
+use crate::macros::for_all_ints;
 use crate::{Arbi, BitCount, Digit};
 use core::ops::{Shr, ShrAssign};
 
@@ -206,7 +206,7 @@ impl ShrAssign<&$bitcount> for Arbi {
 }
 /* impl_shr_integral! */
 
-for_all_integers!(impl_shr_integral);
+for_all_ints!(impl_shr_integral);
 
 #[cfg(test)]
 mod test_arithmetic_rshift {

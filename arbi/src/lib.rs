@@ -22,7 +22,6 @@ mod assign_integral;
 mod assign_string;
 pub mod base;
 mod bits;
-mod bitwise;
 mod builtin_int_methods;
 mod capacity;
 mod comparisons;
@@ -48,6 +47,7 @@ mod macros;
 mod multiplication;
 mod negate;
 mod new;
+mod ops;
 mod print_internal;
 mod random;
 mod right_shift;
@@ -239,5 +239,15 @@ impl Arbi {
         self.vec.extend_from_slice(digits);
         self.neg = is_negative;
         self.trim();
+    }
+
+    /// Ensures `self` has the larger capacity by swapping with `other` if
+    /// desired.
+    ///
+    /// This can help avoid additional memory allocation.
+    pub(crate) fn swap_if_smaller_capacity(&mut self, other: &mut Self) {
+        if other.vec.capacity() > self.vec.capacity() {
+            core::mem::swap(self, other);
+        }
     }
 }
