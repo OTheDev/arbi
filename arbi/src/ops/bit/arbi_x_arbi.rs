@@ -3,177 +3,18 @@ Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-//! Bitwise operators
-//!
-//! These operators (!, &, |, ^, &=, |=, ^=) perform bitwise operations on
-//! integers using two's complement representation (with sign extension).
-
-// TODO:
-// 1. Add examples for BitOr, BitAnd, and BitXor.
-// 2. Document under what situations cloning is needed.
-// 3. Ideally, there should only be one implementation.
-
-use crate::to_twos_complement::{ByteOrder, TwosComplement};
-use crate::{Arbi, Digit};
+use crate::Arbi;
 use core::ops::{
     BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not,
 };
-
-#[allow(dead_code)]
-#[derive(Debug, Copy, Clone)]
-pub enum BitwiseOperation {
-    And,
-    Or,
-    Xor,
-}
-
-impl Arbi {
-    fn bitwise_operation_inplace_impl(
-        x: &mut Self,
-        y: &Self,
-        op: BitwiseOperation,
-    ) {
-        let x_negative = x.is_negative();
-        let y_negative = y.is_negative();
-
-        let mut max_size = x.size().max(y.size());
-
-        if x_negative {
-            x.vec.to_twos_complement(ByteOrder::Le);
-        }
-
-        let y_temp_complement = if y_negative {
-            let mut y_clone = y.vec.clone();
-            y_clone.to_twos_complement(ByteOrder::Le);
-            Some(y_clone)
-        } else {
-            None
-        };
-
-        let y_digits = if y_negative {
-            y_temp_complement.as_ref().unwrap()
-        } else {
-            &y.vec
-        };
-
-        let result_negative = match op {
-            BitwiseOperation::And => x_negative && y_negative,
-            BitwiseOperation::Or => x_negative || y_negative,
-            BitwiseOperation::Xor => {
-                max_size += 1;
-                x_negative != y_negative
-            }
-        };
-
-        x.vec
-            .resize(max_size, if x_negative { Digit::MAX } else { 0 });
-
-        for i in 0..max_size {
-            let lhs_digit = if i < x.size() {
-                x.vec[i]
-            } else if x_negative {
-                Digit::MAX
-            } else {
-                0
-            };
-
-            let rhs_digit = if i < y_digits.len() {
-                y_digits[i]
-            } else if y_negative {
-                Digit::MAX
-            } else {
-                0
-            };
-
-            x.vec[i] = match op {
-                BitwiseOperation::And => lhs_digit & rhs_digit,
-                BitwiseOperation::Or => lhs_digit | rhs_digit,
-                BitwiseOperation::Xor => lhs_digit ^ rhs_digit,
-            };
-        }
-
-        if result_negative {
-            x.vec.to_twos_complement(ByteOrder::Le);
-        }
-
-        x.neg = result_negative;
-        x.trim();
-    }
-
-    fn bitwise_operation_inplace_impl_mut(
-        x: &mut Self,
-        y: &mut Self,
-        op: BitwiseOperation,
-    ) {
-        let x_negative = x.is_negative();
-        let y_negative = y.is_negative();
-
-        let mut max_size = x.size().max(y.size());
-
-        if x_negative {
-            x.vec.to_twos_complement(ByteOrder::Le);
-        }
-
-        if y_negative {
-            y.vec.to_twos_complement(ByteOrder::Le);
-        }
-
-        let result_negative = match op {
-            BitwiseOperation::And => x_negative && y_negative,
-            BitwiseOperation::Or => x_negative || y_negative,
-            BitwiseOperation::Xor => {
-                max_size += 1;
-                x_negative != y_negative
-            }
-        };
-
-        x.vec
-            .resize(max_size, if x_negative { Digit::MAX } else { 0 });
-
-        for i in 0..max_size {
-            let lhs_digit = if i < x.size() {
-                x.vec[i]
-            } else if x_negative {
-                Digit::MAX
-            } else {
-                0
-            };
-
-            let rhs_digit = if i < y.size() {
-                y.vec[i]
-            } else if y_negative {
-                Digit::MAX
-            } else {
-                0
-            };
-
-            x.vec[i] = match op {
-                BitwiseOperation::And => lhs_digit & rhs_digit,
-                BitwiseOperation::Or => lhs_digit | rhs_digit,
-                BitwiseOperation::Xor => lhs_digit ^ rhs_digit,
-            };
-        }
-
-        if result_negative {
-            x.vec.to_twos_complement(ByteOrder::Le);
-        }
-
-        x.neg = result_negative;
-        x.trim();
-    }
-}
 
 /// See [BitAnd](#impl-BitAnd<%26Arbi>-for-%26Arbi) for the mathematical
 /// semantics.
 impl BitAnd<Arbi> for Arbi {
     type Output = Arbi;
-
     fn bitand(mut self, mut rhs: Self) -> Self::Output {
-        Self::bitwise_operation_inplace_impl_mut(
-            &mut self,
-            &mut rhs,
-            BitwiseOperation::And,
-        );
+        self.swap_if_smaller_capacity(&mut rhs);
+        self.inplace_bitwise_and(&rhs);
         self
     }
 }
@@ -182,13 +23,8 @@ impl BitAnd<Arbi> for Arbi {
 /// semantics.
 impl<'a> BitAnd<&'a Arbi> for Arbi {
     type Output = Arbi;
-
     fn bitand(mut self, rhs: &'a Self) -> Self::Output {
-        Self::bitwise_operation_inplace_impl(
-            &mut self,
-            rhs,
-            BitwiseOperation::And,
-        );
+        self.inplace_bitwise_and(rhs);
         self
     }
 }
@@ -202,15 +38,10 @@ impl<'a> BitAnd<&'a Arbi> for Arbi {
 /// \\]
 impl<'a> BitAnd<&'a Arbi> for &Arbi {
     type Output = Arbi;
-
     fn bitand(self, rhs: &'a Arbi) -> Self::Output {
-        let mut result = self.clone();
-        Arbi::bitwise_operation_inplace_impl(
-            &mut result,
-            rhs,
-            BitwiseOperation::And,
-        );
-        result
+        let mut ret = Arbi::zero();
+        ret.assign_bitwise_and(self, rhs);
+        ret
     }
 }
 
@@ -218,11 +49,8 @@ impl<'a> BitAnd<&'a Arbi> for &Arbi {
 /// semantics.
 impl BitAndAssign<Arbi> for Arbi {
     fn bitand_assign(&mut self, mut rhs: Self) {
-        Arbi::bitwise_operation_inplace_impl_mut(
-            self,
-            &mut rhs,
-            BitwiseOperation::And,
-        );
+        self.swap_if_smaller_capacity(&mut rhs);
+        self.inplace_bitwise_and(&rhs);
     }
 }
 
@@ -230,7 +58,7 @@ impl BitAndAssign<Arbi> for Arbi {
 /// semantics.
 impl<'a> BitAndAssign<&'a Arbi> for Arbi {
     fn bitand_assign(&mut self, rhs: &'a Self) {
-        Arbi::bitwise_operation_inplace_impl(self, rhs, BitwiseOperation::And);
+        self.inplace_bitwise_and(rhs);
     }
 }
 
@@ -238,13 +66,9 @@ impl<'a> BitAndAssign<&'a Arbi> for Arbi {
 /// semantics.
 impl BitOr<Arbi> for Arbi {
     type Output = Arbi;
-
     fn bitor(mut self, mut rhs: Self) -> Self::Output {
-        Self::bitwise_operation_inplace_impl_mut(
-            &mut self,
-            &mut rhs,
-            BitwiseOperation::Or,
-        );
+        self.swap_if_smaller_capacity(&mut rhs);
+        self.inplace_bitwise_ior(&rhs);
         self
     }
 }
@@ -253,13 +77,8 @@ impl BitOr<Arbi> for Arbi {
 /// semantics.
 impl<'a> BitOr<&'a Arbi> for Arbi {
     type Output = Arbi;
-
     fn bitor(mut self, rhs: &'a Self) -> Self::Output {
-        Self::bitwise_operation_inplace_impl(
-            &mut self,
-            rhs,
-            BitwiseOperation::Or,
-        );
+        self.inplace_bitwise_ior(rhs);
         self
     }
 }
@@ -273,15 +92,10 @@ impl<'a> BitOr<&'a Arbi> for Arbi {
 /// \\]
 impl<'a> BitOr<&'a Arbi> for &Arbi {
     type Output = Arbi;
-
     fn bitor(self, rhs: &'a Arbi) -> Self::Output {
-        let mut result = self.clone();
-        Arbi::bitwise_operation_inplace_impl(
-            &mut result,
-            rhs,
-            BitwiseOperation::Or,
-        );
-        result
+        let mut ret = Arbi::zero();
+        ret.assign_bitwise_ior(self, rhs);
+        ret
     }
 }
 
@@ -289,11 +103,8 @@ impl<'a> BitOr<&'a Arbi> for &Arbi {
 /// semantics.
 impl BitOrAssign<Arbi> for Arbi {
     fn bitor_assign(&mut self, mut rhs: Self) {
-        Arbi::bitwise_operation_inplace_impl_mut(
-            self,
-            &mut rhs,
-            BitwiseOperation::Or,
-        );
+        self.swap_if_smaller_capacity(&mut rhs);
+        self.inplace_bitwise_ior(&rhs);
     }
 }
 
@@ -301,7 +112,7 @@ impl BitOrAssign<Arbi> for Arbi {
 /// semantics.
 impl<'a> BitOrAssign<&'a Arbi> for Arbi {
     fn bitor_assign(&mut self, rhs: &'a Self) {
-        Arbi::bitwise_operation_inplace_impl(self, rhs, BitwiseOperation::Or);
+        self.inplace_bitwise_ior(rhs);
     }
 }
 
@@ -309,13 +120,9 @@ impl<'a> BitOrAssign<&'a Arbi> for Arbi {
 /// semantics.
 impl BitXor<Arbi> for Arbi {
     type Output = Arbi;
-
     fn bitxor(mut self, mut rhs: Self) -> Self::Output {
-        Self::bitwise_operation_inplace_impl_mut(
-            &mut self,
-            &mut rhs,
-            BitwiseOperation::Xor,
-        );
+        self.swap_if_smaller_capacity(&mut rhs);
+        self.inplace_bitwise_xor(&rhs);
         self
     }
 }
@@ -324,13 +131,8 @@ impl BitXor<Arbi> for Arbi {
 /// semantics.
 impl<'a> BitXor<&'a Arbi> for Arbi {
     type Output = Arbi;
-
     fn bitxor(mut self, rhs: &'a Self) -> Self::Output {
-        Self::bitwise_operation_inplace_impl(
-            &mut self,
-            rhs,
-            BitwiseOperation::Xor,
-        );
+        self.inplace_bitwise_xor(rhs);
         self
     }
 }
@@ -345,15 +147,10 @@ impl<'a> BitXor<&'a Arbi> for Arbi {
 /// \\]
 impl<'a> BitXor<&'a Arbi> for &Arbi {
     type Output = Arbi;
-
     fn bitxor(self, rhs: &'a Arbi) -> Self::Output {
-        let mut result = self.clone();
-        Arbi::bitwise_operation_inplace_impl(
-            &mut result,
-            rhs,
-            BitwiseOperation::Xor,
-        );
-        result
+        let mut ret = Arbi::zero();
+        ret.assign_bitwise_xor(self, rhs);
+        ret
     }
 }
 
@@ -361,11 +158,8 @@ impl<'a> BitXor<&'a Arbi> for &Arbi {
 /// semantics.
 impl BitXorAssign<Arbi> for Arbi {
     fn bitxor_assign(&mut self, mut rhs: Self) {
-        Arbi::bitwise_operation_inplace_impl_mut(
-            self,
-            &mut rhs,
-            BitwiseOperation::Xor,
-        );
+        self.swap_if_smaller_capacity(&mut rhs);
+        self.inplace_bitwise_xor(&rhs);
     }
 }
 
@@ -373,7 +167,7 @@ impl BitXorAssign<Arbi> for Arbi {
 /// semantics.
 impl<'a> BitXorAssign<&'a Arbi> for Arbi {
     fn bitxor_assign(&mut self, rhs: &'a Self) {
-        Arbi::bitwise_operation_inplace_impl(self, rhs, BitwiseOperation::Xor);
+        self.inplace_bitwise_xor(rhs);
     }
 }
 
@@ -400,10 +194,9 @@ impl<'a> BitXorAssign<&'a Arbi> for Arbi {
 /// \\( O(n) \\)
 impl Not for Arbi {
     type Output = Arbi;
-
     fn not(mut self) -> Self::Output {
+        self += 1;
         self.negate_mut();
-        self -= 1;
         self
     }
 }
@@ -411,7 +204,7 @@ impl Not for Arbi {
 /// Unary complement operator. Return a new integer representing the ones'
 /// complement of this integer.
 ///
-/// Currently, this involves cloning the referenced `Arbi` integer.
+/// This involves cloning the referenced `Arbi` integer.
 ///
 /// # Example
 /// ```
@@ -432,12 +225,8 @@ impl Not for Arbi {
 /// \\( O(n) \\)
 impl Not for &Arbi {
     type Output = Arbi;
-
     fn not(self) -> Self::Output {
-        let mut ret = self.clone();
-        ret.negate_mut();
-        ret -= 1;
-        ret
+        !(self.clone())
     }
 }
 
