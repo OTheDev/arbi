@@ -195,8 +195,8 @@ impl<'a> BitXorAssign<&'a Arbi> for Arbi {
 impl Not for Arbi {
     type Output = Arbi;
     fn not(mut self) -> Self::Output {
+        self += 1;
         self.negate_mut();
-        self -= 1;
         self
     }
 }
@@ -204,7 +204,7 @@ impl Not for Arbi {
 /// Unary complement operator. Return a new integer representing the ones'
 /// complement of this integer.
 ///
-/// Currently, this involves cloning the referenced `Arbi` integer.
+/// This involves cloning the referenced `Arbi` integer.
 ///
 /// # Example
 /// ```
@@ -226,10 +226,7 @@ impl Not for Arbi {
 impl Not for &Arbi {
     type Output = Arbi;
     fn not(self) -> Self::Output {
-        let mut ret = self.clone();
-        ret.negate_mut();
-        ret -= 1;
-        ret
+        !(self.clone())
     }
 }
 
