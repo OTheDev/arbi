@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
@@ -80,6 +80,7 @@ pub(crate) fn ldexp(x: f64, exp: i32) -> f64 {
 pub(crate) mod float {
     pub(crate) const ZERO: f64 = 0.0;
     pub(crate) const MAX_INT: f64 = 9007199254740992.0; // 2^53
+    pub(crate) const DBL_MAX_INT: u64 = 1 << 53;
     pub(crate) const MAX_INT_NEG: f64 = -9007199254740992.0;
     pub(crate) const LOWEST_DOUBLE: f64 = f64::MIN;
     pub(crate) const MAX_DOUBLE: f64 = f64::MAX;

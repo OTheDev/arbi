@@ -377,6 +377,7 @@ mod tests {
     use super::BitwiseOp;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
     use crate::{Arbi, DDigit, Digit};
+    use alloc::{format, vec};
     use core::ops::RangeInclusive;
 
     struct BitwiseTestCase {

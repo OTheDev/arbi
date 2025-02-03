@@ -33,7 +33,6 @@ mod division;
 pub mod docs;
 mod exponentiation;
 mod fits;
-mod floor;
 mod fmt;
 mod from_double;
 mod from_integral;
@@ -95,8 +94,6 @@ type SDDigit = i64;
 type QDigit = u128;
 #[allow(dead_code)]
 type SQDigit = i128;
-
-const DBL_MAX_INT: u64 = 0x20000000000000; // 2 ** 53
 
 /// Arbitrary Precision Integer type.
 ///

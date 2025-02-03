@@ -368,6 +368,7 @@ mod tests {
     #[cfg(test)]
     mod random {
         use super::*;
+        use alloc::vec;
 
         macro_rules! test_bit_ops_for_type {
             ($rng:expr, $die:expr) => {

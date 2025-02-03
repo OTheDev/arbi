@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
@@ -159,6 +159,7 @@ impl Base {
     ///
     /// let b36 = Base::new(36).unwrap();
     /// ```
+    #[inline]
     pub fn new(value: u8) -> Result<Self, BaseError> {
         value.try_into()
     }
@@ -172,6 +173,7 @@ impl Base {
     /// let b10 = Base::new(10).unwrap();
     /// assert_eq!(b10.value(), 10);
     /// ```
+    #[inline]
     pub fn value(self) -> u8 {
         self.0
     }
