@@ -214,6 +214,7 @@ mod test_arithmetic_rshift {
     use crate::{
         Arbi, Assign, BitCount, DDigit, Digit, SDDigit, SDigit, SQDigit,
     };
+    use alloc::vec;
 
     #[test]
     fn test_mark_a() {

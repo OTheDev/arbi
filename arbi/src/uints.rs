@@ -1,7 +1,9 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
+
+use crate::BitCount;
 
 #[allow(dead_code)]
 pub(crate) trait UnsignedUtilities: Sized {
@@ -140,6 +142,15 @@ impl UnsignedUtilities for $t {
 impl_unsigned_utilities!(u8, u16, u32, u64, u128, usize);
 
 pub(crate) const fn div_ceil_usize(x: usize, y: usize) -> usize {
+    if x == 0 {
+        0
+    } else {
+        1 + (x - 1) / y
+    }
+}
+
+#[allow(dead_code)]
+pub(crate) const fn div_ceil_bitcount(x: BitCount, y: BitCount) -> BitCount {
     if x == 0 {
         0
     } else {

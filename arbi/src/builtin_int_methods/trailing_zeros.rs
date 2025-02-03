@@ -33,6 +33,7 @@ mod tests {
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
     use crate::Arbi;
     use crate::{BitCount, DDigit, Digit};
+    use alloc::vec;
 
     macro_rules! assert_trailing_zeros {
         ($value:expr) => {

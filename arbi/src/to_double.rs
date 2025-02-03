@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
@@ -61,7 +61,7 @@ mod tests {
     use super::*;
     use crate::util::test::float::*;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{DDigit, QDigit, SDDigit, SQDigit, DBL_MAX_INT};
+    use crate::{DDigit, QDigit, SDDigit, SQDigit};
 
     #[test]
     fn smoke() {

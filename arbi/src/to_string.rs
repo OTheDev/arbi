@@ -1,88 +1,225 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
 use crate::from_string::configs::BASE_MBS;
 use crate::Base;
-use crate::BitCount;
-use crate::{Arbi, Digit, DBL_MAX_INT};
+use crate::{Arbi, Digit};
 use alloc::string::String;
+use alloc::vec::Vec;
 use core::convert::TryInto;
 
-/// `LOG_BASE_2[base]` gives \\( \log_{base}2 \\) (with some rounding up).
-pub(crate) const LOG_BASE_2: [f64; 37] = [
-    0.0, 0.0, 1.0, 0.631, 0.5, 0.431, 0.387, 0.357, 0.334, 0.316, 0.302, 0.290,
-    0.279, 0.271, 0.263, 0.256, 0.25, 0.245, 0.240, 0.236, 0.232, 0.228, 0.225,
-    0.222, 0.219, 0.216, 0.213, 0.211, 0.209, 0.206, 0.204, 0.202, 0.200,
-    0.199, 0.197, 0.195, 0.194,
-];
+const BASE_DIGITS_LOWER_BYTES: &[u8; 36] =
+    b"0123456789abcdefghijklmnopqrstuvwxyz";
+const BASE_DIGITS_UPPER_BYTES: &[u8; 36] =
+    b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 impl Arbi {
-    //  In the documentation block above `base_length()`, it is shown how to
-    //  calculate the minimum number of base-b digits, \\( n \\), required to
-    //  represent any integer with \\( m \\) base-c digits.
-    //
-    //  We can find an upper bound another way as well.
-    //
-    //  Let \\( e \\) denote the largest exponent such that \\( c^{e} \\) fits
-    //  in one base-b digit. By construction, any e-digit base-c number will fit
-    //  in a base-b digit, but not every \\( (e + 1) \\) digit base-c number
-    //  will. By dividing the number of base-c digits in an integer, \\( m \\),
-    //  by \\( e \\), and rounding up the result of the division to the nearest
-    //  integer, we obtain an upperbound on the number of base-b digits, \\( n
-    //  \\), needed to represent any m-digit base-c integer.
+    fn to_string_base_pow2(&self, base: Base, lowercase: bool) -> String {
+        debug_assert!(base.value().is_power_of_two());
 
-    /// Return an estimate of the number of base-`base` digits required to
-    /// represent this integer.
-    ///
-    /// Given an n-digit integer in base b, the largest integer representable is
-    /// \\[
-    ///     b^{n} - 1
-    /// \\]
-    ///
-    /// The minimum number of base b digits, n, required to represent any
-    /// m-digit base c integer is such that:
-    /// \\[
-    /// \begin{align}
-    ///     b^{n} - 1                 & \geq c^{m} - 1                      \\\\
-    ///     b^{n}                     & \geq c^{m}                          \\\\
-    ///     \frac{b^{n}}{c^{m}}       & \geq 1                              \\\\
-    ///     \log(b^{n}) - \log(c^{m}) & \geq 0                              \\\\
-    ///     n                         & \geq m \cdot \frac{\log(c)}{\log(b)}
-    /// \end{align}
-    /// \\]
-    ///
-    /// Use
-    /// \\[
-    ///     n = \left\lceil m \cdot \frac{\log(c)}{\log(b)} \right\rceil
-    /// \\]
-    ///
-    /// For example, the minimum number of base 10 digits required to represent
-    /// any m-digit base 2 integer is:
-    /// \\[
-    ///     n = \left\lceil m * \log_{10}(2) \right\rceil
-    /// \\]
-    /// If `x` has bit length less than or equal to 2 ** 53, return an estimate
-    /// of the number of base-`base` digits needed to represent the absolute
-    /// value of this integer. Otherwise, return the exact number of base-`base`
-    /// digits.
-    fn base_length(x: &Self, base: usize) -> BitCount {
-        // TODO: analyze
-        if x == 0 {
-            return 1;
-        }
-        let bitlen: BitCount = x.size_bits();
-        if bitlen as BitCount > DBL_MAX_INT as BitCount {
-            // TODO: find some quick upperbound.
-            // let ilog2_base = base.ilog2();
-            // (x.size_bits() - 1) / (ilog2_base as BitCount) + (1 as BitCount)
-            x.size_base_ref(base as u32)
+        let base_digits = if lowercase {
+            BASE_DIGITS_LOWER_BYTES
         } else {
-            // This is much more efficient than using size_base()
-            crate::floor::floor(bitlen as f64 * LOG_BASE_2[base] + 1.0)
-                as BitCount
+            BASE_DIGITS_UPPER_BYTES
+        };
+
+        if self.is_zero() {
+            return "0".into();
         }
+
+        let capacity = self
+            .size_base_ref(base.value() as u32)
+            .try_into()
+            .unwrap_or(usize::MAX)
+            .saturating_add(usize::from(self.is_negative()));
+        let mut bytes: Vec<u8> = Vec::new();
+        bytes.reserve_exact(capacity);
+
+        #[cfg(debug_assertions)]
+        let initial_capacity = bytes.capacity();
+
+        let base_digit_bits = base.value().trailing_zeros();
+        let base_digit_mask = ((1 as Digit) << base_digit_bits) - 1;
+
+        if matches!(base.value(), 2 | 4 | 16) {
+            debug_assert!(Digit::BITS % base.value().trailing_zeros() == 0);
+            self.process_digits_base_pow2_aligned(
+                &mut bytes,
+                base_digit_bits,
+                base_digit_mask,
+                base_digits,
+                true,
+            );
+        } else {
+            self.process_digits_base_pow2_generic(
+                &mut bytes,
+                base_digit_bits,
+                base_digit_mask,
+                base_digits,
+                capacity,
+            );
+        }
+
+        #[cfg(debug_assertions)]
+        {
+            // Check that no reallocation occurred
+            debug_assert_eq!(bytes.capacity(), initial_capacity);
+            // Check that len is equal to requested capacity
+            debug_assert_eq!(bytes.len(), capacity);
+        }
+
+        String::from_utf8(bytes).unwrap()
+    }
+
+    fn process_digits_base_pow2_aligned(
+        &self,
+        bytes: &mut Vec<u8>,
+        base_digit_bits: u32,
+        base_digit_mask: Digit,
+        base_digits: &[u8; 36],
+        start_from_msd: bool,
+    ) {
+        let batches_per_digit = Digit::BITS / base_digit_bits;
+
+        match start_from_msd {
+            true => {
+                // This avoids the need to reverse `bytes` at the end and
+                // benchmarks show that this is also a little more efficient.
+                if self.is_negative() {
+                    bytes.push(b'-');
+                }
+
+                /* Handle most significant digit specially */
+                let msd_idx = self.size() - 1;
+                let msd = self.vec[msd_idx];
+                let msd_bits = Digit::BITS - msd.leading_zeros();
+                let msd_bits_mod_base_bits = msd_bits % base_digit_bits;
+
+                // Partial chunk
+                if msd_bits_mod_base_bits != 0 {
+                    let shift = base_digit_bits - msd_bits_mod_base_bits;
+                    let value = (msd >> (msd_bits - msd_bits_mod_base_bits))
+                        << shift
+                        >> shift;
+                    bytes.push(base_digits[value as usize]);
+                }
+
+                // Full chunks
+                let mut shift = msd_bits - msd_bits_mod_base_bits;
+                debug_assert!(shift % base_digit_bits == 0);
+                while shift != 0 {
+                    shift -= base_digit_bits;
+                    bytes.push(
+                        base_digits
+                            [((msd >> shift) & base_digit_mask) as usize],
+                    );
+                }
+
+                /* Handle remaining digits (all full chunks) */
+                let first_shift = (batches_per_digit - 1) * base_digit_bits;
+                for &digit in self.vec[..msd_idx].iter().rev() {
+                    bytes.push(
+                        base_digits[((digit >> first_shift) & base_digit_mask)
+                            as usize],
+                    );
+
+                    let mut shift = first_shift;
+                    debug_assert!(shift % base_digit_bits == 0);
+                    while shift != 0 {
+                        shift -= base_digit_bits;
+                        bytes.push(
+                            base_digits
+                                [((digit >> shift) & base_digit_mask) as usize],
+                        );
+                    }
+                }
+            }
+            false => {
+                let mut j = 0;
+                let last_idx = self.size() - 1;
+                while j < last_idx {
+                    let mut digit = self.vec[j];
+                    for _ in 0..batches_per_digit {
+                        bytes.push(
+                            base_digits[(digit & base_digit_mask) as usize],
+                        );
+                        digit >>= base_digit_bits;
+                    }
+                    j += 1;
+                }
+
+                // Handle last digit specially to avoid pushing leading zeros
+                let mut digit = self.vec[last_idx];
+                while digit != 0 {
+                    bytes.push(base_digits[(digit & base_digit_mask) as usize]);
+                    digit >>= base_digit_bits;
+                }
+
+                if self.is_negative() {
+                    bytes.push(b'-');
+                }
+
+                bytes.reverse();
+            }
+        }
+    }
+
+    fn process_digits_base_pow2_generic(
+        &self,
+        bytes: &mut Vec<u8>,
+        base_digit_bits: u32,
+        base_digit_mask: Digit,
+        base_digits: &[u8; 36],
+        num_bytes: usize,
+    ) {
+        // TODO: vec![0; capacity] might be better rather than allocating
+        // capacity, then resizing, like we are doing now.
+        bytes.resize(num_bytes, 0);
+
+        if self.is_negative() {
+            bytes[0] = b'-';
+        }
+
+        /* Process base_digit_bits batches */
+        let mut output_idx = num_bytes - 1;
+        let mut j = 0;
+        let mut batch_stop_idx = 0;
+        let last_idx = self.size() - 1;
+        while j < last_idx {
+            let mut cur = self.vec[j] >> batch_stop_idx;
+            batch_stop_idx += base_digit_bits;
+
+            if Digit::BITS <= batch_stop_idx {
+                // For < case, batch crosses digit boundaries (takes bits from
+                // both the current and next digit).
+                j += 1;
+                batch_stop_idx -= Digit::BITS;
+
+                // Technically, this is not needed for the = case, but we do
+                // need to update counters, as above.
+                cur |= self.vec[j] << (base_digit_bits - batch_stop_idx);
+            }
+
+            bytes[output_idx] = base_digits[(cur & base_digit_mask) as usize];
+            output_idx = output_idx.wrapping_sub(1);
+        }
+
+        // Handle last digit
+        let last_digit = self.vec[last_idx];
+        let msb = Digit::BITS - last_digit.leading_zeros();
+        while batch_stop_idx < msb {
+            let cur = (last_digit >> batch_stop_idx) & base_digit_mask;
+            bytes[output_idx] = base_digits[cur as usize];
+            output_idx = output_idx.wrapping_sub(1);
+            batch_stop_idx += base_digit_bits;
+        }
+
+        debug_assert_eq!(
+            output_idx,
+            if self.is_negative() { 0 } else { usize::MAX }
+        );
     }
 
     pub(crate) fn to_string_base_(
@@ -93,45 +230,36 @@ impl Arbi {
         let base: usize = base.value() as usize;
         assert!((2..=36).contains(&base));
 
-        const BASE_DIGITS_LOWER: &str = "0123456789abcdefghijklmnopqrstuvwxyz";
-        const BASE_DIGITS_UPPER: &str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
         let base_digits = if lowercase {
-            BASE_DIGITS_LOWER
+            BASE_DIGITS_LOWER_BYTES
         } else {
-            BASE_DIGITS_UPPER
+            BASE_DIGITS_UPPER_BYTES
         };
 
         if self.size() == 0 {
             return "0".into();
         }
 
-        let mut result = String::new();
-        let true_estimate: BitCount =
-            Self::base_length(self, base) + BitCount::from(self.neg);
-        let estimate: usize = if true_estimate > usize::MAX as BitCount {
-            let exact =
-                self.size_base_ref(base as u32) + BitCount::from(self.neg);
-            assert!(exact > isize::MAX as BitCount);
-            panic!(
-                "Base-{} digit estimation exceeds isize::MAX bytes. Exact = {}",
-                base, exact
-            );
+        /* Allocate memory for the result. This will be exactly the number of
+        bytes needed or higher by one. */
+        let mut bytes = Vec::new();
+        let capacity: usize = if base.is_power_of_two() {
+            // Exact number of bytes needed.
+            self.size_base_ref(base as u32)
         } else {
-            true_estimate.try_into().unwrap()
-        };
-        result.reserve(estimate);
-        // let exact_chars =
-        //     self.size_base(base as u32) + if self.neg { 1 } else { 0 };
-        // let exact_chars_usize = if exact_chars > usize::MAX as BitCount {
-        //     panic!(
-        //         "More than usize::MAX bytes needed. Arbi = {}, base = {}",
-        //         self, base
-        //     );
-        // } else {
-        //     exact_chars.try_into().unwrap()
-        // };
-        // result.reserve(exact_chars_usize);
+            // Exact number of bytes needed or one more.
+            Self::size_base_with_size_bits_maybe_over_by_one(
+                base as u32,
+                self.size_bits(),
+            )
+        }
+        .try_into()
+        .unwrap_or(usize::MAX)
+        .saturating_add(usize::from(self.is_negative()));
+        bytes.reserve_exact(capacity);
+
+        #[cfg(debug_assertions)]
+        let initial_capacity = bytes.capacity();
 
         let basembs = BASE_MBS[base];
         let max_batch_size = basembs.mbs;
@@ -148,17 +276,30 @@ impl Arbi {
                 let current_digit: Digit = remainder % base as Digit;
                 remainder /= base as Digit;
 
-                result.push(
-                    base_digits.chars().nth(current_digit as usize).unwrap(),
-                );
+                bytes.push(base_digits[current_digit as usize]);
             }
         }
 
-        if self.neg {
-            result.push('-');
+        if self.is_negative() {
+            bytes.push(b'-');
         }
 
-        result.chars().rev().collect::<String>()
+        #[cfg(debug_assertions)]
+        {
+            // Check that no reallocation occurred
+            debug_assert_eq!(bytes.capacity(), initial_capacity);
+            // Check that the requested capacity was exact or higher by one
+            debug_assert!(
+                bytes.len() == capacity || bytes.len() == capacity - 1,
+                "Capacity estimate {} should be exact or higher by one than \
+                 the true value {}",
+                capacity,
+                bytes.len()
+            );
+        }
+
+        bytes.reverse();
+        String::from_utf8(bytes).unwrap()
     }
 
     /// Return a [`String`] containing the base-`base` representation of the
@@ -174,8 +315,14 @@ impl Arbi {
     /// assert_eq!(Arbi::from(123456789).to_string_base(HEX), "75bcd15");
     /// assert_eq!(Arbi::from(-123456789).to_string_base(HEX), "-75bcd15");
     /// ```
+    #[inline]
     pub fn to_string_base(&self, base: Base) -> String {
-        self.to_string_base_(base, true)
+        let lowercase = true;
+        if base.value().is_power_of_two() {
+            self.to_string_base_pow2(base, lowercase)
+        } else {
+            self.to_string_base_(base, lowercase)
+        }
     }
 
     /// Equivalent to [`Arbi::to_string_base()`], but panics if the base is
@@ -189,16 +336,17 @@ impl Arbi {
     /// let s = a.to_string_radix(10);
     /// assert_eq!(s, "123456789");
     /// ```
+    #[inline]
     pub fn to_string_radix(&self, radix: u32) -> String {
         let base: Base = match radix.try_into() {
             Err(_) => panic!("`radix` is not an integer in [2, 36]"),
             Ok(b) => b,
         };
-
         self.to_string_base(base)
     }
 }
 
+/* TODO: clean up */
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
@@ -358,6 +506,87 @@ pub(crate) mod tests {
         // Test valid bases
         for base in 2..=36 {
             test_to_string_base(base);
+        }
+    }
+
+    fn create_test_number(bits: usize) -> Arbi {
+        let mut num = Arbi::from(1);
+        for _ in 0..bits - 1 {
+            num <<= 1;
+            num += 1;
+        }
+        num
+    }
+
+    #[test]
+    fn pow2_base_tests() {
+        use crate::util::test::random_arbi;
+
+        let pow2_bases = [2, 4, 8, 16, 32];
+        let bit_sizes = [
+            1, 2, 3, 4, 30, 31, 32, 33, 34, 62, 63, 64, 65, 66, 1024, 4096,
+        ];
+
+        for &bits in &bit_sizes {
+            for _ in 0..1000 {
+                let random_num = random_arbi(bits);
+                let neg_random = -random_num.clone();
+
+                for &base in &pow2_bases {
+                    let base = Base::try_from(base).unwrap();
+
+                    // Positive
+                    let pow2_result =
+                        random_num.to_string_base_pow2(base, true);
+                    let general_result = random_num.to_string_base_(base, true);
+                    assert_eq!(pow2_result, general_result,);
+
+                    // Negative
+                    let neg_pow2_result =
+                        neg_random.to_string_base_pow2(base, true);
+                    let neg_general_result =
+                        neg_random.to_string_base_(base, true);
+                    assert_eq!(neg_pow2_result, neg_general_result,);
+                }
+            }
+
+            let num = create_test_number(bits);
+            let neg_num = -num.clone();
+            for &base in &pow2_bases {
+                let base = Base::try_from(base).unwrap();
+
+                // Positive
+                let pow2_result = num.to_string_base_pow2(base, true);
+                let general_result = num.to_string_base_(base, true);
+                assert_eq!(pow2_result, general_result,);
+
+                // Negative
+                let neg_pow2_result = neg_num.to_string_base_pow2(base, true);
+                let neg_general_result = neg_num.to_string_base_(base, true);
+                assert_eq!(neg_pow2_result, neg_general_result,);
+            }
+        }
+
+        let cases = [
+            Arbi::zero(),
+            Arbi::from(1),
+            Arbi::from(-1),
+            create_test_number(1),
+            create_test_number(63),
+            create_test_number(64),
+            create_test_number(65),
+            create_test_number(127),
+            create_test_number(128),
+            create_test_number(129),
+        ];
+
+        for num in cases.iter() {
+            for &base in &pow2_bases {
+                let base = Base::try_from(base).unwrap();
+                let pow2_result = num.to_string_base_pow2(base, true);
+                let general_result = num.to_string_base_(base, true);
+                assert_eq!(pow2_result, general_result,);
+            }
         }
     }
 }
