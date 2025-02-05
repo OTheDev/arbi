@@ -1,9 +1,8 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-use crate::uints::UnsignedUtilities;
 use crate::Base;
 use crate::{Arbi, Digit};
 use core::fmt;
@@ -11,25 +10,32 @@ use core::str::FromStr;
 
 /// Errors that occur when parsing a string into an [`Arbi`].
 ///
+/// Valid strings may optionally consist of a single leading + or - sign (no
+/// sign suggests nonnegative), followed by a mandatory nonempty string of
+/// base-`base` digits, where `base` must represent an integer in
+/// \\( [2, 36] \\).
+///
+/// The requirements are designed to be consistent with the behavior of
+/// `from_str_radix()` for primitive integer types. For example, see
+/// [`i32::from_str_radix()`].
+///
 /// # Examples
 /// ```
 /// use arbi::{Arbi, ParseError};
-///
 /// let a = Arbi::from_str_radix("-123456789", 10).unwrap();
 /// assert_eq!(a, -123456789);
-///
 /// let b = Arbi::from_str_radix("-12345a6789", 10);
 /// assert!(matches!(b, Err(ParseError::InvalidDigit)));
-///
 /// let c = Arbi::from_str_radix("  -   ", 10);
-/// assert!(matches!(c, Err(ParseError::Empty)));
+/// assert!(matches!(c, Err(ParseError::InvalidDigit)));
+/// let d = Arbi::from_str_radix("", 10);
+/// assert!(matches!(d, Err(ParseError::Empty)));
 /// ```
 #[derive(Debug, PartialEq, Eq)]
 pub enum ParseError {
     /// Invalid digit found for the provided base.
     InvalidDigit,
-    /// The provided string is empty (after stripping outer whitespace) or no
-    /// valid digits for the provided base were found.
+    /// The provided string is empty.
     Empty,
 }
 
@@ -40,7 +46,7 @@ impl fmt::Display for ParseError {
                 write!(f, "Invalid digit found for the provided base")
             }
             Self::Empty => {
-                write!(f, "The provided string is empty (after stripping outer whitespace) or no valid digits for the provided base were found")
+                write!(f, "The provided string is empty")
             }
         }
     }
@@ -87,36 +93,6 @@ pub(crate) mod configs {
     use super::{pow, BaseMbs, Digit};
     use crate::DDigit;
 
-    pub(crate) const CHAR_TO_B36_MAP: [u8; 256] = create_char_to_b36_map();
-    pub(crate) const N_DIGITS: usize = 10;
-    pub(crate) const N_LETTERS: usize = 26;
-    pub(crate) const LOWERCASE: [u8; N_LETTERS] = [
-        b'a', b'b', b'c', b'd', b'e', b'f', b'g', b'h', b'i', b'j', b'k', b'l',
-        b'm', b'n', b'o', b'p', b'q', b'r', b's', b't', b'u', b'v', b'w', b'x',
-        b'y', b'z',
-    ];
-    pub(crate) const UPPERCASE: [u8; N_LETTERS] = [
-        b'A', b'B', b'C', b'D', b'E', b'F', b'G', b'H', b'I', b'J', b'K', b'L',
-        b'M', b'N', b'O', b'P', b'Q', b'R', b'S', b'T', b'U', b'V', b'W', b'X',
-        b'Y', b'Z',
-    ];
-
-    const fn create_char_to_b36_map() -> [u8; 256] {
-        let mut map = [0xFF; 256];
-        let mut i = 0;
-        while i < N_DIGITS {
-            map[(b'0' + i as u8) as usize] = i as u8;
-            i += 1;
-        }
-        let mut j: usize = 0;
-        while j < N_LETTERS {
-            map[LOWERCASE[j] as usize] = (10 + j) as u8;
-            map[UPPERCASE[j] as usize] = (10 + j) as u8;
-            j += 1;
-        }
-        map
-    }
-
     pub(crate) const BASE_MBS: [BaseMbs; 37] = compute_base_mbs();
 
     // For example, if digit <==> uint32_t (uint64_t), 10^{9} (10^{19}) is the
@@ -147,94 +123,12 @@ pub(crate) mod configs {
 }
 
 impl Arbi {
-    pub(crate) fn from_str_base_(
-        s: &str,
-        base: Base,
-    ) -> Result<Self, ParseError> {
-        let base = base.value() as u32;
-
-        // Allow leading and trailing whitespace
-        let trimmed = s.trim();
-        if trimmed.is_empty() {
-            return Err(ParseError::Empty);
-        }
-
-        let mut x = Arbi::new();
-
-        // Allow plus/minus sign to precede first base-`base` digit
-        let mut chars = trimmed.chars();
-        if let Some(first_char) = chars.next() {
-            match first_char {
-                '-' => x.neg = true,
-                '+' => x.neg = false,
-                _ => chars = trimmed.chars(),
-            }
-        }
-
-        let start_digit =
-            chars.clone().take_while(|ch| ch.is_ascii_alphanumeric());
-        let n_base = start_digit.clone().count();
-
-        if n_base == 0 {
-            return Err(ParseError::Empty);
-        }
-
-        let base_idx = base as usize;
-        let BaseMbs { mbs, base_pow_mbs } = configs::BASE_MBS[base_idx];
-
-        x.vec.reserve(usize::div_ceil_(n_base, mbs));
-
-        let mut dec_iter = start_digit.clone();
-        let rem_batch_size = n_base % mbs;
-
-        // Initialize batch value
-        let mut batch = 0;
-        // Convert batch substring to integer value
-        for _ in 0..rem_batch_size {
-            if let Some(ch) = dec_iter.next() {
-                let char_value = configs::CHAR_TO_B36_MAP[ch as usize] as Digit;
-                if char_value == 0xFF || char_value >= base {
-                    return Err(ParseError::InvalidDigit);
-                }
-                batch = char_value + batch * base;
-            }
-        }
-
-        // x is initially zero, so multiplication is zero in imul1add1()
-        if batch != 0 {
-            x.vec.push(batch);
-        }
-
-        for _ in 0..(n_base / mbs) {
-            // Initialize batch value
-            batch = 0;
-            // Convert batch substring to integer value
-            for _ in 0..mbs {
-                if let Some(ch) = dec_iter.next() {
-                    let char_value =
-                        configs::CHAR_TO_B36_MAP[ch as usize] as Digit;
-                    if char_value == 0xFF || char_value >= base {
-                        return Err(ParseError::InvalidDigit);
-                    }
-                    batch = char_value + batch * base;
-                } else {
-                    break;
-                }
-            }
-            Self::imul1add1(&mut x, base_pow_mbs, Some(batch));
-        }
-
-        x.trim();
-        Ok(x)
-    }
-
     /// Equivalent to [`Arbi::from_str_base()`], but panics if the base is
     /// invalid (i.e. not in \\( [2, 36] \\)).
     ///
     /// # Examples
     /// ```
     /// use arbi::{Arbi, Base};
-    ///
     /// let x = Arbi::from_str_radix("987654321", 10).unwrap();
     /// assert_eq!(x, 987654321);
     pub fn from_str_radix(src: &str, radix: u32) -> Result<Self, ParseError> {
@@ -248,120 +142,20 @@ impl Arbi {
 
     /// Construct an integer from a string representing a base-`base` integer.
     ///
-    /// Allows leading whitespace and/or a plus/minus sign before the first
-    /// base-`base` digit. `base` must be an integer in \\( [2, 36] \\).
-    /// Trailing whitespace is ignored.
-    ///
     /// # Examples
     /// ```
     /// use arbi::{base::DEC, Arbi};
-    ///
     /// let x = Arbi::from_str_base("987654321", DEC).unwrap();
     /// assert_eq!(x, 987654321);
     /// ```
     pub fn from_str_base(s: &str, base: Base) -> Result<Self, ParseError> {
-        // let mut ret = Arbi::zero();
-        // match ret.from_str_base_inplace(s, base) {
-        //     Ok(_) => Ok(ret),
-        //     Err(e) => Err(e),
-        // }
-
-        // TODO: maybe just use inplace?
-        Self::from_str_base_(s, base)
-    }
-
-    #[allow(clippy::wrong_self_convention)]
-    pub(crate) fn from_str_base_inplace(
-        &mut self,
-        s: &str,
-        base: Base,
-    ) -> Result<(), ParseError> {
-        let base = base.value() as u32;
-
-        let trimmed = s.trim();
-        if trimmed.is_empty() {
-            return Err(ParseError::Empty);
-        }
-
-        let mut chars = trimmed.chars();
-        let mut is_negative = false;
-
-        if let Some(first_char) = chars.next() {
-            match first_char {
-                '-' => is_negative = true,
-                '+' => (),
-                _ => chars = trimmed.chars(),
-            }
-        }
-
-        // First Pass: Validation
-        let mut n_base = 0;
-        for ch in chars.clone() {
-            let char_value = configs::CHAR_TO_B36_MAP[ch as usize];
-            if char_value == 0xFF || char_value as u32 >= base {
-                return Err(ParseError::InvalidDigit);
-            }
-            n_base += 1;
-        }
-
-        if n_base == 0 {
-            return Err(ParseError::Empty);
-        }
-
-        let start_digit = chars.clone().take_while(|&ch| {
-            let char_value = configs::CHAR_TO_B36_MAP[ch as usize];
-            !(char_value == 0xFF || char_value as u32 >= base)
-        });
-
-        // Second Pass: Modification
-        let base_idx = base as usize;
-        let BaseMbs { mbs, base_pow_mbs } = configs::BASE_MBS[base_idx];
-        let estimate = usize::div_ceil_(n_base, mbs);
-
-        if self.vec.capacity() < estimate {
-            self.vec.reserve(estimate - self.vec.capacity());
-        }
-        self.vec.clear();
-        self.neg = is_negative;
-
-        let mut dec_iter = start_digit.clone();
-        let rem_batch_size = n_base % mbs;
-
-        // Initialize batch value
-        let mut batch = 0;
-        // Convert batch substring to integer value
-        for _ in 0..rem_batch_size {
-            if let Some(ch) = dec_iter.next() {
-                let char_value = configs::CHAR_TO_B36_MAP[ch as usize] as Digit;
-                batch = char_value + batch * base;
-            }
-        }
-
-        // x is initially zero, so multiplication is zero in imul1add1()
-        if batch != 0 {
-            self.vec.push(batch);
-        }
-
-        for _ in 0..(n_base / mbs) {
-            // Initialize batch value
-            batch = 0;
-            // Convert batch substring to integer value
-            for _ in 0..mbs {
-                if let Some(ch) = dec_iter.next() {
-                    let char_value =
-                        configs::CHAR_TO_B36_MAP[ch as usize] as Digit;
-                    batch = char_value + batch * base;
-                } else {
-                    break;
-                }
-            }
-            Self::imul1add1(self, base_pow_mbs, Some(batch));
-        }
-
-        self.trim();
-        Ok(())
+        let mut res = Self::new();
+        res.assign_str_base(s, base)?;
+        Ok(res)
     }
 }
+
+/* TODO: clean up */
 
 #[cfg(test)]
 mod tests {
@@ -380,21 +174,19 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_error_empty() {
+    fn test_parse_error() {
         assert!(matches!(
             Arbi::from_str_base("", 10.try_into().unwrap()),
             Err(ParseError::Empty)
         ));
-
         assert!(matches!(
             Arbi::from_str_base("        ", 10.try_into().unwrap()),
-            Err(ParseError::Empty)
+            Err(ParseError::InvalidDigit)
         ));
-
         for s in &["  -", "      -"] {
             assert!(matches!(
                 Arbi::from_str_base(s, 10.try_into().unwrap()),
-                Err(ParseError::Empty)
+                Err(ParseError::InvalidDigit)
             ));
         }
     }
@@ -413,15 +205,11 @@ mod tests {
             ("0", 0),
             ("-0", 0),
             ("+0", 0),
-            ("     0 ", 0),
-            ("      -0", 0),
             ("987", 987),
             ("-987", -987),
             ("+987", 987),
-            ("  -987", -987),
             ("+00100", 100),
             ("+000000", 0),
-            ("    00009876", 9876),
             ("18446744073709551615", 18446744073709551615_i128),
         ] {
             let arbi = Arbi::from_str_base(s, 10.try_into().unwrap()).unwrap();
@@ -530,7 +318,10 @@ mod tests {
             "12A456789".parse::<Arbi>(),
             Err(ParseError::InvalidDigit)
         ));
-        assert!(matches!("   -".parse::<Arbi>(), Err(ParseError::Empty)));
+        assert!(matches!(
+            "   -".parse::<Arbi>(),
+            Err(ParseError::InvalidDigit)
+        ));
 
         let a = "\
             123456789012345678901234567890123456789043909809801329009092930\
@@ -549,16 +340,14 @@ mod tests {
 impl FromStr for Arbi {
     type Err = ParseError;
 
-    /// Uses [`Arbi::from_str_radix()`] with base 10.
+    /// Equivalent to [`Arbi::from_str_radix()`] with base 10.
     ///
     /// # Examples
     /// ```
     /// use arbi::Arbi;
     /// use core::str::FromStr;
-    ///
     /// let a = Arbi::from_str("-987654321").unwrap();
     /// assert_eq!(a, -987654321);
-    ///
     /// let b = "123456789".parse::<Arbi>().unwrap();
     /// assert_eq!(b, 123456789);
     /// ```
