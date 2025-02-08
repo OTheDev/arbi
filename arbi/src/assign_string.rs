@@ -4,9 +4,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
 use crate::from_string::{configs::BASE_MBS, BaseMbs, ParseError};
-use crate::uints::UnsignedUtilities;
-use crate::Base;
-use crate::{Arbi, Digit};
+use crate::{Arbi, Base, Digit};
 
 impl Arbi {
     /// Assign the integer value the provided string represents to this `Arbi`
@@ -137,20 +135,85 @@ impl Arbi {
             return Ok(());
         }
 
-        // Get configuration for this base
-        let base_val = base.value() as u32;
-        let BaseMbs { mbs, base_pow_mbs } = BASE_MBS[base_val as usize];
+        let base_value = base.value() as u32;
 
-        // Reserve estimated capacity
-        let estimate = usize::div_ceil_(base_digits.len(), mbs);
-        self.vec
-            .reserve(estimate.saturating_sub(self.vec.capacity()));
+        let capacity = Self::size_with_size_base_maybe_over_by_one(
+            base_value,
+            base_digits.len(),
+        );
         self.vec.clear();
-        self.neg = has_minus_sign;
+        self.vec.reserve(capacity);
 
         #[cfg(debug_assertions)]
         let initial_capacity = self.vec.capacity();
 
+        self.neg = has_minus_sign;
+
+        if base_value.is_power_of_two() {
+            self.assign_str_radix_algo_pow2(base_digits, base_value)?
+        } else {
+            self.assign_str_radix_algo_generic(base_digits, base_value)?
+        }
+
+        #[cfg(debug_assertions)]
+        {
+            debug_assert_eq!(self.vec.capacity(), initial_capacity);
+            debug_assert!(
+                self.vec.len() == capacity || self.vec.len() == capacity - 1
+            );
+        }
+
+        Ok(())
+    }
+
+    fn assign_str_radix_algo_pow2(
+        &mut self,
+        base_digits: &[u8],
+        base: u32,
+    ) -> Result<(), ParseError> {
+        debug_assert!(!base_digits.is_empty());
+        debug_assert!((2..=36).contains(&base) && base.is_power_of_two());
+
+        // Number of bits in a base-`base` digit.
+        let bits_in_base_digit: u32 = base.trailing_zeros();
+        let mut shift: u32 = 0;
+        let mut digit: Digit = 0;
+        for &c in base_digits.iter().rev() {
+            let base_digit: Digit = match (c as char).to_digit(base) {
+                Some(base_digit) => base_digit as Digit,
+                None => return Err(ParseError::InvalidDigit),
+            };
+            digit |= base_digit << shift;
+            shift += bits_in_base_digit;
+            if Digit::BITS <= shift {
+                self.vec.push(digit);
+                shift -= Digit::BITS;
+                /*
+                    On Digit::BITS == shift, digit is simply reset to 0.
+                    On Digit::BITS < shift, digit will be set to the remaining
+                    bits in the current base digit that could not fit in the
+                    just pushed Arbi::BASE-digit, so no information is lost.
+                */
+                digit = base_digit >> (bits_in_base_digit - shift);
+            }
+        }
+        if digit != 0 {
+            self.vec.push(digit);
+        }
+
+        Ok(())
+    }
+
+    /* Generic Algorithm (works for all valid bases) */
+    fn assign_str_radix_algo_generic(
+        &mut self,
+        base_digits: &[u8],
+        base: u32,
+    ) -> Result<(), ParseError> {
+        debug_assert!(!base_digits.is_empty());
+        debug_assert!((2..=36).contains(&base));
+
+        let BaseMbs { mbs, base_pow_mbs } = BASE_MBS[base as usize];
         let n_base = base_digits.len();
         let rem_batch_size = n_base % mbs;
         let mut pos = 0;
@@ -162,9 +225,9 @@ impl Arbi {
             // Convert batch substring to integer value
             let end = pos + rem_batch_size;
             while pos < end {
-                match (base_digits[pos] as char).to_digit(base_val) {
-                    Some(digit) => {
-                        batch = digit + batch * base_val;
+                match (base_digits[pos] as char).to_digit(base) {
+                    Some(base_digit) => {
+                        batch = base_digit + batch * base;
                         pos += 1;
                     }
                     None => return Err(ParseError::InvalidDigit),
@@ -181,9 +244,9 @@ impl Arbi {
             // Convert batch substring to integer value
             let end = pos + mbs;
             while pos < end {
-                match (base_digits[pos] as char).to_digit(base_val) {
-                    Some(digit) => {
-                        batch = digit + batch * base_val;
+                match (base_digits[pos] as char).to_digit(base) {
+                    Some(base_digit) => {
+                        batch = base_digit + batch * base;
                         pos += 1;
                     }
                     None => return Err(ParseError::InvalidDigit),
@@ -192,10 +255,8 @@ impl Arbi {
             Self::imul1add1(self, base_pow_mbs, Some(batch));
         }
 
-        #[cfg(debug_assertions)]
-        debug_assert_eq!(self.vec.capacity(), initial_capacity);
-
         self.trim();
+
         Ok(())
     }
 
