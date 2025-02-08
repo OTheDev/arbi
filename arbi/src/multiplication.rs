@@ -26,7 +26,7 @@ impl Arbi {
     ///
     /// ## Complexity
     /// \\( O(n) \\)
-    #[allow(dead_code)]
+    #[inline(always)]
     pub(crate) fn imul1add1(x: &mut Self, v: Digit, k: Option<Digit>) {
         let mut k: Digit = k.unwrap_or(0);
         for d in &mut x.vec {

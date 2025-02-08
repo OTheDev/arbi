@@ -3,8 +3,8 @@ Copyright 2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-use crate::util::mul::u128_impl;
-use crate::{Arbi, BitCount, Digit};
+use crate::util::mul::{u128_impl, usize_impl};
+use crate::{Arbi, BitCount, DDigit, Digit};
 
 /*
 Given an n-digit integer in base b, the largest integer representable is
@@ -42,7 +42,7 @@ impl Arbi {
     array will be used.
 
     The values in both arrays were precomputed via a Python script using
-    Python `decimal.Decimal` objects.
+    Python `decimal.Decimal` objects. See scripts/size_in_radix.py.
 
     Technically, the results in the former array can be accurately computed
     simply using f64s. However, f64s won't give us accurate values for the
@@ -50,8 +50,8 @@ impl Arbi {
     help of u128s can be used for the former, but higher width integers (like
     Arbi integers) would be needed for the latter.
     */
-    /// ceil( (log(2) / log(base)) * 2^(Digit::BITS) )
-    const SCALED_LOG2_DIV_LOG: [Digit; 37] = [
+    /// ceil( (log(2) / log(base)) * 2^(32) )
+    const SCALED_LOG2_DIV_LOG_32: [u32; 37] = [
         0x00000000, 0x00000000, 0x00000000, 0xa1849cc2, 0x80000000, 0x6e40d1a5,
         0x6308c91c, 0x5b3064ec, 0x55555556, 0x50c24e61, 0x4d104d43, 0x4a002708,
         0x4768ce0e, 0x452e53e4, 0x433cfffc, 0x41867712, 0x40000000, 0x3ea16afe,
@@ -110,6 +110,7 @@ impl Arbi {
     /// # Panic
     /// This function panics if `base` is not in the half-open interval
     /// `(2, 36]`, or if `size_bits` is `0`.
+    #[inline]
     pub(crate) const fn size_base_with_size_bits_maybe_over_by_one(
         base: u32,
         size_bits: BitCount,
@@ -117,7 +118,8 @@ impl Arbi {
         assert!(base > 2 && base <= 36, "base must be in (2, 36]");
         assert!(size_bits != 0);
 
-        let multiplicand = Self::SCALED_LOG2_DIV_LOG[base as usize] as BitCount;
+        let multiplicand =
+            Self::SCALED_LOG2_DIV_LOG_32[base as usize] as BitCount;
 
         if let Some(product) = size_bits.checked_mul(multiplicand) {
             product >> Digit::BITS
@@ -130,6 +132,102 @@ impl Arbi {
             /* Now shift the product right by Digit::BITS */
             debug_assert!(hi >> Digit::BITS == 0);
             (hi << (u128::BITS - Digit::BITS)) | (lo >> Digit::BITS)
+        }
+        .wrapping_add(1)
+    }
+
+    /// ceil( (log(base) / log(2^(32))) * 2^(32) )
+    const SCALED_LOGB_DIV_LOGAB_32: [u32; 37] = [
+        0x00000000, 0x00000000, 0x8000000, 0xcae00d2, 0x10000000, 0x12934f0a,
+        0x14ae00d2, 0x16757680, 0x18000001, 0x195c01a4, 0x1a934f0a, 0x1bacea7d,
+        0x1cae00d2, 0x1d9a8024, 0x1e757680, 0x1f414fdc, 0x20000000, 0x20b31fb8,
+        0x215c01a4, 0x21fbc16c, 0x22934f0a, 0x23237752, 0x23acea7d, 0x24304141,
+        0x24ae00d2, 0x25269e13, 0x259a8024, 0x260a0276, 0x26757680, 0x26dd2524,
+        0x27414fdc, 0x27a231ad, 0x28000000, 0x285aeb4e, 0x28b31fb8, 0x2908c589,
+        0x295c01a4,
+    ];
+
+    #[allow(dead_code)]
+    /// ceil( (log(base) / log(2^(64))) * 2^(64) )
+    const SCALED_LOGB_DIV_LOGAB_64: [u64; 37] = [
+        0x0000000000000000,
+        0x0000000000000000,
+        0x400000000000000,
+        0x6570068e7ef5a1f,
+        0x800000000000000,
+        0x949a784bcd1b8b0,
+        0xa570068e7ef5a1f,
+        0xb3abb3faa02166d,
+        0xc00000000000001,
+        0xcae00d1cfdeb43d,
+        0xd49a784bcd1b8b0,
+        0xdd6753e032ea0f0,
+        0xe570068e7ef5a1f,
+        0xecd4011c8f1197a,
+        0xf3abb3faa02166d,
+        0xfa0a7eda4c112cf,
+        0x1000000000000000,
+        0x10598fdbeb244c5a,
+        0x10ae00d1cfdeb43d,
+        0x10fde0b5c8134052,
+        0x1149a784bcd1b8b0,
+        0x1191bba891f1708c,
+        0x11d6753e032ea0f0,
+        0x121820a01ac754cc,
+        0x12570068e7ef5a1f,
+        0x12934f0979a37160,
+        0x12cd4011c8f1197a,
+        0x1305013ab7ce0e5c,
+        0x133abb3faa02166d,
+        0x136e9291eaa65b4a,
+        0x13a0a7eda4c112cf,
+        0x13d118d66c4d4e56,
+        0x1400000000000000,
+        0x142d75a6eb1dfb0f,
+        0x14598fdbeb244c5a,
+        0x148462c466d3cf1d,
+        0x14ae00d1cfdeb43d,
+    ];
+
+    /// Compute the number of base-`Arbi::BASE` digits needed to represent a
+    /// nonnegative integer with `size_base` `base` digits. The true value or
+    /// one higher than it will be returned.
+    ///
+    /// # Panic
+    /// This function panics if `base` is not in the closed interval `[2, 36]`,
+    /// or if `size_base` is `0`.
+    #[inline]
+    pub(crate) const fn size_with_size_base_maybe_over_by_one(
+        base: u32,
+        size_base: usize,
+    ) -> usize {
+        assert!(base >= 2 && base <= 36, "base must be in [2, 36]");
+        assert!(size_base != 0);
+
+        /*
+           TODO: is this even worth it? The code after this block suffices for
+           this case as well.
+        */
+        if base.is_power_of_two() {
+            // This will always be exact for base 2, 4, and 16, but may be off
+            // by 1 for base 8 or 32.
+            let base_log2 = base.trailing_zeros();
+            let bit_length = size_base as BitCount * base_log2 as BitCount;
+            return crate::uints::div_ceil_bitcount(
+                bit_length,
+                Digit::BITS as BitCount,
+            ) as usize;
+        }
+
+        let multiplicand: Digit = Self::SCALED_LOGB_DIV_LOGAB_32[base as usize];
+
+        if Digit::BITS >= usize::BITS {
+            let product = (size_base as DDigit) * (multiplicand as DDigit);
+            (product >> Digit::BITS) as usize
+        } else {
+            let (hi, lo) = usize_impl::mul2(size_base, multiplicand as usize);
+            debug_assert!(hi >> Digit::BITS == 0);
+            (hi << (usize::BITS - Digit::BITS)) | (lo >> Digit::BITS)
         }
         .wrapping_add(1)
     }
@@ -185,6 +283,82 @@ mod tests_size_base_with_size_bits {
                         num, base, estimated, actual, bits
                     );
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn smoke_size_with_size_base() {
+        use crate::Arbi;
+
+        let (mut rng, _) = get_seedable_rng();
+        let d1 = get_uniform_die(0, Digit::MAX);
+        let d2 = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
+        let d3 = get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+
+        for _ in 0..i16::MAX {
+            let nums = [
+                d1.sample(&mut rng) as u128,
+                d2.sample(&mut rng) as u128,
+                d3.sample(&mut rng) as u128,
+            ];
+
+            for num in nums {
+                if num == 0 {
+                    continue;
+                }
+                let arbi = Arbi::from(num);
+                let actual = arbi.size();
+                for base in 2..=36 {
+                    let sz_base = size_base(num, base) as usize;
+                    let estimated = Arbi::size_with_size_base_maybe_over_by_one(
+                        base, sz_base,
+                    );
+                    assert!(
+                        estimated == actual || estimated == actual + 1,
+                        "arbi = {}, estimate = {}, actual = {}, base = {}",
+                        arbi,
+                        estimated,
+                        actual,
+                        base
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "rand")]
+    fn smoke_size_with_size_base_large() {
+        use crate::{Arbi, RandomArbi};
+
+        let (mut rng, _) = get_seedable_rng();
+
+        for _ in 0..1000 {
+            let arbi = rng.gen_iarbi(2420);
+            if arbi == 0 {
+                continue;
+            }
+            let actual = arbi.size();
+            for base in 2..=36 {
+                let arbi_string = arbi.to_string_radix(base);
+                let sz_base = if arbi.is_negative() {
+                    arbi_string.len() - 1
+                } else {
+                    arbi_string.len()
+                };
+                /* TODO: this should not be slower than to_string()... */
+                // let sz_base = arbi.size_base_ref(base) as usize;
+                let estimated =
+                    Arbi::size_with_size_base_maybe_over_by_one(base, sz_base);
+                assert!(
+                    estimated == actual || estimated == actual + 1,
+                    "arbi = {}, estimate = {}, actual = {}, base = {}",
+                    arbi,
+                    estimated,
+                    actual,
+                    base
+                );
             }
         }
     }

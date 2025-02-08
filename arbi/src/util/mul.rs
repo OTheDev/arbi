@@ -3,7 +3,58 @@ Copyright 2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
+macro_rules! define_mul2_common {
+    /* Common parts */
+    ($uint:ty) => {
+        const UINT_BITS: u32 = <$uint>::BITS;
+        const UINT_H_BITS: u32 = UINT_BITS >> 1;
+        const UINT_H_BASE: $uint = 1 as $uint << UINT_H_BITS;
+        const UINT_H_MAX: $uint = UINT_H_BASE - 1; // MASK for low part of UINT
+
+        #[inline(always)]
+        #[allow(dead_code)]
+        const fn split_uint(x: $uint) -> ($uint, $uint) {
+            let hi = x >> UINT_H_BITS;
+            let lo = x & UINT_H_MAX;
+            (hi, lo)
+        }
+
+        #[inline(always)]
+        #[allow(dead_code)]
+        pub(crate) const fn mul2(a: $uint, b: $uint) -> ($uint, $uint) {
+            let (a_hi, a_lo) = split_uint(a);
+            let (b_hi, b_lo) = split_uint(b);
+
+            let mut ahbh = a_hi * b_hi;
+            let ahbl = a_hi * b_lo;
+            let mut albh = a_lo * b_hi;
+            let albl = a_lo * b_lo;
+
+            let (albl_hi, albl_lo) = split_uint(albl);
+
+            albh += albl_hi;
+            debug_assert!(albh >= albl_hi);
+
+            let (albh, overflow) = albh.overflowing_add(ahbl);
+            if overflow {
+                ahbh = ahbh.wrapping_add(UINT_H_BASE);
+            }
+
+            (
+                ahbh.wrapping_add(albh >> UINT_H_BITS),
+                albl_lo.wrapping_add(albh << UINT_H_BITS),
+            )
+        }
+    };
+}
+
 macro_rules! define_mul2 {
+    // Defines only mul2()
+    ($uint:ty) => {
+        define_mul2_common!($uint);
+    };
+
+    // Defines both mul2(), mul2_halves()
     // mul2(), mul2_halves() implement
     //
     //      a * b -> (hi, lo)
@@ -16,80 +67,40 @@ macro_rules! define_mul2 {
     // uint_h   : primitive unsigned integer type with size in bits half that
     //            of uint.
     ($uint:ty, $uint_h:ty) => {
+        define_mul2_common!($uint);
 
-const UINT_BITS: u32 = <$uint>::BITS;
-const UINT_H_BITS: u32 = UINT_BITS >> 1;
-const UINT_H_BASE: $uint = 1 as $uint << UINT_H_BITS;
-const UINT_H_MAX: $uint = UINT_H_BASE - 1; // MASK for low part of UINT
+        #[inline(always)]
+        const fn split_uint_halves(x: $uint) -> ($uint_h, $uint_h) {
+            let hi = (x >> UINT_H_BITS) as $uint_h;
+            let lo = (x & UINT_H_MAX) as $uint_h;
+            (hi, lo)
+        }
 
-#[inline(always)]
-#[allow(dead_code)]
-const fn split_uint(x: $uint) -> ($uint, $uint) {
-    let hi = x >> UINT_H_BITS;
-    let lo = x & UINT_H_MAX;
-    (hi, lo)
-}
+        #[inline(always)]
+        pub(crate) const fn mul2_halves(a: $uint, b: $uint) -> ($uint, $uint) {
+            let (a_hi, a_lo) = split_uint_halves(a);
+            let (b_hi, b_lo) = split_uint_halves(b);
 
-#[inline(always)]
-const fn split_uint_halves(x: $uint) -> ($uint_h, $uint_h) {
-    let hi = (x >> UINT_H_BITS) as $uint_h;
-    let lo = (x & UINT_H_MAX) as $uint_h;
-    (hi, lo)
-}
+            let mut ahbh: $uint = (a_hi as $uint) * (b_hi as $uint);
+            let ahbl: $uint = (a_hi as $uint) * (b_lo as $uint);
+            let mut albh: $uint = (a_lo as $uint) * (b_hi as $uint);
+            let albl: $uint = (a_lo as $uint) * (b_lo as $uint);
 
-#[inline]
-#[allow(dead_code)]
-pub(crate) const fn mul2(a: $uint, b: $uint) -> ($uint, $uint) {
-    let (a_hi, a_lo) = split_uint(a);
-    let (b_hi, b_lo) = split_uint(b);
+            let (albl_hi, albl_lo) = split_uint_halves(albl);
 
-    let mut ahbh = a_hi * b_hi;
-    let ahbl = a_hi * b_lo;
-    let mut albh = a_lo * b_hi;
-    let albl = a_lo * b_lo;
+            albh += albl_hi as $uint;
+            debug_assert!(albh >= albl_hi as $uint);
 
-    let (albl_hi, albl_lo) = split_uint(albl);
+            let (albh, overflow) = albh.overflowing_add(ahbl);
+            if overflow {
+                ahbh = ahbh.wrapping_add(UINT_H_BASE);
+            }
 
-    albh += albl_hi;
-    debug_assert!(albh >= albl_hi);
-
-    let (albh, overflow) = albh.overflowing_add(ahbl);
-    if overflow {
-        ahbh = ahbh.wrapping_add(UINT_H_BASE);
-    }
-
-    (
-        ahbh.wrapping_add(albh >> UINT_H_BITS),
-        albl_lo.wrapping_add(albh << UINT_H_BITS),
-    )
-}
-
-#[inline]
-pub(crate) const fn mul2_halves(a: $uint, b: $uint) -> ($uint, $uint) {
-    let (a_hi, a_lo) = split_uint_halves(a);
-    let (b_hi, b_lo) = split_uint_halves(b);
-
-    let mut ahbh: $uint = (a_hi as $uint) * (b_hi as $uint);
-    let ahbl: $uint = (a_hi as $uint) * (b_lo as $uint);
-    let mut albh: $uint = (a_lo as $uint) * (b_hi as $uint);
-    let albl: $uint = (a_lo as $uint) * (b_lo as $uint);
-
-    let (albl_hi, albl_lo) = split_uint_halves(albl);
-
-    albh += albl_hi as $uint;
-    debug_assert!(albh >= albl_hi as $uint);
-
-    let (albh, overflow) = albh.overflowing_add(ahbl);
-    if overflow {
-        ahbh = ahbh.wrapping_add(UINT_H_BASE);
-    }
-
-    (
-        ahbh.wrapping_add(albh >> UINT_H_BITS),
-        (albl_lo as $uint).wrapping_add(albh << UINT_H_BITS),
-    )
-}
-
+            (
+                ahbh.wrapping_add(albh >> UINT_H_BITS),
+                (albl_lo as $uint).wrapping_add(albh << UINT_H_BITS),
+            )
+        }
     };
 }
 
@@ -100,6 +111,10 @@ pub(crate) mod u128_impl {
 #[allow(dead_code)]
 mod u64_impl {
     define_mul2!(u64, u32);
+}
+
+pub(crate) mod usize_impl {
+    define_mul2!(usize);
 }
 
 /* TODO: clean up and reduce repetition */

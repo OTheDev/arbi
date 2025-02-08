@@ -16,13 +16,10 @@ impl Arbi {
     /// # Examples
     /// ```
     /// use arbi::{Arbi, Digit};
-    ///
     /// let zero = Arbi::zero();
     /// assert_eq!(zero.size(), 0);
-    ///
     /// let mut a = Arbi::from(Digit::MAX);
     /// assert_eq!(a.size(), 1);
-    ///
     /// a += 1;
     /// assert_eq!(a.size(), 2);
     /// ```
@@ -42,10 +39,8 @@ impl Arbi {
     /// # Examples
     /// ```
     /// use arbi::{Arbi, BitCount, Digit};
-    ///
     /// let zero = Arbi::zero();
     /// assert_eq!(zero.size_bits(), 0);
-    ///
     /// let mut a = Arbi::from(Digit::MAX);
     /// assert_eq!(a.size_bits(), Digit::BITS as BitCount);
     /// a += 1;
@@ -106,15 +101,12 @@ impl Arbi {
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    ///
     /// let mut zero = Arbi::zero();
     /// assert_eq!(zero.size_base_mut(10), 0);
     /// assert_eq!(zero, 0);
-    ///
     /// let mut one = Arbi::one();
     /// assert_eq!(one.size_base_mut(10), 1);
     /// assert_eq!(one, 1);
-    ///
     /// let mut a = Arbi::from_str_radix("123456789", 10).unwrap();
     /// assert_eq!(a.size_base_mut(10), 9);
     /// assert_eq!(a, 9);
@@ -148,13 +140,10 @@ impl Arbi {
     /// # Examples
     /// ```
     /// use arbi::Arbi;
-    ///
     /// let zero = Arbi::zero();
     /// assert_eq!(zero.size_base_ref(10), 0);
-    ///
     /// let one = Arbi::one();
     /// assert_eq!(one.size_base_ref(10), 1);
-    ///
     /// let a = Arbi::from_str_radix("123456789", 10).unwrap();
     /// assert_eq!(a.size_base_ref(10), 9);
     /// ```
@@ -176,7 +165,7 @@ impl Arbi {
 
     pub(crate) fn size_radix_no_check(&mut self, base: u32) -> BitCount {
         let mut count: BitCount = 0;
-        while self > 0 {
+        while self.size() != 0 {
             Self::div_algo_digit_inplace(self, base as Digit);
             count += 1;
         }
@@ -192,7 +181,6 @@ impl Arbi {
         }
         if base.is_power_of_two() {
             let bit_length = self.size_bits();
-            // let base_log2 = base.ilog2();
             let base_log2 = u32::ilog2_(base);
             return Some(BitCount::div_ceil_(
                 bit_length,
