@@ -102,8 +102,8 @@ impl Arbi {
             }
 
             // 2. Append the next block to the remainder
-            self.vec[r_end] = self.vec[r_end];
-            self.vec[r_end + 1] = self.vec[r_end + 1];
+            // self.vec[r_end] = self.vec[r_end];
+            // self.vec[r_end + 1] = self.vec[r_end + 1];
             r_end += 2;
 
             // 3. Guess the next digit
