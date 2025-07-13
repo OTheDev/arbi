@@ -219,18 +219,24 @@ mod test_uniform_sampler {
         let upper = Arbi::from(4);
 
         let uniform = Uniform::new(&lower, &upper);
-        let mut values_sampled = std::collections::HashSet::new();
+        let mut count_1 = 0;
+        let mut count_2 = 0;
+        let mut count_3 = 0;
 
         for _ in 0..5000 {
             let arbi = uniform.sample(&mut rng);
             assert!(arbi >= lower && arbi < upper);
-            values_sampled.insert(arbi.wrapping_to_i32());
+            match arbi.wrapping_to_i32() {
+                1 => count_1 += 1,
+                2 => count_2 += 1,
+                3 => count_3 += 1,
+                _ => panic!("Unexpected value: {}", arbi.wrapping_to_i32()),
+            }
         }
 
-        assert_eq!(values_sampled.len(), 3);
-        assert!(values_sampled.contains(&1));
-        assert!(values_sampled.contains(&2));
-        assert!(values_sampled.contains(&3));
+        assert!(count_1 > 0, "Value 1 was never sampled");
+        assert!(count_2 > 0, "Value 2 was never sampled");
+        assert!(count_3 > 0, "Value 3 was never sampled");
     }
 
     #[test]
@@ -241,17 +247,23 @@ mod test_uniform_sampler {
         let upper = Arbi::from(3);
 
         let uniform = Uniform::new_inclusive(&lower, &upper);
-        let mut values_sampled = std::collections::HashSet::new();
+        let mut count_1 = 0;
+        let mut count_2 = 0;
+        let mut count_3 = 0;
 
         for _ in 0..5000 {
             let arbi = uniform.sample(&mut rng);
             assert!(arbi >= lower && arbi <= upper);
-            values_sampled.insert(arbi.wrapping_to_i32());
+            match arbi.wrapping_to_i32() {
+                1 => count_1 += 1,
+                2 => count_2 += 1,
+                3 => count_3 += 1,
+                _ => panic!("Unexpected value: {}", arbi.wrapping_to_i32()),
+            }
         }
 
-        assert_eq!(values_sampled.len(), 3);
-        assert!(values_sampled.contains(&1));
-        assert!(values_sampled.contains(&2));
-        assert!(values_sampled.contains(&3));
+        assert!(count_1 > 0, "Value 1 was never sampled");
+        assert!(count_2 > 0, "Value 2 was never sampled");
+        assert!(count_3 > 0, "Value 3 was never sampled");
     }
 }
