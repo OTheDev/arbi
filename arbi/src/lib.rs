@@ -28,8 +28,10 @@ mod comparisons;
 mod comparisons_double;
 mod comparisons_integral;
 mod division;
+// TODO: fix overindented
 #[allow(unknown_lints)]
 #[allow(clippy::doc_lazy_continuation)]
+#[allow(clippy::doc_overindented_list_items)]
 pub mod docs;
 mod exponentiation;
 mod fits;

@@ -44,7 +44,7 @@ impl Arbi {
     /// \\( O(1) \\)
     pub fn ilog2(&self) -> BitCount {
         if self <= 0 {
-            panic!("self must be positive: {}", self)
+            panic!("self must be positive: {self}")
         }
         self.size_bits() - 1
     }

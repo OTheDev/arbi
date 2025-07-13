@@ -70,7 +70,7 @@ impl Arbi {
     ) -> Result<(), ParseError> {
         let base = match Base::try_from(radix) {
             Ok(b) => b,
-            Err(_) => panic!("Invalid radix {}", radix),
+            Err(_) => panic!("Invalid radix {radix}"),
         };
         self.assign_str_base(s, base)
     }

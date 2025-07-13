@@ -174,7 +174,7 @@ impl Arbi {
 
     pub(crate) fn check_args_size_base(&self, base: u32) -> Option<BitCount> {
         if base <= 1 {
-            panic!("base must be greater than 1: {}", base);
+            panic!("base must be greater than 1: {base}");
         }
         if self.is_zero() {
             return Some(0);
