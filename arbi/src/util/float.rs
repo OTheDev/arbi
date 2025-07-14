@@ -6,10 +6,10 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 // Equivalent to 2.0f64.powi(n) or Java's Double.parseDouble("0x1p" + n) for
 // any n (i32).
 pub(crate) fn fpow2(n: i32) -> f64 {
-    if n >= -1022 && n <= 1023 {
+    if (-1022..=1023).contains(&n) {
         // Normal
         f64::from_bits(((1023 + n as i64) << 52) as u64)
-    } else if n >= -1074 && n < -1022 {
+    } else if (-1074..-1022).contains(&n) {
         // Subnormal
         f64::from_bits(1u64 << (n + 1074))
     } else if n < -1074 {
