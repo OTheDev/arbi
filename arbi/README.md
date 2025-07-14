@@ -14,8 +14,8 @@
 
 - **No dependencies** by default.
 
-  If you need to generate random arbitrary integers, enable the `rand` feature,
-  which depends on the [rand](https://docs.rs/rand/latest/rand/) crate.
+  If you need to generate random integers, enable the `rand` feature, which
+  depends on the [rand](https://docs.rs/rand/latest/rand/) crate.
 
 - **`no_std`**.
 

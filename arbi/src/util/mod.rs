@@ -4,6 +4,7 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
 pub(crate) mod arbi_like_array;
+pub(crate) mod float;
 pub(crate) mod max_digits;
 pub(crate) mod mul;
 pub(crate) mod radix_info;

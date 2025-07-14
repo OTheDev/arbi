@@ -7,6 +7,7 @@ https://arxiv.org/abs/2406.07751. This implementation translates their provided
 Java implementation closely, with some comments rewritten verbatim.
 */
 
+use crate::util::float::MathOps;
 use crate::Arbi;
 use alloc::vec;
 
@@ -59,7 +60,7 @@ impl Arbi {
             // Even length
             // Ensure round up of digit
             let val = ((self.vec[0] as u64) << 32) + (self.vec[1] as u64);
-            digit = next_up_sqrt(next_up_f64(val as f64)) as u64;
+            digit = next_up_sqrt((val as f64).next_up_()) as u64;
             if digit == b {
                 // Avoid overflow due to too high digit’s rounding
                 digit -= 1;
@@ -242,45 +243,9 @@ impl Arbi {
     }
 }
 
-// Helper function to mimic Math.nextUp for f64
-fn next_up_f64(val: f64) -> f64 {
-    if val.is_nan() || val == f64::INFINITY {
-        val
-    } else if val == f64::NEG_INFINITY {
-        f64::MIN
-    } else if val == 0.0 {
-        f64::MIN_POSITIVE
-    } else {
-        let bits = val.to_bits();
-        if val > 0.0 {
-            f64::from_bits(bits + 1)
-        } else {
-            f64::from_bits(bits - 1)
-        }
-    }
-}
-
-// Helper function to mimic Math.nextDown for f64
-fn next_down_f64(val: f64) -> f64 {
-    if val.is_nan() || val == f64::NEG_INFINITY {
-        val
-    } else if val == f64::INFINITY {
-        f64::MAX
-    } else if val == 0.0 {
-        -f64::MIN_POSITIVE
-    } else {
-        let bits = val.to_bits();
-        if val > 0.0 {
-            f64::from_bits(bits - 1)
-        } else {
-            f64::from_bits(bits + 1)
-        }
-    }
-}
-
 fn next_up_sqrt(val: f64) -> f64 {
     let sqrt_val = val.sqrt();
-    next_up_f64(sqrt_val)
+    sqrt_val.next_up_()
 }
 
 #[derive(Clone, Debug)]
@@ -404,7 +369,7 @@ impl Floating {
             return Self::MIN_VALUE;
         }
 
-        let res_signif = next_up_f64(self.signif);
+        let res_signif = self.signif.next_up_();
         if res_signif >= 2.0 {
             Self {
                 signif: res_signif / 2.0,
@@ -423,7 +388,7 @@ impl Floating {
             return Self::ZERO;
         }
 
-        let res_signif = next_down_f64(self.signif);
+        let res_signif = self.signif.next_down_();
         if res_signif < 1.0 {
             Self {
                 signif: res_signif * 2.0,
