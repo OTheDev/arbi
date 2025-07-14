@@ -186,10 +186,14 @@ impl Arbi {
         r_pos -= 1;
 
         let twice_digit = (digit << 1) & 0xFFFFFFFF;
+        let high = (digit as i32) < 0;
 
         // rEnd >= 2*sqrtLen + 1, no risk that rPos becomes negative
         for i in (0..sqrt_len).rev() {
             prod = twice_digit * (sqrt[i] as u64) + (prod >> 32);
+            if high {
+                prod += sqrt[i + 1] as u64;
+            }
             diff = (r[r_pos] as u64) as i64 - (prod & 0xFFFFFFFF) as i64
                 + (diff >> 32);
             r[r_pos] = diff as u32;
@@ -199,9 +203,17 @@ impl Arbi {
         // Borrow propagation
         if r_pos >= r_begin {
             prod >>= 32;
+            if high {
+                prod += sqrt[0] as u64;
+            }
             diff = (r[r_pos] as u64) as i64 - prod as i64 + (diff >> 32);
             r[r_pos] = diff as u32;
-            r_pos -= 1;
+            // This check was not present in the Java code, but r_pos is an int
+            // in Java. However, here, r_pos is unsigned, so it will wrap around
+            // which means the branch below will execute when it shouldn't!
+            if r_pos > 0 {
+                r_pos -= 1;
+            }
 
             if r_pos >= r_begin {
                 diff = (r[r_pos] as u64) as i64 + (diff >> 32);
