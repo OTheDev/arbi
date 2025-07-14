@@ -7,6 +7,7 @@ https://arxiv.org/abs/2406.07751. This implementation translates their provided
 Java implementation closely, with some comments rewritten verbatim.
 */
 
+use crate::util::float::fpow2;
 use crate::util::float::MathOps;
 use crate::Arbi;
 use alloc::vec;
@@ -280,8 +281,8 @@ impl Floating {
             let signif = if exp == 0 {
                 val
             } else {
-                // Java: Double.parseDouble("0x1p-" + exp)
-                val * 2.0f64.powi(-(exp as i32))
+                // Java: val * Double.parseDouble("0x1p-" + exp)
+                val * fpow2(-(exp as i32))
             };
 
             Self { signif, exp }
@@ -439,8 +440,8 @@ impl Floating {
             if scale == 0 {
                 res_signif += little.signif;
             } else {
-                // Java: Double.parseDouble("0x1p" + scale)
-                res_signif += little.signif * 2.0f64.powi(scale as i32);
+                // Java: little.signif * Double.parseDouble("0x1p" + scale)
+                res_signif += little.signif * fpow2(scale as i32);
             }
 
             // Carry propagation
