@@ -211,9 +211,8 @@ impl Arbi {
             // This check was not present in the Java code, but r_pos is an int
             // in Java. However, here, r_pos is unsigned, so it will wrap around
             // which means the branch below will execute when it shouldn't!
-            if r_pos > 0 {
-                r_pos -= 1;
-            }
+            // In Java, this line was just `r_pos--`.
+            r_pos = r_pos.saturating_sub(1);
 
             if r_pos >= r_begin {
                 diff = (r[r_pos] as u64) as i64 + (diff >> 32);
