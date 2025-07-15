@@ -1,15 +1,13 @@
 /*
 Copyright 2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
-
-We use Romano (2024) for integer square root. See
-https://arxiv.org/abs/2406.07751. This implementation translates their provided
-Java implementation closely, with some comments rewritten verbatim.
 */
 
 use crate::util::float::fpow2;
 use crate::util::float::MathOps;
 use crate::Arbi;
+use crate::Assign;
+use crate::uints::UnsignedUtilities;
 use alloc::vec;
 
 impl Arbi {
@@ -35,6 +33,60 @@ impl Arbi {
     /// # Panics
     /// Panics if `self` is negative.
     pub fn isqrt_mut(&mut self) {
+        if self.is_negative() {
+            panic!("argument of integer square root cannot be negative");
+        }
+
+        if self.is_zero() {
+            return;
+        }
+
+        // Fast path for small integers
+        if let Some(val) = self.checked_to_u128() {
+            // If self fits in a u128, use binary search (no memory allocation)
+            self.assign(val.isqrt_());
+            return;
+        }
+
+        // Algorithm 1.13 SqrtInt from Brent and Zimmerman (2010)
+        // Input: an integer m >= 1
+        // Output: s = floor(m^(1/2))
+        let mut s = Arbi::new();
+        let mut t = Arbi::new();
+
+        // 1. u <- m (any value u ≥ ⌊m^(1/2)⌋ works). We follow parentheses
+        let mut u = Arbi::one() << ((self.size_bits() + 1) >> 1);
+
+        // 2. repeat
+        loop {
+            // 3. s <- u
+            s.assign(&u);
+
+            // 4. t <- s + floor(m/s)
+            t.assign(&*self);
+            t /= &s; // floor(m/s)
+            t += &s; // s + floor(m/s)
+
+            // 5. u <- floor(t/2)
+            u.assign(&t);
+            u >>= 1; // Divide by 2 (floor division for positive numbers)
+
+            // 6. until u >= s
+            if u >= s {
+                break;
+            }
+        }
+
+        // 7. return s
+        self.assign(&s);
+    }
+
+    // Romano (2024) for integer square root.
+    // See https://arxiv.org/abs/2406.07751. This implementation translates
+    // their provided Java implementation closely, with some comments rewritten
+    // verbatim.
+    #[allow(dead_code)]
+    fn isqrt_mut_romano(&mut self) {
         if self.is_negative() {
             panic!("argument of integer square root cannot be negative");
         }
@@ -170,6 +222,7 @@ impl Arbi {
         self.trim();
     }
 
+    #[allow(dead_code)]
     fn compute_remainder(
         mut digit: u64,
         sqrt: &mut [u32],
@@ -255,6 +308,7 @@ impl Arbi {
     }
 }
 
+#[allow(dead_code)]
 fn next_up_sqrt(val: f64) -> f64 {
     let sqrt_val = val.sqrt();
     sqrt_val.next_up_()
@@ -267,6 +321,7 @@ struct Floating {
     exp: i64,
 }
 
+#[allow(dead_code)]
 impl Floating {
     const ZERO: Self = Self {
         signif: 0.0,
