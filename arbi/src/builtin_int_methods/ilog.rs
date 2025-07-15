@@ -120,10 +120,10 @@ impl Arbi {
 
     fn check_ilog_args(x: &Self, base: u32) {
         if x <= 0 {
-            panic!("self must be positive: {}", x);
+            panic!("self must be positive: {x}");
         }
         if base < 2 {
-            panic!("base must be greater than or equal to 2: {}", base);
+            panic!("base must be greater than or equal to 2: {base}");
         }
     }
 }

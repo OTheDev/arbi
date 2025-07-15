@@ -10,7 +10,7 @@ impl Arbi {
     ///
     /// # See also
     /// - [`div_euclid()`](https://doc.rust-lang.org/std/primitive.i64.html#method.div_euclid)
-    ///     for built-in integer types.
+    ///   for built-in integer types.
     /// - [`Arbi::divrem_euclid_ref()`].
     ///
     /// # Panics
@@ -56,7 +56,7 @@ impl Arbi {
     ///
     /// # See also
     /// - [`rem_euclid()`](https://doc.rust-lang.org/std/primitive.i64.html#method.rem_euclid)
-    ///     for built-in integer types.
+    ///   for built-in integer types.
     /// - [`Arbi::divrem_euclid_ref()`].
     ///
     /// # Panics

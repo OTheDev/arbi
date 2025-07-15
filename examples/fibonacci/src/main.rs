@@ -9,7 +9,7 @@ use arbi::Arbi;
 fn main() {
     let bound = Arbi::one() << 16_384;
     let fib = fib_gte(&bound);
-    println!("{}", fib);
+    println!("{fib}");
 }
 
 /// Return the first value in the Fibonacci sequence greater than or equal to

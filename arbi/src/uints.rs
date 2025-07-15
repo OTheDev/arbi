@@ -34,6 +34,9 @@ pub(crate) trait UnsignedUtilities: Sized {
     fn ilog2_(v: Self) -> u8;
     fn ilog_(v: Self, base: Self) -> u32;
     fn ilog10_(v: Self) -> u32;
+    /// Integer square root using binary search.
+    /// Returns the largest integer y such that y * y <= x.
+    fn isqrt_(self) -> Self;
 }
 
 /* !impl_unsigned_utilities */
@@ -131,6 +134,29 @@ impl UnsignedUtilities for $t {
         } else {
             1 + (x - 1) / y
         }
+    }
+
+    fn isqrt_(self) -> Self {
+        let x = self;
+
+        let mut l = 0;
+        let mut r = x;
+        let mut result = 0;
+
+        while l <= r {
+            let m = l + (r - l) / 2;
+
+            let (square, overflow) = m.overflowing_mul(m);
+
+            if !overflow && square <= x {
+                result = m;
+                l = m + 1;  // Try to find a bigger one
+            } else {
+                r = m - 1;
+            }
+        }
+
+        result
     }
 }
 

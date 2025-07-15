@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
@@ -14,6 +14,7 @@ mod ilog10;
 mod ilog2;
 mod is_positive_is_negative;
 mod is_power_of_two;
+mod isqrt;
 mod reverse_bits;
 mod signum;
 mod swap_bytes;
