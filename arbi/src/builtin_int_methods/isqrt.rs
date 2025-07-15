@@ -38,11 +38,17 @@ impl Arbi {
             return;
         }
 
-        // Fast path for small integers
-        if let Some(val) = self.checked_to_u128() {
-            // If self fits in a u128, use binary search (no memory allocation)
-            self.assign(val.isqrt_());
-            return;
+        #[cfg(not(test))]
+        {
+            // Fast path for small integers
+            if let Some(val) = self.checked_to_u128() {
+                // If self fits in a u128, use binary search (no memory
+                // allocation). This should be tested separately.
+                // Skipped during tests to ensure the general algorithm is
+                // exercised.
+                self.assign(val.isqrt_());
+                return;
+            }
         }
 
         // Algorithm 1.13 SqrtInt from Brent and Zimmerman (2010)
