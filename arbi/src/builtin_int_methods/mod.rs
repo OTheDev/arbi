@@ -7,6 +7,7 @@ mod abs;
 mod abs_diff;
 mod count_ones;
 mod count_zeros;
+mod div_ceil;
 mod euclid_div_and_rem;
 mod from_bytes;
 mod ilog;

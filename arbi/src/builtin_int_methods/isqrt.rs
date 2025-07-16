@@ -3,7 +3,6 @@ Copyright 2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-use crate::uints::UnsignedUtilities;
 use crate::Arbi;
 use crate::Assign;
 
@@ -40,6 +39,7 @@ impl Arbi {
 
         #[cfg(not(test))]
         {
+            use crate::uints::UnsignedUtilities;
             // Fast path for small integers
             if let Some(val) = self.checked_to_u128() {
                 // If self fits in a u128, use binary search (no memory
