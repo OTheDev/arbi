@@ -485,12 +485,10 @@ impl Arbi {
             } else {
                 modulus - x
             }
+        } else if modulus.is_negative() {
+            x + modulus
         } else {
-            if modulus.is_negative() {
-                x + modulus
-            } else {
-                x
-            }
+            x
         }
     }
 }
