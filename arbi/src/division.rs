@@ -198,7 +198,7 @@ impl Arbi {
         Self::ddiv_algo_knuth(q, r, &u.vec, &v.vec);
     }
 
-    fn ddivide(
+    pub(crate) fn ddivide(
         q: &mut Self,
         r: &mut Self,
         n: &[Digit],
