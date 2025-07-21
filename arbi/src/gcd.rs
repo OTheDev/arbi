@@ -12,44 +12,123 @@ impl Arbi {
     /// are zero, in which case this function returns zero. That is, we define
     /// \\( \text{gcd}(0,0) \equiv 0 \\).
     pub fn gcd_ref(&self, other: &Self) -> Self {
-        Self::gcd_(self, other)
+        // We have a choice between Knuth Algorithm B and L. Preliminary
+        // benchmarks show that algorithm B outperforms L, sometimes by a factor
+        // of 3-4. However, when one input is very small and the other large,
+        // algorithm L might outperform B. In the future, it might be useful
+        // to choose the algorithm based on input sizes.
+        self.gcd_ref_b(other)
+    }
+}
+
+// Knuth Algorithm B
+// Given positive integers u and v, finds their greatest common divisor.
+// B1. [Find power of 2.] Set k <- 0, then repeatedly set k <- k + 1, u <- u/2,
+// v <- v/2, zero or more times until u and v are not both even.
+// B2. [Initialize.] If u is odd, set t <- -v and go to B4. Otherwise set
+// t <- u.
+// B3. [Halve t.] Set t <- t/2.
+// B4. [Is t even?] If t is even, go back to B3.
+// B5. [Reset max(u,v).] If t > 0, set u <- t; otherwise set v <- -t.
+// B6. [Subtract.] Set t <- u - v. If t != 0, go back to B3. Otherwise,
+// algorithm terminates with u * 2^k as the output.
+impl Arbi {
+    pub(crate) fn gcd_ref_b(&self, other: &Self) -> Self {
+        if self.is_zero() {
+            return other.abs_ref();
+        }
+        if other.is_zero() {
+            return self.abs_ref();
+        }
+        let mut u = self.abs_ref();
+        let mut v = other.abs_ref();
+        // Ensure u >= v
+        if u < v {
+            core::mem::swap(&mut u, &mut v);
+        }
+        Self::gcd_knuth_algo_b(u, v)
     }
 
-    // Knuth Algorithm L
-    // Input: u >= v >= 0
-    // Auxiliary single-precision p-digit variables uhat, vhat, A, B, C, D, T, q,
-    // and auxiliary multiple-precision variables t and w.
-    // L1. [Initialize.] If v is small enough to be represented as a
-    // single-precision value, calculate gcd(u,v) by Algorithm A and terminate
-    // the computation. Otherwise, let uhat be the p leading digits of u and
-    // let vhat be the corresponding digits of v; in other words, if radix-b
-    // notation is being used, uhat <- floor(u/b^k) and vhat <- floor(v/b^k),
-    // where k is as small as possible consistent with the condition uhat < b^p.
-    //      Set A <- 1, B <- 0, C <- 0, D <- 1
-    // L2. [Test quotient.] Set q <- floor((uhat + A)/(vhat + C)).
-    // If q != floor((uhat + B) / (vhat + D), go to step L4.
-    // Single-precision overflow can occur in special circumstances during
-    // the computation in this step, but only when uhat = b^p - 1 and A = 1 or
-    // when vhat = b^p - 1 and D = 1; the conditions
-    //      0 <= uhat + A <= b^p, 0 <= vhat + C < b^p
-    //      0 <= uhat + B < b^P,  0 <= vhat + D <= b^p
-    // will always hold. It is possible to have vhat + C = 0 or vhat + D = 0,
-    // but not both simultaneously; therefore, division by zero in this step
-    // is taken to mean "Go directly to L4".
-    // L3. [Emulate Euclid.] Set T <- A - qC, A <- C, C <- T, T <- B - qD, B <- D, D <- T,
-    // T <- uhat - qvhat, uhat <- vhat, vhat <- T, and go back to step L2.
-    // L4. [Multiprecision step.] If B = 0, set t <- u mod v, u <- v, v <- t,
-    // using multiple-precision division. Otherwise, set t <- Au, t <- t + Bv,
-    // w <- Cu, w <- w + Dv, u <- t, v <- w. Go back to step L1.
-    fn gcd_(u: &Self, v: &Self) -> Self {
-        if u.is_zero() {
-            return v.abs_ref();
+    fn gcd_knuth_algo_b(mut u: Self, mut v: Self) -> Self {
+        /* B1. [Find power of 2.]
+         * Set k <- 0, then repeatedly set k <- k + 1, u <- u/2, v <- v/2,
+         * zero or more times until u and v are not both even.
+         */
+        let u_trailing = u.trailing_zeros().unwrap_or(0);
+        let v_trailing = v.trailing_zeros().unwrap_or(0);
+        let k = core::cmp::min(u_trailing, v_trailing);
+        u >>= k;
+        v >>= k;
+        /* B2. [Initialize.]
+         * If u is odd, set t <- -v and go to B4. Otherwise, set t <- u.
+         */
+        let mut t = if u.is_odd() { -&v } else { u.clone() };
+        loop {
+            /* B3. [Halve t.] Set t <- t/2.
+             * B4. [Is t even?] If t is even, go back to B3.
+             */
+            if let Some(trailing) = t.trailing_zeros() {
+                t >>= trailing;
+            }
+            /* B5. [Reset max(u,v).]
+             * If t > 0, set u <- t; otherwise set v <- -t.
+             */
+            if t > 0 {
+                u = core::mem::take(&mut t);
+            } else {
+                t.negate_mut();
+                v = core::mem::take(&mut t);
+            }
+            /* B6. [Subtract.]
+             * Set t <- u - v. If t != 0, go back to B3.
+             * Otherwise, algorithm terminates with u * 2^k as the output.
+             */
+            t = &u - &v;
+            if t.is_zero() {
+                break;
+            }
         }
-        if v.is_zero() {
-            return u.abs_ref();
+        u << k
+    }
+}
+
+// Knuth Algorithm L
+// Input: u >= v >= 0
+// Auxiliary single-precision p-digit variables uhat, vhat, A, B, C, D, T, q,
+// and auxiliary multiple-precision variables t and w.
+// L1. [Initialize.] If v is small enough to be represented as a
+// single-precision value, calculate gcd(u,v) by Algorithm A and terminate
+// the computation. Otherwise, let uhat be the p leading digits of u and
+// let vhat be the corresponding digits of v; in other words, if radix-b
+// notation is being used, uhat <- floor(u/b^k) and vhat <- floor(v/b^k),
+// where k is as small as possible consistent with the condition uhat < b^p.
+//      Set A <- 1, B <- 0, C <- 0, D <- 1
+// L2. [Test quotient.] Set q <- floor((uhat + A)/(vhat + C)).
+// If q != floor((uhat + B) / (vhat + D), go to step L4.
+// Single-precision overflow can occur in special circumstances during
+// the computation in this step, but only when uhat = b^p - 1 and A = 1 or
+// when vhat = b^p - 1 and D = 1; the conditions
+//      0 <= uhat + A <= b^p, 0 <= vhat + C < b^p
+//      0 <= uhat + B < b^P,  0 <= vhat + D <= b^p
+// will always hold. It is possible to have vhat + C = 0 or vhat + D = 0,
+// but not both simultaneously; therefore, division by zero in this step
+// is taken to mean "Go directly to L4".
+// L3. [Emulate Euclid.] Set T <- A - qC, A <- C, C <- T, T <- B - qD, B <- D, D <- T,
+// T <- uhat - qvhat, uhat <- vhat, vhat <- T, and go back to step L2.
+// L4. [Multiprecision step.] If B = 0, set t <- u mod v, u <- v, v <- t,
+// using multiple-precision division. Otherwise, set t <- Au, t <- t + Bv,
+// w <- Cu, w <- w + Dv, u <- t, v <- w. Go back to step L1.
+#[allow(dead_code)]
+impl Arbi {
+    fn gcd_ref_l(&self, other: &Self) -> Self {
+        if self.is_zero() {
+            return other.abs_ref();
         }
-        let mut u = u.abs_ref();
-        let mut v = v.abs_ref();
+        if other.is_zero() {
+            return self.abs_ref();
+        }
+        let mut u = self.abs_ref();
+        let mut v = other.abs_ref();
         /* Ensure u >= v >= 0 */
         if u < v {
             core::mem::swap(&mut u, &mut v);
@@ -231,6 +310,8 @@ mod tests {
                 "GCD mismatch: gcd({}, {}) expected {} got {}",
                 a, b, expected, actual
             );
+            let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
+            assert_eq!(actual, actual_2);
 
             // (i64,i64)
             let (a, b) = (sdd.sample(&mut rng), sdd.sample(&mut rng));
@@ -242,6 +323,8 @@ mod tests {
                 "GCD mismatch: gcd({}, {}) expected {} got {}",
                 a, b, expected, actual
             );
+            let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
+            assert_eq!(actual, actual_2);
 
             // (i128,i28)
             let (a, b) = (sqd.sample(&mut rng), sqd.sample(&mut rng));
@@ -253,6 +336,8 @@ mod tests {
                 "GCD mismatch: gcd({}, {}) expected {} got {}",
                 a, b, expected, actual
             );
+            let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
+            assert_eq!(actual, actual_2);
 
             // (i32,i64)
             let (a, b) = (sd.sample(&mut rng), sdd.sample(&mut rng));
@@ -264,6 +349,8 @@ mod tests {
                 "GCD mismatch: gcd({}, {}) expected {} got {}",
                 a, b, expected, actual
             );
+            let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
+            assert_eq!(actual, actual_2);
 
             // (i32,i128)
             let (a, b) = (sd.sample(&mut rng), sqd.sample(&mut rng));
@@ -275,6 +362,8 @@ mod tests {
                 "GCD mismatch: gcd({}, {}) expected {} got {}",
                 a, b, expected, actual
             );
+            let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
+            assert_eq!(actual, actual_2);
 
             // (i64, i128)
             let (a, b) = (sdd.sample(&mut rng), sqd.sample(&mut rng));
@@ -286,6 +375,8 @@ mod tests {
                 "GCD mismatch: gcd({}, {}) expected {} got {}",
                 a, b, expected, actual
             );
+            let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
+            assert_eq!(actual, actual_2);
 
             // (small,small)
             let (a, b) = (small.sample(&mut rng), small.sample(&mut rng));
@@ -297,6 +388,8 @@ mod tests {
                 "GCD mismatch: gcd({}, {}) expected {} got {}",
                 a, b, expected, actual
             );
+            let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
+            assert_eq!(actual, actual_2);
 
             // (small,i64)
             let (a, b) = (small.sample(&mut rng), sdd.sample(&mut rng));
@@ -308,6 +401,8 @@ mod tests {
                 "GCD mismatch: gcd({}, {}) expected {} got {}",
                 a, b, expected, actual
             );
+            let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
+            assert_eq!(actual, actual_2);
 
             // (small,i128)
             let (a, b) = (small.sample(&mut rng), sqd.sample(&mut rng));
@@ -319,6 +414,8 @@ mod tests {
                 "GCD mismatch: gcd({}, {}) expected {} got {}",
                 a, b, expected, actual
             );
+            let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
+            assert_eq!(actual, actual_2);
         }
     }
 
@@ -439,6 +536,8 @@ mod tests_large {
                 "GCD mismatch: gcd({}, {}) expected {} got {}",
                 a_str, b_str, expected_str, result
             );
+            let result_b = a.gcd_ref_l(&b);
+            assert_eq!(result, result_b);
 
             // Test commutativity
             let result_rev = b.gcd_ref(&a);
@@ -447,6 +546,8 @@ mod tests_large {
                 "GCD not commutative: gcd({}, {}) != gcd({}, {})",
                 b_str, a_str, a_str, b_str
             );
+            let result_b = b.gcd_ref_l(&a);
+            assert_eq!(result_rev, result_b);
         }
     }
 
@@ -491,6 +592,8 @@ mod tests_large {
                 "GCD mismatch: gcd({}, {}) expected {} got {}",
                 a_str, b_str, expected_str, result
             );
+            let result_b = a.gcd_ref_l(&b);
+            assert_eq!(result, result_b);
 
             // Test commutativity
             let result_rev = b.gcd_ref(&a);
@@ -499,6 +602,8 @@ mod tests_large {
                 "GCD not commutative: gcd({}, {}) != gcd({}, {})",
                 b_str, a_str, a_str, b_str
             );
+            let result_b = b.gcd_ref_l(&a);
+            assert_eq!(result_rev, result_b);
         }
     }
 
@@ -543,6 +648,8 @@ mod tests_large {
                 "GCD mismatch: gcd({}, {}) expected {} got {}",
                 a_str, b_str, expected_str, result
             );
+            let result_b = a.gcd_ref_l(&b);
+            assert_eq!(result, result_b);
 
             // Test commutativity
             let result_rev = b.gcd_ref(&a);
@@ -551,6 +658,8 @@ mod tests_large {
                 "GCD not commutative: gcd({}, {}) != gcd({}, {})",
                 b_str, a_str, a_str, b_str
             );
+            let result_b = b.gcd_ref_l(&a);
+            assert_eq!(result_rev, result_b);
         }
     }
 
@@ -595,6 +704,8 @@ mod tests_large {
                 "GCD mismatch: gcd({}, {}) expected {} got {}",
                 a_str, b_str, expected_str, result
             );
+            let result_b = a.gcd_ref_l(&b);
+            assert_eq!(result, result_b);
 
             // Test commutativity
             let result_rev = b.gcd_ref(&a);
@@ -603,6 +714,8 @@ mod tests_large {
                 "GCD not commutative: gcd({}, {}) != gcd({}, {})",
                 b_str, a_str, a_str, b_str
             );
+            let result_b = b.gcd_ref_l(&a);
+            assert_eq!(result_rev, result_b);
         }
     }
 
@@ -647,6 +760,8 @@ mod tests_large {
                 "GCD mismatch: gcd({}, {}) expected {} got {}",
                 a_str, b_str, expected_str, result
             );
+            let result_b = a.gcd_ref_l(&b);
+            assert_eq!(result, result_b);
 
             // Test commutativity
             let result_rev = b.gcd_ref(&a);
@@ -655,6 +770,8 @@ mod tests_large {
                 "GCD not commutative: gcd({}, {}) != gcd({}, {})",
                 b_str, a_str, a_str, b_str
             );
+            let result_b = b.gcd_ref_l(&a);
+            assert_eq!(result_rev, result_b);
         }
     }
 
@@ -699,6 +816,8 @@ mod tests_large {
                 "GCD mismatch: gcd({}, {}) expected {} got {}",
                 a_str, b_str, expected_str, result
             );
+            let result_b = a.gcd_ref_l(&b);
+            assert_eq!(result, result_b);
 
             // Test commutativity
             let result_rev = b.gcd_ref(&a);
@@ -707,6 +826,8 @@ mod tests_large {
                 "GCD not commutative: gcd({}, {}) != gcd({}, {})",
                 b_str, a_str, a_str, b_str
             );
+            let result_b = b.gcd_ref_l(&a);
+            assert_eq!(result_rev, result_b);
         }
     }
 
@@ -751,6 +872,8 @@ mod tests_large {
                 "GCD mismatch: gcd({}, {}) expected {} got {}",
                 a_str, b_str, expected_str, result
             );
+            let result_b = a.gcd_ref_l(&b);
+            assert_eq!(result, result_b);
 
             // Test commutativity
             let result_rev = b.gcd_ref(&a);
@@ -759,6 +882,8 @@ mod tests_large {
                 "GCD not commutative: gcd({}, {}) != gcd({}, {})",
                 b_str, a_str, a_str, b_str
             );
+            let result_b = b.gcd_ref_l(&a);
+            assert_eq!(result_rev, result_b);
         }
     }
 }
