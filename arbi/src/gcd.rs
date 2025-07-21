@@ -13,9 +13,9 @@ impl Arbi {
     /// \\( \text{gcd}(0,0) \equiv 0 \\).
     pub fn gcd_ref(&self, other: &Self) -> Self {
         // We have a choice between Binary GCD and Knuth Algorithm L (Lehmer).
-        // Preliminary benchmarks show that binary GCD outperforms L, sometimes
+        // Preliminary benchmarks show that Binary GCD outperforms L, sometimes
         // by a factor of 3-4. However, when one input is very small and the
-        // other large,  algorithm L might outperform the other. In the future,
+        // other large, algorithm L might outperform the other. In the future,
         // it might be useful to choose the algorithm based on input sizes.
         self.gcd_ref_b_optimized(other)
     }
