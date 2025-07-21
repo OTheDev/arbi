@@ -21,17 +21,6 @@ impl Arbi {
     }
 }
 
-// Knuth Algorithm B
-// Given positive integers u and v, finds their greatest common divisor.
-// B1. [Find power of 2.] Set k <- 0, then repeatedly set k <- k + 1, u <- u/2,
-// v <- v/2, zero or more times until u and v are not both even.
-// B2. [Initialize.] If u is odd, set t <- -v and go to B4. Otherwise set
-// t <- u.
-// B3. [Halve t.] Set t <- t/2.
-// B4. [Is t even?] If t is even, go back to B3.
-// B5. [Reset max(u,v).] If t > 0, set u <- t; otherwise set v <- -t.
-// B6. [Subtract.] Set t <- u - v. If t != 0, go back to B3. Otherwise,
-// algorithm terminates with u * 2^k as the output.
 impl Arbi {
     pub(crate) fn gcd_ref_b(&self, other: &Self) -> Self {
         if self.is_zero() {
@@ -92,32 +81,6 @@ impl Arbi {
     }
 }
 
-// Knuth Algorithm L
-// Input: u >= v >= 0
-// Auxiliary single-precision p-digit variables uhat, vhat, A, B, C, D, T, q,
-// and auxiliary multiple-precision variables t and w.
-// L1. [Initialize.] If v is small enough to be represented as a
-// single-precision value, calculate gcd(u,v) by Algorithm A and terminate
-// the computation. Otherwise, let uhat be the p leading digits of u and
-// let vhat be the corresponding digits of v; in other words, if radix-b
-// notation is being used, uhat <- floor(u/b^k) and vhat <- floor(v/b^k),
-// where k is as small as possible consistent with the condition uhat < b^p.
-//      Set A <- 1, B <- 0, C <- 0, D <- 1
-// L2. [Test quotient.] Set q <- floor((uhat + A)/(vhat + C)).
-// If q != floor((uhat + B) / (vhat + D), go to step L4.
-// Single-precision overflow can occur in special circumstances during
-// the computation in this step, but only when uhat = b^p - 1 and A = 1 or
-// when vhat = b^p - 1 and D = 1; the conditions
-//      0 <= uhat + A <= b^p, 0 <= vhat + C < b^p
-//      0 <= uhat + B < b^P,  0 <= vhat + D <= b^p
-// will always hold. It is possible to have vhat + C = 0 or vhat + D = 0,
-// but not both simultaneously; therefore, division by zero in this step
-// is taken to mean "Go directly to L4".
-// L3. [Emulate Euclid.] Set T <- A - qC, A <- C, C <- T, T <- B - qD, B <- D, D <- T,
-// T <- uhat - qvhat, uhat <- vhat, vhat <- T, and go back to step L2.
-// L4. [Multiprecision step.] If B = 0, set t <- u mod v, u <- v, v <- t,
-// using multiple-precision division. Otherwise, set t <- Au, t <- t + Bv,
-// w <- Cu, w <- w + Dv, u <- t, v <- w. Go back to step L1.
 #[allow(dead_code)]
 impl Arbi {
     fn gcd_ref_l(&self, other: &Self) -> Self {
