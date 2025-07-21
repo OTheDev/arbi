@@ -39,6 +39,7 @@ mod fmt;
 mod from_double;
 mod from_integral;
 mod from_string;
+mod gcd;
 mod increment_decrement;
 mod is_odd_is_even;
 mod is_signed;
