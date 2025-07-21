@@ -12,16 +12,46 @@ impl Arbi {
     /// are zero, in which case this function returns zero. That is, we define
     /// \\( \text{gcd}(0,0) \equiv 0 \\).
     pub fn gcd_ref(&self, other: &Self) -> Self {
-        // We have a choice between Knuth Algorithm B and L. Preliminary
-        // benchmarks show that algorithm B outperforms L, sometimes by a factor
-        // of 3-4. However, when one input is very small and the other large,
-        // algorithm L might outperform B. In the future, it might be useful
-        // to choose the algorithm based on input sizes.
-        self.gcd_ref_b(other)
+        // We have a choice between Binary GCD and Knuth Algorithm L (Lehmer).
+        // Preliminary benchmarks show that binary GCD outperforms L, sometimes
+        // by a factor of 3-4. However, when one input is very small and the
+        // other large,  algorithm L might outperform the other. In the future,
+        // it might be useful to choose the algorithm based on input sizes.
+        self.gcd_ref_b_optimized(other)
     }
 }
 
 impl Arbi {
+    pub(crate) fn gcd_ref_b_optimized(&self, other: &Self) -> Self {
+        if self.is_zero() {
+            return other.abs_ref();
+        }
+        if other.is_zero() {
+            return self.abs_ref();
+        }
+        let mut u = self.abs_ref();
+        let mut v = other.abs_ref();
+
+        let uz = u.trailing_zeros().unwrap_or(0);
+        let vz = v.trailing_zeros().unwrap_or(0);
+        let k = core::cmp::min(uz, vz);
+
+        u >>= uz;
+        v >>= vz;
+        loop {
+            if u > v {
+                core::mem::swap(&mut u, &mut v);
+            }
+            v -= &u;
+            if v == 0 {
+                return u << k;
+            }
+            v >>= v.trailing_zeros().unwrap_or(0);
+        }
+    }
+
+    // Knuth Algorithm B
+    #[allow(dead_code)]
     pub(crate) fn gcd_ref_b(&self, other: &Self) -> Self {
         if self.is_zero() {
             return other.abs_ref();
