@@ -54,6 +54,37 @@ impl Arbi {
     /// let (q, r) = x.divrem_floor_ref(&Arbi::zero());
     /// ```
     pub fn divrem_floor_ref(&self, rhs: &Self) -> (Self, Self) {
+        let (mut q, mut r) = (Arbi::zero(), Arbi::zero());
+        Self::fdivide(&mut q, &mut r, self, rhs);
+        (q, r)
+    }
+
+    pub fn divrem_floor_mut(&mut self, rhs: &mut Self) {
+        Self::fdivide(self, rhs, &*self, &*rhs);
+    }
+
+    pub(crate) fn fdivide(q: &mut Self, r: &mut Self, n: &Self, d: &Self) {
+        Self::ddivide(q, r, &n.vec, &d.vec, false, false);
+        if d.is_negative() {
+            r.negate_mut();
+        }
+        match (n.signum(), d.signum()) {
+            (1, -1) | (-1, 1) => {
+                if r.is_zero() {
+                    q.negate_mut();
+                } else {
+                    q.negate_mut();
+                    *q -= 1;
+                    r.negate_mut();
+                    *r += d;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    #[allow(dead_code)]
+    fn divrem_floor_ref_reference(&self, rhs: &Self) -> (Self, Self) {
         // Compute quotient and remainder, treating operands as nonnegative,
         // with same semantics of / and % for builtin integers
         let (mut q, mut r) = (Arbi::zero(), Arbi::zero());
