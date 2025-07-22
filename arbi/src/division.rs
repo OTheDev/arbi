@@ -245,6 +245,33 @@ impl Arbi {
         r.neg = r.size() > 0 && n_is_neg;
     }
 
+    pub(crate) fn fddivide(
+        q: &mut Self,
+        r: &mut Self,
+        n: &[Digit],
+        d: &[Digit],
+        n_sign: i32,
+        d_sign: i32,
+    ) {
+        Self::ddivide(q, r, n, d, false, false);
+        if d_sign == -1 {
+            r.negate_mut();
+        }
+        match (n_sign, d_sign) {
+            (1, -1) | (-1, 1) => {
+                if r.is_zero() {
+                    q.negate_mut();
+                } else {
+                    q.negate_mut();
+                    *q -= 1;
+                    r.negate_mut();
+                    r.dadd_inplace(d, d_sign == -1); // *r += d;
+                }
+            }
+            _ => {}
+        }
+    }
+
     /// `Q = N / D, R = N % D`, in one pass.
     /// Panics if the divisor is zero.
     ///
@@ -263,23 +290,7 @@ impl Arbi {
 
     // Floor Division
     pub(crate) fn fdivide(q: &mut Self, r: &mut Self, n: &Self, d: &Self) {
-        Self::ddivide(q, r, &n.vec, &d.vec, false, false);
-        if d.is_negative() {
-            r.negate_mut();
-        }
-        match (n.signum(), d.signum()) {
-            (1, -1) | (-1, 1) => {
-                if r.is_zero() {
-                    q.negate_mut();
-                } else {
-                    q.negate_mut();
-                    *q -= 1;
-                    r.negate_mut();
-                    *r += d;
-                }
-            }
-            _ => {}
-        }
+        Self::fddivide(q, r, &n.vec, &d.vec, n.signum(), d.signum());
     }
 }
 

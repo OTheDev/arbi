@@ -35,7 +35,7 @@ impl Arbi {
     }
 
     /// \\( self += y \\)
-    fn dadd_inplace(&mut self, y: &[Digit], y_is_neg: bool) {
+    pub(crate) fn dadd_inplace(&mut self, y: &[Digit], y_is_neg: bool) {
         if self.is_negative() {
             if y_is_neg {
                 // x < 0, y < 0 ==> x = -|x|, y = -|y|. ==> x + y = -(|x| + |y|)
