@@ -256,8 +256,30 @@ impl Arbi {
     /// > quotient with any fractional part discarded; if the quotient a/b is
     /// > representable in the type of the result, (a/b)*b + a%b is equal to a;
     /// > otherwise, the behavior of both a/b and a%b is undefined.
-    fn divide(q: &mut Self, r: &mut Self, n: &Self, d: &Self) {
+    // Truncating Division
+    pub(crate) fn tdivide(q: &mut Self, r: &mut Self, n: &Self, d: &Self) {
         Self::ddivide(q, r, &n.vec, &d.vec, n.is_negative(), d.is_negative());
+    }
+
+    // Floor Division
+    pub(crate) fn fdivide(q: &mut Self, r: &mut Self, n: &Self, d: &Self) {
+        Self::ddivide(q, r, &n.vec, &d.vec, false, false);
+        if d.is_negative() {
+            r.negate_mut();
+        }
+        match (n.signum(), d.signum()) {
+            (1, -1) | (-1, 1) => {
+                if r.is_zero() {
+                    q.negate_mut();
+                } else {
+                    q.negate_mut();
+                    *q -= 1;
+                    r.negate_mut();
+                    *r += d;
+                }
+            }
+            _ => {}
+        }
     }
 }
 
@@ -268,7 +290,7 @@ impl Div<Arbi> for Arbi {
     fn div(self, rhs: Arbi) -> Arbi {
         let mut quot: Arbi = Arbi::zero();
         let mut rem: Arbi = Arbi::zero();
-        Self::divide(&mut quot, &mut rem, &self, &rhs);
+        Self::tdivide(&mut quot, &mut rem, &self, &rhs);
         quot
     }
 }
@@ -280,7 +302,7 @@ impl<'a> Div<&'a Arbi> for Arbi {
     fn div(self, rhs: &'a Arbi) -> Arbi {
         let mut quot: Arbi = Arbi::zero();
         let mut rem: Arbi = Arbi::zero();
-        Self::divide(&mut quot, &mut rem, &self, rhs);
+        Self::tdivide(&mut quot, &mut rem, &self, rhs);
         quot
     }
 }
@@ -292,7 +314,7 @@ impl<'a> Div<&'a Arbi> for &Arbi {
     fn div(self, rhs: &'a Arbi) -> Arbi {
         let mut quot: Arbi = Arbi::zero();
         let mut rem: Arbi = Arbi::zero();
-        Arbi::divide(&mut quot, &mut rem, self, rhs);
+        Arbi::tdivide(&mut quot, &mut rem, self, rhs);
         quot
     }
 }
@@ -302,7 +324,7 @@ impl DivAssign<Arbi> for Arbi {
     fn div_assign(&mut self, rhs: Arbi) {
         let mut quot: Arbi = Arbi::zero();
         let mut rem: Arbi = Arbi::zero();
-        Self::divide(&mut quot, &mut rem, self, &rhs);
+        Self::tdivide(&mut quot, &mut rem, self, &rhs);
         *self = quot;
     }
 }
@@ -312,7 +334,7 @@ impl<'a> DivAssign<&'a Arbi> for Arbi {
     fn div_assign(&mut self, rhs: &'a Arbi) {
         let mut quot: Arbi = Arbi::zero();
         let mut rem: Arbi = Arbi::zero();
-        Self::divide(&mut quot, &mut rem, self, rhs);
+        Self::tdivide(&mut quot, &mut rem, self, rhs);
         *self = quot;
     }
 }
@@ -324,7 +346,7 @@ impl Rem<Arbi> for Arbi {
     fn rem(self, rhs: Arbi) -> Arbi {
         let mut quot: Arbi = Arbi::zero();
         let mut rem: Arbi = Arbi::zero();
-        Self::divide(&mut quot, &mut rem, &self, &rhs);
+        Self::tdivide(&mut quot, &mut rem, &self, &rhs);
         rem
     }
 }
@@ -336,7 +358,7 @@ impl<'a> Rem<&'a Arbi> for Arbi {
     fn rem(self, rhs: &'a Arbi) -> Arbi {
         let mut quot: Arbi = Arbi::zero();
         let mut rem: Arbi = Arbi::zero();
-        Self::divide(&mut quot, &mut rem, &self, rhs);
+        Self::tdivide(&mut quot, &mut rem, &self, rhs);
         rem
     }
 }
@@ -348,7 +370,7 @@ impl<'a> Rem<&'a Arbi> for &Arbi {
     fn rem(self, rhs: &'a Arbi) -> Arbi {
         let mut quot: Arbi = Arbi::zero();
         let mut rem: Arbi = Arbi::zero();
-        Arbi::divide(&mut quot, &mut rem, self, rhs);
+        Arbi::tdivide(&mut quot, &mut rem, self, rhs);
         rem
     }
 }
@@ -358,7 +380,7 @@ impl RemAssign<Arbi> for Arbi {
     fn rem_assign(&mut self, rhs: Arbi) {
         let mut quot: Arbi = Arbi::zero();
         let mut rem: Arbi = Arbi::zero();
-        Self::divide(&mut quot, &mut rem, self, &rhs);
+        Self::tdivide(&mut quot, &mut rem, self, &rhs);
         *self = rem;
     }
 }
@@ -368,7 +390,7 @@ impl<'a> RemAssign<&'a Arbi> for Arbi {
     fn rem_assign(&mut self, rhs: &'a Arbi) {
         let mut quot: Arbi = Arbi::zero();
         let mut rem: Arbi = Arbi::zero();
-        Self::divide(&mut quot, &mut rem, self, rhs);
+        Self::tdivide(&mut quot, &mut rem, self, rhs);
         *self = rem;
     }
 }
@@ -509,7 +531,7 @@ impl Arbi {
     pub fn divrem(&self, other: &Arbi) -> (Arbi, Arbi) {
         let mut quot: Arbi = Arbi::zero();
         let mut rem: Arbi = Arbi::zero();
-        Self::divide(&mut quot, &mut rem, self, other);
+        Self::tdivide(&mut quot, &mut rem, self, other);
         (quot, rem)
     }
 }
