@@ -99,21 +99,13 @@ impl Arbi {
                 // x < 0, y >= 0 ==> x = -|x|, y = |y| ==> x - y = -(|x| + |y|)
                 // y - x = |y| + |x|
                 self.dadd_abs_inplace(y);
-                if !from_other {
-                    self.neg = true;
-                } else {
-                    self.neg = false;
-                }
+                self.neg = !from_other;
             }
         } else if y_is_neg {
             // x >= 0, y < 0 ==> x = |x|, y = -|y| ==> x - y = |x| + |y|
             // y - x = -|y| - |x| = -(|y| + |x|)
             self.dadd_abs_inplace(y);
-            if !from_other {
-                self.neg = false;
-            } else {
-                self.neg = true;
-            }
+            self.neg = from_other;
         } else {
             // x >= 0, y >= 0 ==> x = |x|, y = |y| ==> x - y = |x| - |y|
             // y - x = |y| - |x|
