@@ -17,6 +17,7 @@ mod ilog2;
 mod is_positive_is_negative;
 mod is_power_of_two;
 mod isqrt;
+mod next_multiple_of;
 mod reverse_bits;
 mod signum;
 mod swap_bytes;
