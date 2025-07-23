@@ -166,6 +166,15 @@ impl Arbi {
         }
     }
 
+    pub(crate) fn test_bit_magnitude(&self, i: BitCount) -> bool {
+        let digit_idx = (i / Digit::BITS as BitCount) as usize;
+        if self.size() <= digit_idx {
+            false
+        } else {
+            ((self.vec[digit_idx] >> (i % Digit::BITS as BitCount)) & 1) != 0
+        }
+    }
+
     /// Set bit `i` of the two's complement representation (with sign extension)
     /// of this integer.
     ///
