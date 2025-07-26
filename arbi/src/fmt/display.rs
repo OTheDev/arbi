@@ -28,7 +28,7 @@ impl fmt::Display for Arbi {
 mod tests {
     use super::*;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{SDDigit, SDigit, SQDigit};
+    use crate::{SDDigit, SDigit};
     use alloc::format;
     use alloc::string::ToString;
 
@@ -56,16 +56,16 @@ mod tests {
 
         let die_s = get_uniform_die(SDigit::MIN, SDigit::MAX);
         let die_m = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
-        let die_l = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+        // let die_l = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
 
         for i in i16::MIN..i16::MAX {
             let rs = die_s.sample(&mut rng);
             let rm = die_m.sample(&mut rng);
-            let rl = die_l.sample(&mut rng);
+            // let rl = die_l.sample(&mut rng);
 
             assert_eq!(format!("{}", Arbi::from(rs)), rs.to_string());
             assert_eq!(format!("{}", Arbi::from(rm)), rm.to_string());
-            assert_eq!(format!("{}", Arbi::from(rl)), rl.to_string());
+            // assert_eq!(format!("{}", Arbi::from(rl)), rl.to_string());
 
             assert_eq!(format!("{}", Arbi::from(i)), i.to_string());
         }

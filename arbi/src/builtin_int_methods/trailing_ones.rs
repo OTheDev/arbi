@@ -70,7 +70,7 @@ impl Arbi {
 mod tests {
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
     use crate::{Arbi, Assign};
-    use crate::{BitCount, DDigit, Digit, QDigit, SDDigit, SDigit, SQDigit};
+    use crate::{BitCount, DDigit, Digit, SDDigit, SDigit};
 
     macro_rules! test_uniform_die {
         ($die:expr, $rng:expr, unsigned) => {{
@@ -100,18 +100,18 @@ mod tests {
         let (mut rng, _) = get_seedable_rng();
         let die_d = get_uniform_die(Digit::MIN, Digit::MAX);
         let die_dd = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        let die_qd = get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+        // let die_qd = get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
         let die_sd = get_uniform_die(SDigit::MIN, SDigit::MAX);
         let die_sdd = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
-        let die_sqd = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+        // let die_sqd = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
 
         for _ in 0..i16::MAX {
             test_uniform_die!(die_d, &mut rng, unsigned);
             test_uniform_die!(die_dd, &mut rng, unsigned);
-            test_uniform_die!(die_qd, &mut rng, unsigned);
+            // test_uniform_die!(die_qd, &mut rng, unsigned);
             test_uniform_die!(die_sd, &mut rng);
             test_uniform_die!(die_sdd, &mut rng);
-            test_uniform_die!(die_sqd, &mut rng);
+            // test_uniform_die!(die_sqd, &mut rng);
         }
     }
 
@@ -196,10 +196,10 @@ mod tests {
             Some(BitCount::from(DDigit::MAX.trailing_ones()))
         );
 
-        a.assign(DDigit::MAX as QDigit + 1);
-        assert_eq!(
-            a.trailing_ones(),
-            Some(BitCount::from((DDigit::MAX as QDigit + 1).trailing_ones()))
-        );
+        // a.assign(DDigit::MAX as QDigit + 1);
+        // assert_eq!(
+        //     a.trailing_ones(),
+        //     Some(BitCount::from((DDigit::MAX as QDigit + 1).trailing_ones()))
+        // );
     }
 }

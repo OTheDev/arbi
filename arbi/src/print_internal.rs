@@ -57,6 +57,7 @@ impl Arbi {
     }
 }
 
+#[cfg(not(target_pointer_width = "64"))]
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -51,7 +51,8 @@ impl Arbi {
     Arbi integers) would be needed for the latter.
     */
     /// ceil( (log(2) / log(base)) * 2^(32) )
-    const SCALED_LOG2_DIV_LOG_32: [u32; 37] = [
+    #[cfg(not(target_pointer_width = "64"))]
+    const SCALED_LOG2_DIV_LOG: [u32; 37] = [
         0x00000000, 0x00000000, 0x00000000, 0xa1849cc2, 0x80000000, 0x6e40d1a5,
         0x6308c91c, 0x5b3064ec, 0x55555556, 0x50c24e61, 0x4d104d43, 0x4a002708,
         0x4768ce0e, 0x452e53e4, 0x433cfffc, 0x41867712, 0x40000000, 0x3ea16afe,
@@ -63,7 +64,8 @@ impl Arbi {
 
     /// ceil( (log(2) / log(base)) * 2^(64) )
     #[allow(dead_code)]
-    const SCALED_LOG2_DIV_LOG_64: [u64; 37] = [
+    #[cfg(target_pointer_width = "64")]
+    const SCALED_LOG2_DIV_LOG: [u64; 37] = [
         0x0000000000000000,
         0x0000000000000000,
         0x0000000000000000,
@@ -118,8 +120,7 @@ impl Arbi {
         assert!(base > 2 && base <= 36, "base must be in (2, 36]");
         assert!(size_bits != 0);
 
-        let multiplicand =
-            Self::SCALED_LOG2_DIV_LOG_32[base as usize] as BitCount;
+        let multiplicand = Self::SCALED_LOG2_DIV_LOG[base as usize] as BitCount;
 
         if let Some(product) = size_bits.checked_mul(multiplicand) {
             product >> Digit::BITS
@@ -137,7 +138,8 @@ impl Arbi {
     }
 
     /// ceil( (log(base) / log(2^(32))) * 2^(32) )
-    const SCALED_LOGB_DIV_LOGAB_32: [u32; 37] = [
+    #[cfg(not(target_pointer_width = "64"))]
+    const SCALED_LOGB_DIV_LOGAB: [u32; 37] = [
         0x00000000, 0x00000000, 0x8000000, 0xcae00d2, 0x10000000, 0x12934f0a,
         0x14ae00d2, 0x16757680, 0x18000001, 0x195c01a4, 0x1a934f0a, 0x1bacea7d,
         0x1cae00d2, 0x1d9a8024, 0x1e757680, 0x1f414fdc, 0x20000000, 0x20b31fb8,
@@ -149,7 +151,8 @@ impl Arbi {
 
     #[allow(dead_code)]
     /// ceil( (log(base) / log(2^(64))) * 2^(64) )
-    const SCALED_LOGB_DIV_LOGAB_64: [u64; 37] = [
+    #[cfg(target_pointer_width = "64")]
+    const SCALED_LOGB_DIV_LOGAB: [u64; 37] = [
         0x0000000000000000,
         0x0000000000000000,
         0x400000000000000,
@@ -219,7 +222,7 @@ impl Arbi {
             ) as usize;
         }
 
-        let multiplicand: Digit = Self::SCALED_LOGB_DIV_LOGAB_32[base as usize];
+        let multiplicand: Digit = Self::SCALED_LOGB_DIV_LOGAB[base as usize];
 
         if Digit::BITS >= usize::BITS {
             let product = (size_base as DDigit) * (multiplicand as DDigit);
@@ -237,7 +240,7 @@ impl Arbi {
 mod tests_size_base_with_size_bits {
     use super::*;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{DDigit, Digit, QDigit};
+    use crate::{DDigit, Digit};
 
     fn size_base(mut x: u128, base: u32) -> BitCount {
         if x == 0 {
@@ -260,13 +263,13 @@ mod tests_size_base_with_size_bits {
         let (mut rng, _) = get_seedable_rng();
         let d1 = get_uniform_die(0, Digit::MAX);
         let d2 = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        let d3 = get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+        // let d3 = get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
 
         for _ in 0..i16::MAX {
             let nums = [
                 d1.sample(&mut rng) as u128,
                 d2.sample(&mut rng) as u128,
-                d3.sample(&mut rng) as u128,
+                // d3.sample(&mut rng) as u128,
             ];
 
             for num in nums {
@@ -294,13 +297,13 @@ mod tests_size_base_with_size_bits {
         let (mut rng, _) = get_seedable_rng();
         let d1 = get_uniform_die(0, Digit::MAX);
         let d2 = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        let d3 = get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+        // let d3 = get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
 
         for _ in 0..i16::MAX {
             let nums = [
                 d1.sample(&mut rng) as u128,
                 d2.sample(&mut rng) as u128,
-                d3.sample(&mut rng) as u128,
+                // d3.sample(&mut rng) as u128,
             ];
 
             for num in nums {

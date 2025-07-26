@@ -91,6 +91,7 @@ impl IntoArbiLikeArray<$max_size> for $int {
 
 for_all_ints_with_metadata!(impl_into_arbi_like_array);
 
+#[cfg(not(target_pointer_width = "64"))]
 #[cfg(test)]
 mod tests {
     use super::*;

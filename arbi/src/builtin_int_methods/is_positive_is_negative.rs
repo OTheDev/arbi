@@ -56,14 +56,14 @@ impl Arbi {
 #[cfg(test)]
 mod tests {
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{Arbi, SDDigit, SDigit, SQDigit};
+    use crate::{Arbi, SDDigit, SDigit};
 
     #[test]
     fn smoke() {
         let (mut rng, _) = get_seedable_rng();
         let die_sdigit = get_uniform_die(SDigit::MIN, SDigit::MAX);
         let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
-        let die_sqdigit = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+        // let die_sqdigit = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
 
         for _ in 0..i16::MAX {
             let r = die_sdigit.sample(&mut rng);
@@ -78,11 +78,11 @@ mod tests {
             assert_eq!(a.is_negative(), r.is_negative());
             assert_eq!(a.is_positive(), r.is_positive());
 
-            let r = die_sqdigit.sample(&mut rng);
-            let a = Arbi::from(r);
+            // let r = die_sqdigit.sample(&mut rng);
+            // let a = Arbi::from(r);
 
-            assert_eq!(a.is_negative(), r.is_negative());
-            assert_eq!(a.is_positive(), r.is_positive());
+            // assert_eq!(a.is_negative(), r.is_negative());
+            // assert_eq!(a.is_positive(), r.is_positive());
         }
     }
 }

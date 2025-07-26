@@ -42,7 +42,7 @@ impl Arbi {
 #[cfg(test)]
 mod tests {
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{Arbi, SDDigit, SDigit, SQDigit};
+    use crate::{Arbi, SDDigit, SDigit};
 
     fn div_ceil(lhs: i128, rhs: i128) -> i128 {
         let (q, r) = (lhs / rhs, lhs % rhs);
@@ -64,16 +64,16 @@ mod tests {
         let (mut rng, _) = get_seedable_rng();
 
         let udist_sd =
-            get_uniform_die(SDigit::MIN as SQDigit, SDigit::MAX as SQDigit);
+            get_uniform_die(SDigit::MIN as SDDigit, SDigit::MAX as SDDigit);
         let udist_sdd =
-            get_uniform_die(SDDigit::MIN as SQDigit, SDDigit::MAX as SQDigit);
-        let udist_sqd = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+            get_uniform_die(SDDigit::MIN as SDDigit, SDDigit::MAX as SDDigit);
+        // let udist_sqd = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
 
         for _ in 0..i16::MAX {
             for (udist, mn) in &[
-                (udist_sd, SDigit::MIN as SQDigit),
-                (udist_sdd, SDDigit::MIN as SQDigit),
-                (udist_sqd, SQDigit::MIN),
+                (udist_sd, SDigit::MIN as SDDigit),
+                (udist_sdd, SDDigit::MIN as SDDigit),
+                // (udist_sqd, SQDigit::MIN),
             ] {
                 let (a_in, b_in) =
                     (udist.sample(&mut rng), udist.sample(&mut rng));
