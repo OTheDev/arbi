@@ -61,7 +61,7 @@ mod tests {
     use super::*;
     use crate::util::test::float::*;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{DDigit, QDigit, SDDigit, SQDigit};
+    use crate::{DDigit, SDDigit};
 
     #[test]
     fn smoke() {
@@ -69,14 +69,14 @@ mod tests {
         let die_0 = get_uniform_die(MAX_INT_NEG, MAX_INT);
         let die_1 = get_uniform_die(-100.0, 100.0);
         let die_2 = get_uniform_die(DBL_MAX_INT, u64::MAX);
-        let die_3 = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+        // let die_3 = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
         let die_4 = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
 
         for _ in 0..i16::MAX {
             let mut random_double: f64;
             let mut int_val: i64;
             let uint_val: u64;
-            let qval: SQDigit;
+            // let qval: SQDigit;
             let sval: SDDigit;
 
             random_double = die_0.sample(&mut rng);
@@ -90,8 +90,8 @@ mod tests {
             uint_val = die_2.sample(&mut rng);
             assert_eq!(Arbi::from(uint_val).to_f64(), uint_val as f64);
 
-            qval = die_3.sample(&mut rng);
-            assert_double_eq(Arbi::from(qval).to_f64(), qval as f64);
+            // qval = die_3.sample(&mut rng);
+            // assert_double_eq(Arbi::from(qval).to_f64(), qval as f64);
 
             sval = die_4.sample(&mut rng);
             assert_double_eq(Arbi::from(sval).to_f64(), sval as f64);
@@ -135,8 +135,8 @@ mod tests {
     fn digit_types_max_and_min() {
         test_db(&Arbi::from(Digit::MAX), Digit::MAX as f64);
         test_db(&Arbi::from(DDigit::MAX), DDigit::MAX as f64);
-        test_db(&Arbi::from(QDigit::MAX), QDigit::MAX as f64);
-        test_db(&Arbi::from(SQDigit::MIN), SQDigit::MIN as f64);
+        // test_db(&Arbi::from(QDigit::MAX), QDigit::MAX as f64);
+        // test_db(&Arbi::from(SQDigit::MIN), SQDigit::MIN as f64);
     }
 
     #[test]

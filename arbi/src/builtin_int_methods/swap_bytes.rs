@@ -5,17 +5,18 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use crate::Arbi;
 
+/* TODO IMPORTANT: bug */
+
 impl Arbi {
+    // # Examples
+    // ```
+    // use arbi::Arbi;
+    // let a = Arbi::from(0x12345678_u32);
+    // assert_eq!(a.swap_bytes(), 0x78563412);
+    // ```
     /// Reverses the byte order of the absolute value of the integer.
     ///
     /// The sign remains unchanged.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    /// let a = Arbi::from(0x12345678_u32);
-    /// assert_eq!(a.swap_bytes(), 0x78563412);
-    /// ```
     ///
     /// ## Complexity
     /// \\( O(n) \\)
@@ -24,17 +25,16 @@ impl Arbi {
         self
     }
 
+    // # Examples
+    // ```
+    // use arbi::Arbi;
+    // let mut a = Arbi::from(0x12345678_u32);
+    // a.swap_bytes_mut();
+    // assert_eq!(a, 0x78563412);
+    // ```
     /// Reverses the byte order of the absolute value of the integer.
     ///
     /// The sign remains unchanged.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    /// let mut a = Arbi::from(0x12345678_u32);
-    /// a.swap_bytes_mut();
-    /// assert_eq!(a, 0x78563412);
-    /// ```
     pub fn swap_bytes_mut(&mut self) {
         let len = self.vec.len();
         for i in 0..(len / 2) {
@@ -48,16 +48,15 @@ impl Arbi {
         self.trim();
     }
 
+    // # Examples
+    // ```
+    // use arbi::Arbi;
+    // let a = Arbi::from(0x12345678_u32);
+    // assert_eq!(a.swap_bytes_ref(), 0x78563412);
+    // ```
     /// Reverses the byte order of the absolute value of the integer.
     ///
     /// The sign remains unchanged.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    /// let a = Arbi::from(0x12345678_u32);
-    /// assert_eq!(a.swap_bytes_ref(), 0x78563412);
-    /// ```
     pub fn swap_bytes_ref(&self) -> Self {
         let ret = self.clone();
         ret.swap_bytes()

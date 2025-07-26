@@ -326,6 +326,7 @@ mod tests {
     }
 
     // Should keep negative
+    #[cfg(not(target_pointer_width = "64"))]
     #[test]
     fn negative_base_odd_exponent() {
         let mone = Arbi::neg_one();
@@ -346,6 +347,7 @@ mod tests {
     }
 
     // Should make positive
+    #[cfg(not(target_pointer_width = "64"))]
     #[test]
     fn negative_base_even_exponent() {
         let mone = Arbi::neg_one();

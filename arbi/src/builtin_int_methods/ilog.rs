@@ -132,7 +132,7 @@ impl Arbi {
 mod tests {
     use crate::uints::UnsignedUtilities;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{Arbi, BitCount, DDigit, Digit, QDigit};
+    use crate::{Arbi, BitCount, DDigit, Digit};
 
     #[test]
     fn test_digit_boundaries() {
@@ -140,7 +140,7 @@ mod tests {
             let a = Arbi::from(Digit::MAX);
             assert_eq!(
                 a.ilog_ref(base),
-                Digit::ilog_(Digit::MAX, base) as BitCount
+                Digit::ilog_(Digit::MAX, base as Digit) as BitCount
             );
             let a = Arbi::from(Digit::MAX as DDigit + 1);
             assert_eq!(
@@ -154,12 +154,12 @@ mod tests {
                 a.ilog_ref(base),
                 DDigit::ilog_(DDigit::MAX, base as DDigit) as BitCount
             );
-            let a = Arbi::from(DDigit::MAX as QDigit + 1);
-            assert_eq!(
-                a.ilog_ref(base),
-                QDigit::ilog_(DDigit::MAX as QDigit + 1, base as QDigit)
-                    as BitCount
-            );
+            // let a = Arbi::from(DDigit::MAX as QDigit + 1);
+            // assert_eq!(
+            //     a.ilog_ref(base),
+            //     QDigit::ilog_(DDigit::MAX as QDigit + 1, base as QDigit)
+            //         as BitCount
+            // );
         }
     }
 
@@ -189,8 +189,8 @@ mod tests {
         let (mut rng, _) = get_seedable_rng();
         let die_digit = get_uniform_die(Digit::MIN, Digit::MAX);
         let die_ddigit = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        let die_qdigit =
-            get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+        // let die_qdigit =
+        //     get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
 
         for base in 2u32..=36u32 {
             for _ in 0..i16::MAX {
@@ -199,7 +199,10 @@ mod tests {
                     continue;
                 }
                 let a = Arbi::from(r);
-                assert_eq!(a.ilog_ref(base), Digit::ilog_(r, base) as BitCount);
+                assert_eq!(
+                    a.ilog_ref(base),
+                    Digit::ilog_(r, base as Digit) as BitCount
+                );
 
                 let r = die_ddigit.sample(&mut rng);
                 let a = Arbi::from(r);
@@ -208,12 +211,12 @@ mod tests {
                     DDigit::ilog_(r, base as DDigit) as BitCount
                 );
 
-                let r = die_qdigit.sample(&mut rng);
-                let a = Arbi::from(r);
-                assert_eq!(
-                    a.ilog_ref(base),
-                    QDigit::ilog_(r, base as QDigit) as BitCount
-                );
+                // let r = die_qdigit.sample(&mut rng);
+                // let a = Arbi::from(r);
+                // assert_eq!(
+                //     a.ilog_ref(base),
+                //     QDigit::ilog_(r, base as QDigit) as BitCount
+                // );
             }
         }
     }

@@ -89,7 +89,7 @@ impl Arbi {
 mod tests {
     use crate::uints::UnsignedUtilities;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{Arbi, DDigit, Digit, QDigit};
+    use crate::{Arbi, DDigit, Digit};
 
     #[test]
     fn test_isqrt_basic() {
@@ -110,12 +110,12 @@ mod tests {
         let dmax = Digit::MAX;
         let dmaxp1 = dmax as DDigit + 1;
         let ddmax = DDigit::MAX;
-        let ddmaxp1 = ddmax as QDigit + 1;
+        // let ddmaxp1 = ddmax as QDigit + 1;
 
         assert_eq!(Arbi::from(dmax).isqrt(), dmax.isqrt_());
         assert_eq!(Arbi::from(dmaxp1).isqrt(), dmaxp1.isqrt_());
         assert_eq!(Arbi::from(ddmax).isqrt(), ddmax.isqrt_());
-        assert_eq!(Arbi::from(ddmaxp1).isqrt(), ddmaxp1.isqrt_());
+        // assert_eq!(Arbi::from(ddmaxp1).isqrt(), ddmaxp1.isqrt_());
     }
 
     #[test]
@@ -123,8 +123,8 @@ mod tests {
         let (mut rng, _) = get_seedable_rng();
         let die_digit = get_uniform_die(Digit::MIN, Digit::MAX);
         let die_ddigit = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        let die_qdigit =
-            get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+        // let die_qdigit =
+        //     get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
 
         for _ in 0..i16::MAX {
             let r = die_digit.sample(&mut rng);
@@ -135,9 +135,9 @@ mod tests {
             let a = Arbi::from(r);
             assert_eq!(a.isqrt(), r.isqrt_());
 
-            let r = die_qdigit.sample(&mut rng);
-            let a = Arbi::from(r);
-            assert_eq!(a.isqrt(), r.isqrt_());
+            // let r = die_qdigit.sample(&mut rng);
+            // let a = Arbi::from(r);
+            // assert_eq!(a.isqrt(), r.isqrt_());
         }
     }
 

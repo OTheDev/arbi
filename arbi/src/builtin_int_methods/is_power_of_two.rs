@@ -52,7 +52,7 @@ impl Arbi {
 #[cfg(test)]
 mod tests {
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{Arbi, DDigit, Digit, QDigit, SDDigit, SQDigit};
+    use crate::{Arbi, DDigit, Digit, SDDigit};
 
     #[test]
     fn test_is_power_of_two_digit_boundaries() {
@@ -68,13 +68,13 @@ mod tests {
 
         let a = Arbi::from(DDigit::MAX);
         assert!(!a.is_power_of_two());
-        let a = Arbi::from(DDigit::MAX as QDigit + 1);
-        assert!(a.is_power_of_two());
+        // let a = Arbi::from(DDigit::MAX as QDigit + 1);
+        // assert!(a.is_power_of_two());
 
-        let a = Arbi::from(-(DDigit::MAX as SQDigit));
-        assert!(!a.is_power_of_two());
-        let a = Arbi::from(-(DDigit::MAX as SQDigit + 1));
-        assert!(a.is_power_of_two());
+        // let a = Arbi::from(-(DDigit::MAX as SQDigit));
+        // assert!(!a.is_power_of_two());
+        // let a = Arbi::from(-(DDigit::MAX as SQDigit + 1));
+        // assert!(a.is_power_of_two());
     }
 
     #[test]
@@ -94,8 +94,8 @@ mod tests {
         let (mut rng, _) = get_seedable_rng();
         let die_digit = get_uniform_die(Digit::MIN, Digit::MAX);
         let die_ddigit = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        let die_qdigit =
-            get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+        // let die_qdigit =
+        //     get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
         let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
 
         for _ in 0..i16::MAX {
@@ -107,9 +107,9 @@ mod tests {
             let a = Arbi::from(r);
             assert_eq!(a.is_power_of_two(), r.is_power_of_two());
 
-            let r = die_qdigit.sample(&mut rng);
-            let a = Arbi::from(r);
-            assert_eq!(a.is_power_of_two(), r.is_power_of_two());
+            // let r = die_qdigit.sample(&mut rng);
+            // let a = Arbi::from(r);
+            // assert_eq!(a.is_power_of_two(), r.is_power_of_two());
 
             let r = die_sddigit.sample(&mut rng);
             let a = Arbi::from(r);

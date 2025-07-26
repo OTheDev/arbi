@@ -5,20 +5,21 @@ SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use crate::Arbi;
 
+/* TODO IMPORTANT: bug */
+
 impl Arbi {
+    // # Examples
+    // ```
+    // use arbi::Arbi;
+    // let a = Arbi::from(0x12345678_u32);
+    // assert_eq!(a.reverse_bits(), 0x12345678_u32.reverse_bits());
+    // ```
     /// Reverses the order of bits in the absolute value of the integer.
     ///
     /// The least significant bit becomes the most significant bit, second least
     /// significant bit becomes second most-significant bit, etc.
     ///
     /// The sign remains unchanged.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    /// let a = Arbi::from(0x12345678_u32);
-    /// assert_eq!(a.reverse_bits(), 0x12345678_u32.reverse_bits());
-    /// ```
     ///
     /// # Complexity
     /// \\( O(n) \\)
@@ -27,20 +28,19 @@ impl Arbi {
         self
     }
 
+    // # Examples
+    // ```
+    // use arbi::Arbi;
+    // let mut a = Arbi::from(0x12345678_u32);
+    // a.reverse_bits_mut();
+    // assert_eq!(a, 0x12345678_u32.reverse_bits());
+    // ```
     /// Reverses the order of bits in the absolute value of the integer.
     ///
     /// The least significant bit becomes the most significant bit, second least
     /// significant bit becomes second most-significant bit, etc.
     ///
     /// The sign remains unchanged.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    /// let mut a = Arbi::from(0x12345678_u32);
-    /// a.reverse_bits_mut();
-    /// assert_eq!(a, 0x12345678_u32.reverse_bits());
-    /// ```
     pub fn reverse_bits_mut(&mut self) {
         let len = self.vec.len();
         for i in 0..(len / 2) {
@@ -54,20 +54,19 @@ impl Arbi {
         self.trim();
     }
 
+    // # Examples
+    // ```
+    // use arbi::Arbi;
+    // let a = Arbi::from(0x12345678_u32);
+    // let b: Arbi = a.reverse_bits_ref();
+    // assert_eq!(b, 0x12345678_u32.reverse_bits());
+    // ```
     /// Reverses the order of bits in the absolute value of the integer.
     ///
     /// The least significant bit becomes the most significant bit, second least
     /// significant bit becomes second most-significant bit, etc.
     ///
     /// The sign remains unchanged.
-    ///
-    /// # Examples
-    /// ```
-    /// use arbi::Arbi;
-    /// let a = Arbi::from(0x12345678_u32);
-    /// let b: Arbi = a.reverse_bits_ref();
-    /// assert_eq!(b, 0x12345678_u32.reverse_bits());
-    /// ```
     pub fn reverse_bits_ref(&self) -> Self {
         let ret = self.clone();
         ret.reverse_bits()

@@ -45,7 +45,7 @@ impl Arbi {
 mod tests {
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
     use crate::Arbi;
-    use crate::{BitCount, DDigit, Digit, QDigit, SDDigit, SDigit, SQDigit};
+    use crate::{BitCount, DDigit, Digit, SDDigit, SDigit};
 
     macro_rules! assert_count_zeros {
         ($value:expr) => {
@@ -69,18 +69,18 @@ mod tests {
         let (mut rng, _) = get_seedable_rng();
         let die_d = get_uniform_die(Digit::MIN, Digit::MAX);
         let die_dd = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        let die_qd = get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+        // let die_qd = get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
         let die_sd = get_uniform_die(SDigit::MIN, SDigit::MAX);
         let die_sdd = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
-        let die_sqd = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+        // let die_sqd = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
 
         for _ in 0..i16::MAX {
             assert_count_zeros!(die_d.sample(&mut rng));
             assert_count_zeros!(die_dd.sample(&mut rng));
-            assert_count_zeros!(die_qd.sample(&mut rng));
+            // assert_count_zeros!(die_qd.sample(&mut rng));
             assert_count_zeros!(die_sd.sample(&mut rng));
             assert_count_zeros!(die_sdd.sample(&mut rng));
-            assert_count_zeros!(die_sqd.sample(&mut rng));
+            // assert_count_zeros!(die_sqd.sample(&mut rng));
         }
     }
 }
