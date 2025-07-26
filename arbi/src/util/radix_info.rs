@@ -229,8 +229,15 @@ impl Arbi {
             (product >> Digit::BITS) as usize
         } else {
             let (hi, lo) = usize_impl::mul2(size_base, multiplicand as usize);
-            debug_assert!(hi >> Digit::BITS == 0);
-            (hi << (usize::BITS - Digit::BITS)) | (lo >> Digit::BITS)
+
+            // To appease rustc-1.65
+            let shift = Digit::BITS;
+            if shift < usize::BITS {
+                debug_assert!(hi >> shift == 0);
+                (hi << (usize::BITS - shift)) | (lo >> shift)
+            } else {
+                unreachable!()
+            }
         }
         .wrapping_add(1)
     }
