@@ -174,11 +174,20 @@ impl From<I256> for Arbi {
         if value.is_zero() {
             return x;
         } else if value.is_negative() {
-            uvalue =
-                UnsignedT::ZERO.wrapping_sub(UnsignedT::wrapping_from(value));
+            // uvalue =
+            //     UnsignedT::ZERO.wrapping_sub(UnsignedT::wrapping_from(value));
+            // FIX as wrapping_from() not available in 0.5
+            let bytes: [u8; 32] = value.to_le_bytes();
+            uvalue = U256::from_le_bytes(bytes);
+            uvalue = U256::ZERO.wrapping_sub(uvalue);
+
             x.neg = true;
         } else {
-            uvalue = UnsignedT::wrapping_from(value);
+            // uvalue = UnsignedT::wrapping_from(value);
+            // FIX as wrapping_from() not available in 0.5
+            let bytes: [u8; 32] = value.to_le_bytes();
+            uvalue = U256::from_le_bytes(bytes);
+
             x.neg = false;
         }
 
@@ -381,9 +390,18 @@ impl CompareWith<$signed> for Arbi {
         #[allow(unused_comparisons)]
         let b_negative = b < <$signed>::ZERO;
         let unsigned_b: UnsignedT = if b_negative {
-            UnsignedT::ZERO.wrapping_sub(UnsignedT::wrapping_from(b))
+            // UnsignedT::ZERO.wrapping_sub(UnsignedT::wrapping_from(b))
+
+            // FIX as wrapping_from() not available in 0.5
+            let bytes: [u8; 32] = b.to_be_bytes();
+            let temp = UnsignedT::from_be_bytes(bytes);
+            UnsignedT::ZERO.wrapping_sub(temp)
         } else {
-            UnsignedT::wrapping_from(b)
+            // UnsignedT::wrapping_from(b)
+
+            // FIX as wrapping_from() not available in 0.5
+            let bytes: [u8; 32] = b.to_be_bytes();
+            UnsignedT::from_be_bytes(bytes)
         };
 
         if a.is_negative() && !b_negative {
