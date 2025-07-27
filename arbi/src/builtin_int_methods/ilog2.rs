@@ -53,8 +53,9 @@ impl Arbi {
 #[cfg(test)]
 mod tests {
     use crate::uints::UnsignedUtilities;
+    use crate::util::qdigit::get_uniform_qdigit_die;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{Arbi, BitCount, DDigit, Digit};
+    use crate::{Arbi, BitCount, DDigit, Digit, QDigit};
 
     #[test]
     fn test_digit_boundaries() {
@@ -68,11 +69,12 @@ mod tests {
 
         let a = Arbi::from(DDigit::MAX);
         assert_eq!(a.ilog2(), DDigit::ilog2_(DDigit::MAX) as BitCount);
-        // let a = Arbi::from(DDigit::MAX as QDigit + 1);
-        // assert_eq!(
-        //     a.ilog2(),
-        //     QDigit::ilog2_(DDigit::MAX as QDigit + 1) as BitCount
-        // );
+        let a = Arbi::from(QDigit::from(DDigit::MAX) + QDigit::from(1));
+        assert_eq!(
+            a.ilog2(),
+            QDigit::ilog2_(QDigit::from(DDigit::MAX) + QDigit::from(1))
+                as BitCount
+        );
     }
 
     #[test]
@@ -94,8 +96,10 @@ mod tests {
         let (mut rng, _) = get_seedable_rng();
         let die_digit = get_uniform_die(Digit::MIN, Digit::MAX);
         let die_ddigit = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        // let die_qdigit =
-        //     get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+        let die_qdigit = get_uniform_qdigit_die(
+            QDigit::from(DDigit::MAX) + QDigit::from(1),
+            QDigit::MAX,
+        );
 
         for _ in 0..i16::MAX {
             let r = die_digit.sample(&mut rng);
@@ -106,9 +110,9 @@ mod tests {
             let a = Arbi::from(r);
             assert_eq!(a.ilog2(), DDigit::ilog2_(r) as BitCount);
 
-            // let r = die_qdigit.sample(&mut rng);
-            // let a = Arbi::from(r);
-            // assert_eq!(a.ilog2(), QDigit::ilog2_(r) as BitCount);
+            let r = die_qdigit.sample(&mut rng);
+            let a = Arbi::from(r);
+            assert_eq!(a.ilog2(), QDigit::ilog2_(r) as BitCount);
         }
     }
 }

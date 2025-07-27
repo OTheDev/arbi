@@ -163,7 +163,7 @@ impl Arbi {
 #[cfg(test)]
 mod tests {
     use crate::util::qdigit::get_uniform_sqdigit_die;
-    use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
+    use crate::util::test::get_seedable_rng;
     use crate::{Arbi, SDDigit, SDigit, SQDigit};
 
     #[test]
