@@ -258,42 +258,11 @@ pub(crate) fn get_uniform_i256_die<R: Rng>(
     if min_inclusive == max_inclusive {
         return min_inclusive;
     }
-
-    let range_u256 = if max_inclusive >= min_inclusive {
-        let diff = max_inclusive - min_inclusive;
-        diff.into_raw()
-    } else {
-        let pos_part = (I256::MAX - min_inclusive).into_raw();
-        let neg_part = (max_inclusive - I256::MIN).into_raw();
-        pos_part + neg_part + U256::from(2)
-    };
-
-    if range_u256 == U256::MAX {
-        let mut bytes = [0u8; 32];
-        rng.fill_bytes(&mut bytes);
-        let random_u256 = U256::from_be_bytes(bytes);
-        let random_i256 = I256::from_raw(random_u256);
-        return random_i256;
-    }
-
-    let range_plus_one = range_u256 + U256::from(1);
-
-    loop {
-        // Random U256
-        let mut bytes = [0u8; 32];
-        rng.fill_bytes(&mut bytes);
-        let candidate = U256::from_be_bytes(bytes);
-
-        // Rejection sampling
-        let multiplier = U256::MAX / range_plus_one;
-        let limit = multiplier * range_plus_one;
-
-        if candidate < limit {
-            let result = candidate % range_plus_one;
-            let result_i256 = I256::from_raw(result);
-            return min_inclusive.wrapping_add(result_i256);
-        }
-    }
+    let min_u256 = min_inclusive.into_raw().wrapping_add(I256::MIN.into_raw());
+    let max_u256 = max_inclusive.into_raw().wrapping_add(I256::MIN.into_raw());
+    let result_u256 = get_uniform_u256_die(min_u256, max_u256, rng);
+    let result_raw = result_u256.wrapping_sub(I256::MIN.into_raw());
+    I256::from_raw(result_raw)
 }
 
 pub struct U256Uniform {
