@@ -14,10 +14,10 @@ pub(crate) trait UnsignedUtilities: Sized {
     fn umul_overflow(r: &mut Self, a: Self, b: Self) -> bool;
     /// Return the number of bits required to represent a value of type Self,
     /// where Self is an unsigned integral type.
-    fn bit_length(value: Self) -> u8;
+    fn bit_length(value: Self) -> u32;
     /// Return the number of leading zero bits in nonzero unsigned integral `v`,
     /// starting from the MSB.
-    fn clz(value: Self) -> u8;
+    fn clz(value: Self) -> u32;
     /// Any integer with absolute value less than 2 ** 53 can be exactly
     /// represented in an IEEE 754 double. An n-bit unsigned integer can
     /// represent values in the range [0, 2 ** n - 1].
@@ -30,9 +30,19 @@ pub(crate) trait UnsignedUtilities: Sized {
     ///     - `return value <= dbl_max_int;`
     ///     - `[dbl_max_int is 2 ** 53]`
     fn has_double_exact(value: Self) -> bool;
+    /// Calculates the quotient of `self` and `rhs`, rounding the result towards
+    /// positive infinity.
+    ///
+    /// # Panics
+    /// This function will panic if `rhs` is zero.
+    ///
+    /// # Examples
+    /// ```ignore
+    /// assert_eq!(u64::div_ceil_(9, 5), 2);
+    /// ```
     fn div_ceil_(x: Self, y: Self) -> Self;
-    fn ilog2_(v: Self) -> u8;
-    fn ilog_(v: Self, base: Self) -> u32;
+    fn ilog2_(v: Self) -> u32;
+    fn ilog_(v: Self, base: u32) -> u32;
     fn ilog10_(v: Self) -> u32;
     /// Integer square root using binary search.
     /// Returns the largest integer y such that y * y <= x.
@@ -72,22 +82,23 @@ impl UnsignedUtilities for $t {
         return if a != 0 { true } else { false } && *r / a != b;
     }
 
-    fn bit_length(number: Self) -> u8 {
+    fn bit_length(number: Self) -> u32 {
         if number == 0 {
             1
         } else {
-            <$t>::BITS as u8 - number.leading_zeros() as u8
+            <$t>::BITS as u32 - number.leading_zeros() as u32
         }
     }
 
-    fn ilog2_(v: Self) -> u8 {
+    fn ilog2_(v: Self) -> u32 {
         if v <= 0 {
             panic!("ilog2_(): value must be positive: {}", v)
         }
         Self::bit_length(v) - 1
     }
 
-    fn ilog_(v: Self, base: Self) -> u32 {
+    fn ilog_(v: Self, base: u32) -> u32 {
+        let base = base as Self;
         if v < 1 || base < 2 {
             panic!("ilog_(): value ({}) must be positive and base ({}) >= 2", v, base);
         }
@@ -104,8 +115,8 @@ impl UnsignedUtilities for $t {
         Self::ilog_(v, 10)
     }
 
-    fn clz(v: Self) -> u8 {
-        let width = Self::BITS as u8;
+    fn clz(v: Self) -> u32 {
+        let width = Self::BITS as u32;
         width - Self::bit_length(v)
     }
 
@@ -118,16 +129,6 @@ impl UnsignedUtilities for $t {
         }
     }
 
-    /// Calculates the quotient of `self` and `rhs`, rounding the result towards
-    /// positive infinity.
-    ///
-    /// # Panics
-    /// This function will panic if `rhs` is zero.
-    ///
-    /// # Examples
-    /// ```ignore
-    /// assert_eq!(u64::div_ceil_(9, 5), 2);
-    /// ```
     fn div_ceil_(x: Self, y: Self) -> Self {
         if x == 0 {
             0

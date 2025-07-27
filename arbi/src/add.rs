@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
@@ -1061,7 +1061,7 @@ mod test_add_with_integral {
 mod test_sub_with_integral {
     use super::*;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{SDDigit, SDigit};
+    use crate::{SDDigit, SDigit, SQDigit};
 
     #[test]
     fn test_sub_zero() {
@@ -1110,36 +1110,60 @@ mod test_sub_with_integral {
     fn smoke() {
         let (mut rng, _) = get_seedable_rng();
         let die_sdigit = get_uniform_die(SDigit::MIN, SDigit::MAX);
-        // let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
+        let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
 
         for _ in 0..i16::MAX {
-            // let lhs = die_sddigit.sample(&mut rng);
-            // let lhs_arbi = Arbi::from(lhs);
-            // let rhs = die_sddigit.sample(&mut rng);
-            // assert_eq!(&lhs_arbi - rhs, lhs as SQDigit - rhs as SQDigit);
-            // let rhs = die_sdigit.sample(&mut rng);
-            // assert_eq!(lhs_arbi - rhs, lhs as SQDigit - rhs as SQDigit);
+            let lhs = die_sddigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(
+                &lhs_arbi - rhs,
+                SQDigit::try_from(lhs).unwrap()
+                    - SQDigit::try_from(rhs).unwrap()
+            );
+            let rhs = die_sdigit.sample(&mut rng);
+            assert_eq!(
+                lhs_arbi - rhs,
+                SQDigit::try_from(lhs).unwrap()
+                    - SQDigit::try_from(rhs).unwrap()
+            );
 
             let lhs = die_sdigit.sample(&mut rng);
             let lhs_arbi = Arbi::from(lhs);
             let rhs = die_sdigit.sample(&mut rng);
             assert_eq!(&lhs_arbi - rhs, lhs as SDDigit - rhs as SDDigit);
-            // let rhs = die_sddigit.sample(&mut rng);
-            // assert_eq!(lhs_arbi - rhs, lhs as SQDigit - rhs as SQDigit);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(
+                lhs_arbi - rhs,
+                SQDigit::try_from(lhs).unwrap()
+                    - SQDigit::try_from(rhs).unwrap()
+            );
 
-            // let lhs = die_sddigit.sample(&mut rng);
-            // let lhs_arbi = Arbi::from(lhs);
-            // let rhs = die_sddigit.sample(&mut rng);
-            // assert_eq!(rhs - &lhs_arbi, rhs as SQDigit - lhs as SQDigit);
-            // let rhs = die_sdigit.sample(&mut rng);
-            // assert_eq!(rhs - lhs_arbi, rhs as SQDigit - lhs as SQDigit);
+            let lhs = die_sddigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(
+                rhs - &lhs_arbi,
+                SQDigit::try_from(rhs).unwrap()
+                    - SQDigit::try_from(lhs).unwrap()
+            );
+            let rhs = die_sdigit.sample(&mut rng);
+            assert_eq!(
+                rhs - lhs_arbi,
+                SQDigit::try_from(rhs).unwrap()
+                    - SQDigit::try_from(lhs).unwrap()
+            );
 
             let lhs = die_sdigit.sample(&mut rng);
             let lhs_arbi = Arbi::from(lhs);
             let rhs = die_sdigit.sample(&mut rng);
             assert_eq!(rhs - &lhs_arbi, rhs as SDDigit - lhs as SDDigit);
-            // let rhs = die_sddigit.sample(&mut rng);
-            // assert_eq!(rhs - lhs_arbi, rhs as SQDigit - lhs as SQDigit);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(
+                rhs - lhs_arbi,
+                SQDigit::try_from(rhs).unwrap()
+                    - SQDigit::try_from(lhs).unwrap()
+            );
         }
     }
 
@@ -1265,7 +1289,6 @@ impl Arbi {
     }
 }
 
-#[cfg(not(target_pointer_width = "64"))]
 #[cfg(test)]
 mod test_add3_abs_assign {
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
@@ -1278,7 +1301,7 @@ mod test_add3_abs_assign {
         let b = 11334117686971261073_u64;
         let c = 9795558189060012567_u64;
         s.add3_abs_assign(&Arbi::from(a), &Arbi::from(b), &Arbi::from(c));
-        assert_eq!(s, (a as QDigit) + (b as QDigit) + (c as QDigit));
+        assert_eq!(s, QDigit::from(a) + QDigit::from(b) + QDigit::from(c));
     }
 
     #[test]
@@ -1288,7 +1311,7 @@ mod test_add3_abs_assign {
         let b = 13975311186207392826_u64;
         let c = 12301324174353418444_u64;
         s.add3_abs_assign(&Arbi::from(a), &Arbi::from(b), &Arbi::from(c));
-        assert_eq!(s, (a as QDigit) + (b as QDigit) + (c as QDigit));
+        assert_eq!(s, QDigit::from(a) + QDigit::from(b) + QDigit::from(c));
     }
 
     #[test]
@@ -1298,7 +1321,7 @@ mod test_add3_abs_assign {
         let b = 1619148075948679532_u64;
         let c = 2567961127114686782_u64;
         s.add3_abs_assign(&Arbi::from(a), &Arbi::from(b), &Arbi::from(c));
-        assert_eq!(s, (a as QDigit) + (b as QDigit) + (c as QDigit));
+        assert_eq!(s, QDigit::from(a) + QDigit::from(b) + QDigit::from(c));
     }
 
     #[test]
@@ -1311,12 +1334,11 @@ mod test_add3_abs_assign {
             let b = die.sample(&mut rng);
             let c = die.sample(&mut rng);
             s.add3_abs_assign(&Arbi::from(a), &Arbi::from(b), &Arbi::from(c));
-            assert_eq!(s, (a as QDigit) + (b as QDigit) + (c as QDigit));
+            assert_eq!(s, QDigit::from(a) + QDigit::from(b) + QDigit::from(c));
         }
     }
 }
 
-#[cfg(not(target_pointer_width = "64"))]
 #[cfg(test)]
 mod test_sub_sum_of_abs_gt {
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
@@ -1329,7 +1351,7 @@ mod test_sub_sum_of_abs_gt {
         let b = 1986771123253152281_u64;
         let mut slf = Arbi::from(s);
         slf.sub_sum_of_abs_gt(&Arbi::from(a), &Arbi::from(b));
-        assert_eq!(slf, (s as QDigit) - (a as QDigit + b as QDigit));
+        assert_eq!(slf, QDigit::from(s) - (QDigit::from(a) + QDigit::from(b)));
     }
 
     #[test]
@@ -1339,7 +1361,7 @@ mod test_sub_sum_of_abs_gt {
         let b = 3480730557869871236_u64;
         let mut slf = Arbi::from(s);
         slf.sub_sum_of_abs_gt(&Arbi::from(a), &Arbi::from(b));
-        assert_eq!(slf, (s as QDigit) - (a as QDigit + b as QDigit));
+        assert_eq!(slf, QDigit::from(s) - (QDigit::from(a) + QDigit::from(b)));
     }
 
     #[test]
@@ -1349,7 +1371,7 @@ mod test_sub_sum_of_abs_gt {
         let b = 1329917829030286033_u64;
         let mut slf = Arbi::from(s);
         slf.sub_sum_of_abs_gt(&Arbi::from(a), &Arbi::from(b));
-        assert_eq!(slf, (s as QDigit) - (a as QDigit + b as QDigit));
+        assert_eq!(slf, QDigit::from(s) - (QDigit::from(a) + QDigit::from(b)));
     }
 
     #[test]
@@ -1360,12 +1382,15 @@ mod test_sub_sum_of_abs_gt {
             let s = die.sample(&mut rng);
             let a = die.sample(&mut rng);
             let b = die.sample(&mut rng);
-            if (s as QDigit) < (a as QDigit + b as QDigit) {
+            if QDigit::from(s) < QDigit::from(a) + QDigit::from(b) {
                 continue;
             }
             let mut slf = Arbi::from(s);
             slf.sub_sum_of_abs_gt(&Arbi::from(a), &Arbi::from(b));
-            assert_eq!(slf, (s as QDigit) - (a as QDigit + b as QDigit));
+            assert_eq!(
+                slf,
+                QDigit::from(s) - (QDigit::from(a) + QDigit::from(b))
+            );
         }
     }
 }

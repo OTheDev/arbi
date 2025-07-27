@@ -107,13 +107,13 @@ type SDDigit = i128;
 #[cfg(not(target_pointer_width = "64"))]
 type SDDigit = i64;
 
-// // u128, i128 for now
-// #[cfg(test)]
-// #[cfg(target_pointer_width = "64")]
-// type QDigit = u128;
-// #[cfg(test)]
-// #[cfg(target_pointer_width = "64")]
-// type SQDigit = i128;
+/* Only used for tests */
+#[cfg(test)]
+#[cfg(target_pointer_width = "64")]
+type QDigit = alloy_primitives::U256;
+#[cfg(test)]
+#[cfg(target_pointer_width = "64")]
+type SQDigit = alloy_primitives::I256;
 
 #[allow(dead_code)]
 #[cfg(not(target_pointer_width = "64"))]

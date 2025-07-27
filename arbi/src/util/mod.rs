@@ -18,3 +18,5 @@ pub(crate) use arbi_like_array::{ArbiLikeArray, IntoArbiLikeArray};
 pub(crate) use max_digits::max_digits;
 #[allow(unused_imports)]
 pub(crate) use view::ArbiLikeView;
+#[cfg(test)]
+pub(crate) mod qdigit;
