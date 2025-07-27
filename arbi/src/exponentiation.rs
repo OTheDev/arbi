@@ -393,3 +393,215 @@ mod tests {
         two.pow(Arbi::from(Arbi::MAX_BITS + 1));
     }
 }
+
+impl Arbi {
+    // Brent and Zimmermann (2010) Algorithm 2.12
+    // Input: a,e,N positive integers
+    // Output: x = a^e mod N
+    // let (e_{ℓ}e_{ℓ−1} ... e_{1}e_{0}) be the binary representation of e, with e_{ℓ} = 1
+    // 1. x <- a
+    // 2. for i from ℓ − 1 downto 0 do
+    // 3. x ← x^2 mod N
+    // 4. if e_{i} = 1 then x ← ax mod N.
+
+    /// Returns \\( \text{self}^{\text{exponent}} \mod \text{modulus} \\).
+    ///
+    /// # Panics
+    /// This function panics if `exponent` is negative or if `modulus` is zero.
+    pub fn powmod(&self, exponent: &Self, modulus: &Self) -> Self {
+        if exponent.is_negative() {
+            panic!("Negative exponents are not allowed.");
+        }
+        if modulus.is_zero() {
+            panic!("Division by zero: modulus cannot be zero");
+        }
+
+        if exponent.is_zero() {
+            if modulus.is_negative() {
+                return 1 + modulus; // 1 + (-|m|)
+            } else if modulus == 1 {
+                return Self::zero(); // 1 % 1 = 0
+            }
+            return Self::one();
+        }
+        if self.is_zero() {
+            return Self::zero();
+        }
+
+        // Stores unused quotient in division when we only want remainder
+        let mut tmp_q = Arbi::zero();
+        // Stores intermediate multiplication results
+        let mut prod = Arbi::zero();
+
+        // First, perform algorithm 2.12 above, treating all operands as
+        // positive. Adjust for actual signs at the end.
+
+        // (1): x <- a
+        let mut x = Arbi::zero();
+        Arbi::ddivide(
+            &mut tmp_q,
+            &mut x,
+            &self.vec,
+            &modulus.vec,
+            false,
+            false,
+        );
+
+        // (2): for i from ℓ − 1 down to 0 do (where ℓ is the position of the
+        // most significant bit)
+        for i in (0..exponent.size_bits() - 1).rev() {
+            // (3): x ← x^2 mod N
+            Arbi::dmul_(&mut prod, &x.vec, &x.vec, false, false);
+            Arbi::ddivide(
+                &mut tmp_q,
+                &mut x,
+                &prod.vec,
+                &modulus.vec,
+                false,
+                false,
+            );
+            // (4): if e_{i} = 1 then x ← ax mod N
+            if exponent.test_bit_magnitude(i) {
+                Arbi::dmul_(&mut prod, &x.vec, &self.vec, false, false);
+                Arbi::ddivide(
+                    &mut tmp_q,
+                    &mut x,
+                    &prod.vec,
+                    &modulus.vec,
+                    false,
+                    false,
+                );
+            }
+        }
+
+        if x.is_zero() {
+            return x;
+        }
+
+        // Handle signs
+        if self.is_negative() && exponent.is_odd() {
+            if modulus.is_negative() {
+                -x
+            } else {
+                modulus - x
+            }
+        } else if modulus.is_negative() {
+            x + modulus
+        } else {
+            x
+        }
+    }
+}
+
+#[cfg(test)]
+mod powmod_tests {
+    use super::*;
+    // use rand::Rng;
+
+    #[test]
+    #[should_panic(expected = "Division by zero")]
+    fn powmod_zero_modulus() {
+        Arbi::powmod(&Arbi::from(2), &Arbi::from(3), &Arbi::zero());
+    }
+
+    #[test]
+    #[should_panic(expected = "Negative exponents are not allowed.")]
+    fn powmod_negative_exponent() {
+        Arbi::powmod(&Arbi::from(2), &Arbi::from(-1), &Arbi::from(5));
+    }
+
+    #[test]
+    fn powmod_edge_cases() {
+        // Test 1 % 1 = 0
+        assert_eq!(
+            Arbi::powmod(&Arbi::from(123), &Arbi::zero(), &Arbi::from(1)),
+            0
+        );
+        // Test base^0 mod m = 1 for any m > 1
+        assert_eq!(
+            Arbi::powmod(&Arbi::from(123), &Arbi::zero(), &Arbi::from(456)),
+            1
+        );
+        // Test 0^exp mod m = 0 for exp > 0
+        assert_eq!(
+            Arbi::powmod(&Arbi::zero(), &Arbi::from(5), &Arbi::from(7)),
+            0
+        );
+        // Test x mod 1 = 0
+        assert_eq!(
+            Arbi::powmod(&Arbi::from(123), &Arbi::from(456), &Arbi::from(1)),
+            0
+        );
+        // Test 1^exp mod m = 1 for any exp, m > 1
+        assert_eq!(
+            Arbi::powmod(&Arbi::one(), &Arbi::from(999), &Arbi::from(13)),
+            1
+        );
+        // Test base^1 mod m = base mod m
+        assert_eq!(
+            Arbi::powmod(&Arbi::from(123), &Arbi::one(), &Arbi::from(10)),
+            3
+        );
+    }
+
+    #[test]
+    fn powmod_known_values() {
+        // 2^10 mod 1000 = 24
+        assert_eq!(
+            Arbi::powmod(&Arbi::from(2), &Arbi::from(10), &Arbi::from(1000)),
+            24
+        );
+        // 3^4 mod 7 = 4
+        assert_eq!(
+            Arbi::powmod(&Arbi::from(3), &Arbi::from(4), &Arbi::from(7)),
+            4
+        );
+        // 5^13 mod 13 = 5
+        assert_eq!(
+            Arbi::powmod(&Arbi::from(5), &Arbi::from(13), &Arbi::from(13)),
+            5
+        );
+    }
+
+    #[test]
+    fn powmod_negative_base() {
+        // (-3)^4 mod 7 == 4
+        assert_eq!(
+            Arbi::powmod(&Arbi::from(-3), &Arbi::from(4), &Arbi::from(7)),
+            4
+        );
+        // (-3)^3 mod 7 == 1
+        assert_eq!(
+            Arbi::powmod(&Arbi::from(-3), &Arbi::from(3), &Arbi::from(7)),
+            1
+        );
+    }
+
+    #[test]
+    fn powmod_negative_modulus() {
+        // 3^4 mod (-7) == -3
+        assert_eq!(
+            Arbi::powmod(&Arbi::from(3), &Arbi::from(4), &Arbi::from(-7)),
+            -3
+        );
+        // 2^3 mod (-5) == -2
+        assert_eq!(
+            Arbi::powmod(&Arbi::from(2), &Arbi::from(3), &Arbi::from(-5)),
+            -2
+        );
+    }
+
+    #[test]
+    fn powmod_both_negative() {
+        // (-2)^3 mod (-5) == -3
+        assert_eq!(
+            Arbi::powmod(&Arbi::from(-2), &Arbi::from(3), &Arbi::from(-5)),
+            -3
+        );
+        // (-2)^4 mod (-5) == -4
+        assert_eq!(
+            Arbi::powmod(&Arbi::from(-2), &Arbi::from(4), &Arbi::from(-5)),
+            -4
+        );
+    }
+}
