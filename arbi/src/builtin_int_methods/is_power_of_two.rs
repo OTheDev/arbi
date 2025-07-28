@@ -1,5 +1,5 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
@@ -51,8 +51,9 @@ impl Arbi {
 
 #[cfg(test)]
 mod tests {
+    use crate::util::qdigit::get_uniform_qdigit_die;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{Arbi, DDigit, Digit, SDDigit};
+    use crate::{Arbi, DDigit, Digit, QDigit, SDDigit, SQDigit};
 
     #[test]
     fn test_is_power_of_two_digit_boundaries() {
@@ -68,13 +69,16 @@ mod tests {
 
         let a = Arbi::from(DDigit::MAX);
         assert!(!a.is_power_of_two());
-        // let a = Arbi::from(DDigit::MAX as QDigit + 1);
-        // assert!(a.is_power_of_two());
+        let a = Arbi::from(QDigit::from(DDigit::MAX) + QDigit::from(1));
+        assert!(a.is_power_of_two());
 
-        // let a = Arbi::from(-(DDigit::MAX as SQDigit));
-        // assert!(!a.is_power_of_two());
-        // let a = Arbi::from(-(DDigit::MAX as SQDigit + 1));
-        // assert!(a.is_power_of_two());
+        let a = Arbi::from(-(SQDigit::try_from(DDigit::MAX).unwrap()));
+        assert!(!a.is_power_of_two());
+        let a = Arbi::from(
+            -(SQDigit::try_from(DDigit::MAX).unwrap()
+                + SQDigit::try_from(1).unwrap()),
+        );
+        assert!(a.is_power_of_two());
     }
 
     #[test]
@@ -94,9 +98,11 @@ mod tests {
         let (mut rng, _) = get_seedable_rng();
         let die_digit = get_uniform_die(Digit::MIN, Digit::MAX);
         let die_ddigit = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        // let die_qdigit =
-        //     get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
         let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
+        let die_qdigit = get_uniform_qdigit_die(
+            QDigit::from(DDigit::MAX) + QDigit::from(1),
+            QDigit::MAX,
+        );
 
         for _ in 0..i16::MAX {
             let r = die_digit.sample(&mut rng);
@@ -107,13 +113,13 @@ mod tests {
             let a = Arbi::from(r);
             assert_eq!(a.is_power_of_two(), r.is_power_of_two());
 
-            // let r = die_qdigit.sample(&mut rng);
-            // let a = Arbi::from(r);
-            // assert_eq!(a.is_power_of_two(), r.is_power_of_two());
-
             let r = die_sddigit.sample(&mut rng);
             let a = Arbi::from(r);
             assert_eq!(a.is_power_of_two(), r.unsigned_abs().is_power_of_two());
+
+            let r = die_qdigit.sample(&mut rng);
+            let a = Arbi::from(r);
+            assert_eq!(a.is_power_of_two(), r.is_power_of_two());
         }
     }
 }

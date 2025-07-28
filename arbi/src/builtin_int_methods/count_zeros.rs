@@ -43,9 +43,29 @@ impl Arbi {
 
 #[cfg(test)]
 mod tests {
+    use crate::util::qdigit::{
+        get_uniform_qdigit_die, get_uniform_sqdigit_die,
+    };
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
     use crate::Arbi;
-    use crate::{BitCount, DDigit, Digit, SDDigit, SDigit};
+    use crate::{BitCount, DDigit, Digit, QDigit, SDDigit, SDigit, SQDigit};
+
+    macro_rules! assert_count_zeros_big {
+        ($value:expr, $T:ty) => {
+            #[allow(unused_comparisons)] // for unsigned types
+            {
+                let value = $value;
+                assert_eq!(
+                    Arbi::from(value).count_zeros(),
+                    if value >= <$T>::try_from(0).unwrap() {
+                        None
+                    } else {
+                        Some(BitCount::from(value.count_zeros() as u32))
+                    }
+                );
+            }
+        };
+    }
 
     macro_rules! assert_count_zeros {
         ($value:expr) => {
@@ -69,18 +89,23 @@ mod tests {
         let (mut rng, _) = get_seedable_rng();
         let die_d = get_uniform_die(Digit::MIN, Digit::MAX);
         let die_dd = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        // let die_qd = get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
         let die_sd = get_uniform_die(SDigit::MIN, SDigit::MAX);
         let die_sdd = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
-        // let die_sqd = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+
+        let die_qd = get_uniform_qdigit_die(
+            QDigit::from(DDigit::MAX) + QDigit::from(1),
+            QDigit::MAX,
+        );
+        let die_sqd = get_uniform_sqdigit_die(SQDigit::MIN, SQDigit::MAX);
 
         for _ in 0..i16::MAX {
             assert_count_zeros!(die_d.sample(&mut rng));
             assert_count_zeros!(die_dd.sample(&mut rng));
-            // assert_count_zeros!(die_qd.sample(&mut rng));
             assert_count_zeros!(die_sd.sample(&mut rng));
             assert_count_zeros!(die_sdd.sample(&mut rng));
-            // assert_count_zeros!(die_sqd.sample(&mut rng));
+
+            assert_count_zeros_big!(die_qd.sample(&mut rng), QDigit);
+            assert_count_zeros_big!(die_sqd.sample(&mut rng), SQDigit);
         }
     }
 }

@@ -1,9 +1,9 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-/* TODO: need to document differences between primitive and Arbi type behavior.
+/* TODO IMPORTANT: need to document differences between primitive and Arbi type behavior.
  * excess bytes are ignored (if we include commented code). */
 
 use crate::to_twos_complement::{ByteOrder, TwosComplement};

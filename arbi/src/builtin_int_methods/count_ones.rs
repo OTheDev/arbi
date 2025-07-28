@@ -54,7 +54,7 @@ mod tests {
                 let value = $value;
                 assert_eq!(
                     Arbi::from(value).count_ones(),
-                    if value >= <$T>::ZERO {
+                    if value >= <$T>::try_from(0).unwrap() {
                         Some(BitCount::from(value.count_ones() as u32))
                     } else {
                         None
@@ -150,10 +150,11 @@ mod tests {
             Some(BitCount::from(DDigit::MAX.count_ones()))
         );
 
-        // a.assign(DDigit::MAX as QDigit + 1);
-        // assert_eq!(
-        //     a.count_ones(),
-        //     Some(BitCount::from((DDigit::MAX as QDigit + 1).count_ones()))
-        // );
+        a = Arbi::from(QDigit::from(DDigit::MAX) + QDigit::from(1));
+        assert_eq!(
+            a.count_ones(),
+            Some((QDigit::from(DDigit::MAX) + QDigit::from(1)).count_ones()
+                as BitCount)
+        );
     }
 }
