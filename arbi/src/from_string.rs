@@ -217,21 +217,22 @@ mod tests {
         }
     }
 
+    #[cfg(not(target_pointer_width = "64"))]
     fn test_construct_from_string(base: Base) {
         use crate::to_string::tests::ToStringBase;
         use crate::util::test::{
             get_seedable_rng, get_uniform_die, Distribution,
         };
-        use crate::{DDigit, QDigit, SDDigit, SDigit, SQDigit};
+        use crate::{DDigit, SDDigit, SDigit};
 
         for x in [
-            0 as SQDigit,
-            Digit::MAX as SQDigit,
-            DDigit::MAX as SQDigit,
-            SDigit::MIN as SQDigit,
-            SDDigit::MIN as SQDigit,
-            SDigit::MAX as SQDigit,
-            SDDigit::MAX as SQDigit,
+            0 as SDDigit,
+            Digit::MAX as SDDigit,
+            DDigit::MAX as SDDigit,
+            SDigit::MIN as SDDigit,
+            SDDigit::MIN as SDDigit,
+            SDigit::MAX as SDDigit,
+            SDDigit::MAX as SDDigit,
             SQDigit::MIN,
             SQDigit::MAX,
         ] {
@@ -249,7 +250,7 @@ mod tests {
 
         let (mut rng, _) = get_seedable_rng();
 
-        let die = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+        let die = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
         let die_16 = get_uniform_die(i16::MIN, i16::MAX);
         for _ in 0..i16::MAX {
             let rv = die.sample(&mut rng);
@@ -262,6 +263,7 @@ mod tests {
         }
     }
 
+    #[cfg(not(target_pointer_width = "64"))]
     #[test]
     fn test_construct_from_string_() {
         for i in 2..=36 {

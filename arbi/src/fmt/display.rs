@@ -27,6 +27,7 @@ impl fmt::Display for Arbi {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::util::qdigit::get_uniform_sqdigit_die;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
     use crate::{SDDigit, SDigit, SQDigit};
     use alloc::format;
@@ -56,7 +57,7 @@ mod tests {
 
         let die_s = get_uniform_die(SDigit::MIN, SDigit::MAX);
         let die_m = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
-        let die_l = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+        let die_l = get_uniform_sqdigit_die(SQDigit::MIN, SQDigit::MAX);
 
         for i in i16::MIN..i16::MAX {
             let rs = die_s.sample(&mut rng);

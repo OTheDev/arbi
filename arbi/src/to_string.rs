@@ -351,7 +351,7 @@ impl Arbi {
 pub(crate) mod tests {
     use super::*;
     use crate::util::test::{get_uniform_die, BASE10};
-    use crate::{QDigit, SQDigit};
+    // use crate::{QDigit, SQDigit};
 
     pub(crate) trait ToStringBase {
         fn to_string_base(&self, base: Base) -> String;
@@ -430,6 +430,10 @@ pub(crate) mod tests {
     }
 
     use crate::util::test::{get_seedable_rng, Distribution};
+    #[cfg(not(target_pointer_width = "64"))]
+    use crate::QDigit;
+    #[cfg(not(target_pointer_width = "64"))]
+    use crate::SQDigit;
     use crate::{DDigit, Digit, SDDigit, SDigit};
 
     fn test_to_string_base(b: usize) {
@@ -470,29 +474,40 @@ pub(crate) mod tests {
                 .to_string_base(b.try_into().unwrap()),
             (Digit::MAX as DDigit + 1).to_string_base(b)
         );
-        assert_eq!(
-            Arbi::from(QDigit::MAX).to_string_base(b),
-            (QDigit::MAX).to_string_base(b)
-        );
-        assert_eq!(
-            Arbi::from(SQDigit::MIN).to_string_base(b),
-            (SQDigit::MIN).to_string_base(b)
-        );
-        assert_eq!(
-            Arbi::from(SQDigit::MAX).to_string_base(b),
-            (SQDigit::MAX).to_string_base(b)
-        );
+        #[cfg(not(target_pointer_width = "64"))]
+        {
+            assert_eq!(
+                Arbi::from(QDigit::MAX).to_string_base(b),
+                (QDigit::MAX).to_string_base(b)
+            );
+            assert_eq!(
+                Arbi::from(SQDigit::MIN).to_string_base(b),
+                (SQDigit::MIN).to_string_base(b)
+            );
+            assert_eq!(
+                Arbi::from(SQDigit::MAX).to_string_base(b),
+                (SQDigit::MAX).to_string_base(b)
+            );
+        }
 
         let (mut rng, _) = get_seedable_rng();
-        let udist = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
         let udist_digit = get_uniform_die(Digit::MIN, Digit::MAX);
+        #[cfg(not(target_pointer_width = "64"))]
+        let udist = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
 
         let mn = i16::MIN / 8;
         let mx = i16::MAX / 8;
         for i in mn..mx {
-            let r: SQDigit = udist.sample(&mut rng);
+            #[cfg(not(target_pointer_width = "64"))]
+            {
+                let r: SQDigit = udist.sample(&mut rng);
+                assert_eq!(
+                    Arbi::from(r).to_string_base(b),
+                    r.to_string_base(b)
+                );
+            }
+
             let r_digit: Digit = udist_digit.sample(&mut rng);
-            assert_eq!(Arbi::from(r).to_string_base(b), r.to_string_base(b));
             assert_eq!(
                 Arbi::from(r_digit).to_string_base(b),
                 r_digit.to_string_base(b)

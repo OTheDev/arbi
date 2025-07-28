@@ -47,6 +47,23 @@ mod tests {
     use crate::{Arbi, Assign};
     use crate::{BitCount, DDigit, Digit, QDigit, SDDigit, SDigit, SQDigit};
 
+    macro_rules! assert_count_ones_big {
+        ($value:expr, $T:ty) => {
+            #[allow(unused_comparisons)] // for unsigned types
+            {
+                let value = $value;
+                assert_eq!(
+                    Arbi::from(value).count_ones(),
+                    if value >= <$T>::try_from(0).unwrap() {
+                        Some(BitCount::from(value.count_ones() as u32))
+                    } else {
+                        None
+                    }
+                );
+            }
+        };
+    }
+
     macro_rules! assert_count_ones {
         ($value:expr) => {
             #[allow(unused_comparisons)] // for unsigned types
@@ -55,7 +72,7 @@ mod tests {
                 assert_eq!(
                     Arbi::from(value).count_ones(),
                     if value >= 0 {
-                        Some(BitCount::from(value.count_ones()))
+                        Some(BitCount::from(value.count_ones() as u32))
                     } else {
                         None
                     }
@@ -69,18 +86,32 @@ mod tests {
         let (mut rng, _) = get_seedable_rng();
         let die_d = get_uniform_die(Digit::MIN, Digit::MAX);
         let die_dd = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        let die_qd = get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+        let die_qd = crate::util::qdigit::get_uniform_qdigit_die(
+            QDigit::from(DDigit::MAX) + QDigit::from(1u8),
+            QDigit::MAX,
+        );
         let die_sd = get_uniform_die(SDigit::MIN, SDigit::MAX);
         let die_sdd = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
-        let die_sqd = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+        let die_sqd = crate::util::qdigit::get_uniform_sqdigit_die(
+            SQDigit::MIN,
+            SQDigit::MAX,
+        );
 
         for _ in 0..i16::MAX {
             assert_count_ones!(die_d.sample(&mut rng));
             assert_count_ones!(die_dd.sample(&mut rng));
-            assert_count_ones!(die_qd.sample(&mut rng));
             assert_count_ones!(die_sd.sample(&mut rng));
             assert_count_ones!(die_sdd.sample(&mut rng));
-            assert_count_ones!(die_sqd.sample(&mut rng));
+            #[cfg(not(target_pointer_width = "64"))]
+            {
+                assert_count_ones!(die_qd.sample(&mut rng));
+                assert_count_ones!(die_sqd.sample(&mut rng));
+            }
+            #[cfg(target_pointer_width = "64")]
+            {
+                assert_count_ones_big!(die_qd.sample(&mut rng), QDigit);
+                assert_count_ones_big!(die_sqd.sample(&mut rng), SQDigit);
+            }
         }
     }
 
@@ -119,10 +150,11 @@ mod tests {
             Some(BitCount::from(DDigit::MAX.count_ones()))
         );
 
-        a.assign(DDigit::MAX as QDigit + 1);
+        a = Arbi::from(QDigit::from(DDigit::MAX) + QDigit::from(1));
         assert_eq!(
             a.count_ones(),
-            Some(BitCount::from((DDigit::MAX as QDigit + 1).count_ones()))
+            Some((QDigit::from(DDigit::MAX) + QDigit::from(1)).count_ones()
+                as BitCount)
         );
     }
 }

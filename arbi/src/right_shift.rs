@@ -210,10 +210,13 @@ for_all_ints!(impl_shr_integral);
 
 #[cfg(test)]
 mod test_arithmetic_rshift {
+    #[cfg(not(target_pointer_width = "64"))]
+    use crate::util::qdigit::get_uniform_sqdigit_die;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{
-        Arbi, Assign, BitCount, DDigit, Digit, SDDigit, SDigit, SQDigit,
-    };
+    #[cfg(not(target_pointer_width = "64"))]
+    use crate::SQDigit;
+    use crate::{Arbi, Assign, BitCount, DDigit, Digit, SDDigit, SDigit};
+    #[cfg(not(target_pointer_width = "64"))]
     use alloc::vec;
 
     #[test]
@@ -245,6 +248,7 @@ mod test_arithmetic_rshift {
         assert_eq!(a, -1);
     }
 
+    #[cfg(not(target_pointer_width = "64"))]
     #[test]
     fn test_correction_needed_with_nonempty_vec() {
         let mut a = Arbi::from(-128965486767644366027235583800544990179_i128);
@@ -273,14 +277,19 @@ mod test_arithmetic_rshift {
         let (mut rng, _) = get_seedable_rng();
         let die_sd = get_uniform_die(SDigit::MIN, SDigit::MAX);
         let die_sdd = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
-        let die_sqd = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+        #[cfg(not(target_pointer_width = "64"))]
+        let die_sqd = get_uniform_sqdigit_die(SQDigit::MIN, SQDigit::MAX);
 
         for _ in i16::MIN..i16::MAX {
             let r = die_sd.sample(&mut rng);
             for shift in 0..(Digit::BITS as BitCount) {
                 let mut a = Arbi::from(r);
                 a.arithmetic_rshift(shift);
-                assert_eq!(a, r >> shift);
+                assert_eq!(
+                    a,
+                    r >> shift,
+                    "Right shift failed r = {r}, shift = {shift}"
+                );
             }
 
             let r = die_sdd.sample(&mut rng);
@@ -290,15 +299,19 @@ mod test_arithmetic_rshift {
                 assert_eq!(a, r >> shift);
             }
 
-            let r = die_sqd.sample(&mut rng);
-            for shift in 0..(4 * Digit::BITS as BitCount) {
-                let mut a = Arbi::from(r);
-                a.arithmetic_rshift(shift);
-                assert_eq!(a, r >> shift);
+            #[cfg(not(target_pointer_width = "64"))]
+            {
+                let r = die_sqd.sample(&mut rng);
+                for shift in 0..(4 * Digit::BITS as BitCount) {
+                    let mut a = Arbi::from(r);
+                    a.arithmetic_rshift(shift);
+                    assert_eq!(a, r >> shift as u32);
+                }
             }
         }
     }
 
+    #[cfg(not(target_pointer_width = "64"))]
     #[test]
     fn test_correction_with_nonzero_carries_within_loop() {
         // 2-digit number with carries
@@ -316,6 +329,7 @@ mod test_arithmetic_rshift {
         assert_eq!(b, -18446744073709551616_i128);
     }
 
+    #[cfg(not(target_pointer_width = "64"))]
     #[test]
     fn test_edge_shifts() {
         let mut a = Arbi::from_digits(vec![0xFFFFFFFF, 0x1], true);

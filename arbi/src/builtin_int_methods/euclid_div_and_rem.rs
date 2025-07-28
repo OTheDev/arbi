@@ -162,24 +162,29 @@ impl Arbi {
 
 #[cfg(test)]
 mod tests {
-    use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
+    use crate::util::qdigit::get_uniform_sqdigit_die;
+    use crate::util::test::get_seedable_rng;
     use crate::{Arbi, SDDigit, SDigit, SQDigit};
 
     #[test]
     fn smoke() {
         let (mut rng, _) = get_seedable_rng();
 
-        let udist_sd =
-            get_uniform_die(SDigit::MIN as SQDigit, SDigit::MAX as SQDigit);
-        let udist_sdd =
-            get_uniform_die(SDDigit::MIN as SQDigit, SDDigit::MAX as SQDigit);
-        let udist_sqd = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+        let udist_sd = get_uniform_sqdigit_die(
+            SQDigit::try_from(SDigit::MIN).unwrap(),
+            SQDigit::try_from(SDigit::MAX).unwrap(),
+        );
+        let udist_sdd = get_uniform_sqdigit_die(
+            SQDigit::try_from(SDDigit::MIN).unwrap(),
+            SQDigit::try_from(SDDigit::MAX).unwrap(),
+        );
+        let udist_sqd = get_uniform_sqdigit_die(SQDigit::MIN, SQDigit::MAX);
 
         for _ in 0..i16::MAX {
             for (udist, mn) in &[
-                (udist_sd, SDigit::MIN as SQDigit),
-                (udist_sdd, SDDigit::MIN as SQDigit),
-                (udist_sqd, SQDigit::MIN),
+                (&udist_sd, SQDigit::try_from(SDigit::MIN).unwrap()),
+                (&udist_sdd, SQDigit::try_from(SDDigit::MIN).unwrap()),
+                (&udist_sqd, SQDigit::MIN),
             ] {
                 let (a_in, b_in) =
                     (udist.sample(&mut rng), udist.sample(&mut rng));

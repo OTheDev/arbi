@@ -50,7 +50,6 @@ mod multiplication;
 mod negate;
 mod new;
 mod ops;
-mod print_internal;
 mod random;
 mod right_shift;
 mod sign;
@@ -74,6 +73,9 @@ pub use from_string::ParseError;
 pub use random::RandomArbi;
 
 /// Unsigned integer type representing a base-[`Arbi::BASE`] digit.
+#[cfg(target_pointer_width = "64")]
+pub type Digit = u64;
+#[cfg(not(target_pointer_width = "64"))]
 pub type Digit = u32;
 
 /// Unsigned integer type used for counts of bits.
@@ -88,14 +90,35 @@ pub type Digit = u32;
 pub type BitCount = u128;
 
 #[allow(dead_code)]
+#[cfg(target_pointer_width = "64")]
+type SDigit = i64;
+#[allow(dead_code)]
+#[cfg(not(target_pointer_width = "64"))]
 type SDigit = i32;
 
+#[cfg(target_pointer_width = "64")]
+type DDigit = u128;
+#[cfg(not(target_pointer_width = "64"))]
 type DDigit = u64;
+
+#[cfg(target_pointer_width = "64")]
+type SDDigit = i128;
+#[cfg(not(target_pointer_width = "64"))]
 type SDDigit = i64;
 
+/* Only used for tests */
+#[cfg(test)]
+#[cfg(target_pointer_width = "64")]
+type QDigit = alloy_primitives::U256;
+#[cfg(test)]
+#[cfg(target_pointer_width = "64")]
+type SQDigit = alloy_primitives::I256;
+
 #[allow(dead_code)]
+#[cfg(not(target_pointer_width = "64"))]
 type QDigit = u128;
 #[allow(dead_code)]
+#[cfg(not(target_pointer_width = "64"))]
 type SQDigit = i128;
 
 /// Arbitrary Precision Integer type.

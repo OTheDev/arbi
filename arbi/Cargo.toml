@@ -26,6 +26,7 @@ rand = { version = "0.8.5", optional = true }
 
 [dev-dependencies]
 rand = { version = "0.8.5", features = ["std_rng"] }
+alloy-primitives = { version = "0.5" }
 
 [package.metadata.docs.rs]
 # RUSTDOCFLAGS="--html-in-header ./arbi/doc/header.html --cfg docsrs" cargo +nightly doc --no-deps --all-features

@@ -33,7 +33,6 @@ mod tests {
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
     use crate::Arbi;
     use crate::{BitCount, DDigit, Digit};
-    use alloc::vec;
 
     macro_rules! assert_trailing_zeros {
         ($value:expr) => {
@@ -49,6 +48,7 @@ mod tests {
         };
     }
 
+    #[allow(unused_macros)]
     macro_rules! assert_trailing_zeros_from_digits {
         ($digits:expr) => {
             let arbi = Arbi::from_digits($digits, true);
@@ -78,13 +78,17 @@ mod tests {
             assert_trailing_zeros!(digit);
             assert_trailing_zeros!(ddigit);
 
-            assert_trailing_zeros_from_digits!(vec![0, digit]);
-            assert_trailing_zeros_from_digits!(vec![
-                0,
-                ddigit as Digit,
-                (ddigit >> Digit::BITS) as Digit
-            ]);
-            assert_trailing_zeros_from_digits!(vec![0, 0, digit]);
+            #[cfg(not(target_pointer_width = "64"))]
+            {
+                use alloc::vec;
+                assert_trailing_zeros_from_digits!(vec![0, digit]);
+                assert_trailing_zeros_from_digits!(vec![
+                    0,
+                    ddigit as Digit,
+                    (ddigit >> Digit::BITS) as Digit
+                ]);
+                assert_trailing_zeros_from_digits!(vec![0, 0, digit]);
+            }
         }
     }
 

@@ -30,17 +30,17 @@ impl ToDigits<$digit_size> for $signed_type {
         } else {
             *self as $unsigned_type
         };
+        let mut digits = [0 as Digit; $digit_size];
         if Digit::BITS >= <$unsigned_type>::BITS {
-            Some([value as Digit; $digit_size])
+            digits[0] = value as Digit;
         } else {
-            let mut digits = [0 as Digit; $digit_size];
             for digit in &mut digits {
                 *digit = (value & (Digit::MAX as $unsigned_type)) as Digit;
                 // value >>= Digit::BITS;
                 value = value.shr(Digit::BITS); // For MSRV
             }
-            Some(digits)
         }
+        Some(digits)
     }
 }
 
@@ -49,6 +49,25 @@ impl ToDigits<$digit_size> for $signed_type {
 }
 /* impl_to_digits_for_primitive! */
 
+/* TODO: usize stack is an upperbound right now */
+
+#[cfg(target_pointer_width = "64")]
+impl_to_digits_for_primitive![
+    (1, u8, i8),
+    (1, u8, u8),
+    (1, u16, i16),
+    (1, u16, u16),
+    (1, u32, i32),
+    (1, u32, u32),
+    (1, u64, i64),
+    (1, u64, u64),
+    (2, u128, i128),
+    (2, u128, u128),
+    (2, usize, isize),
+    (2, usize, usize)
+];
+
+#[cfg(not(target_pointer_width = "64"))]
 impl_to_digits_for_primitive![
     (1, u8, i8),
     (1, u8, u8),

@@ -95,7 +95,7 @@ mod test_uniform_sampler {
     #[should_panic]
     fn test_new_inclusive_panics_on_invalid_range() {
         let (low, high) = (
-            Arbi::from(DDigit::MAX as QDigit + 1),
+            Arbi::from(QDigit::from(DDigit::MAX) + QDigit::from(1)),
             Arbi::from(DDigit::MAX),
         );
         let _ = Uniform::new_inclusive(&low, &high);

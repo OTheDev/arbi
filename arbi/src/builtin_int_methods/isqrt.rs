@@ -88,6 +88,7 @@ impl Arbi {
 #[cfg(test)]
 mod tests {
     use crate::uints::UnsignedUtilities;
+    use crate::util::qdigit::get_uniform_qdigit_die;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
     use crate::{Arbi, DDigit, Digit, QDigit};
 
@@ -110,7 +111,7 @@ mod tests {
         let dmax = Digit::MAX;
         let dmaxp1 = dmax as DDigit + 1;
         let ddmax = DDigit::MAX;
-        let ddmaxp1 = ddmax as QDigit + 1;
+        let ddmaxp1 = QDigit::from(ddmax) + QDigit::from(1);
 
         assert_eq!(Arbi::from(dmax).isqrt(), dmax.isqrt_());
         assert_eq!(Arbi::from(dmaxp1).isqrt(), dmaxp1.isqrt_());
@@ -123,8 +124,10 @@ mod tests {
         let (mut rng, _) = get_seedable_rng();
         let die_digit = get_uniform_die(Digit::MIN, Digit::MAX);
         let die_ddigit = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        let die_qdigit =
-            get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+        let die_qdigit = get_uniform_qdigit_die(
+            QDigit::from(DDigit::MAX) + QDigit::from(1),
+            QDigit::MAX,
+        );
 
         for _ in 0..i16::MAX {
             let r = die_digit.sample(&mut rng);

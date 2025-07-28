@@ -227,7 +227,7 @@ impl Arbi {
             while pos < end {
                 match (base_digits[pos] as char).to_digit(base) {
                     Some(base_digit) => {
-                        batch = base_digit + batch * base;
+                        batch = base_digit as Digit + batch * base as Digit;
                         pos += 1;
                     }
                     None => return Err(ParseError::InvalidDigit),
@@ -246,7 +246,7 @@ impl Arbi {
             while pos < end {
                 match (base_digits[pos] as char).to_digit(base) {
                     Some(base_digit) => {
-                        batch = base_digit + batch * base;
+                        batch = base_digit as Digit + batch * base as Digit;
                         pos += 1;
                     }
                     None => return Err(ParseError::InvalidDigit),

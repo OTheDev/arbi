@@ -140,7 +140,6 @@ mod $to_unchecked {
         use crate::util::test::{
             get_seedable_rng, get_uniform_die, Distribution,
         };
-        use crate::{QDigit, SQDigit};
 
         let mut arbi = Arbi::new();
         assert_eq!(0, arbi.$to_unchecked());
@@ -182,16 +181,16 @@ mod $to_unchecked {
         }
 
         if <$t>::BITS == 128 && !<$t>::IS_SIGNED {
-            // u128
-            let die = get_uniform_die(QDigit::MIN, QDigit::MAX);
+            // // u128
+            let die = get_uniform_die(u128::MIN, u128::MAX);
             for _ in 0..i16::MAX {
-                let rv: QDigit = die.sample(&mut rng);
+                let rv: u128 = die.sample(&mut rng);
                 let arbi = Arbi::from(rv);
 
                 assert_eq!(rv as $t, arbi.$to_unchecked());
 
-                if (rv >= (<$t>::MIN as QDigit))
-                    && (rv <= (<$t>::MAX as QDigit))
+                if (rv >= (<$t>::MIN as u128))
+                    && (rv <= (<$t>::MAX as u128))
                 {
                     assert!(arbi.$fits());
                     assert_eq!(Some(rv as $t), arbi.$to_checked());
@@ -201,16 +200,16 @@ mod $to_unchecked {
                 }
             }
         } else {
-            // other
-            let die = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+            // // other
+            let die = get_uniform_die(i128::MIN, i128::MAX);
             for _ in 0..i16::MAX {
-                let rv: SQDigit = die.sample(&mut rng);
+                let rv: i128 = die.sample(&mut rng);
                 let arbi = Arbi::from(rv);
 
                 assert_eq!(rv as $t, arbi.$to_unchecked());
 
-                if (rv >= (<$t>::MIN as SQDigit))
-                    && (rv <= (<$t>::MAX as SQDigit))
+                if (rv >= (<$t>::MIN as i128))
+                    && (rv <= (<$t>::MAX as i128))
                 {
                     assert!(arbi.$fits());
                     assert_eq!(Some(rv as $t), arbi.$to_checked());

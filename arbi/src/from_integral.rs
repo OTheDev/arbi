@@ -118,7 +118,8 @@ impl_from_integral!(
 #[cfg(test)]
 mod test_internal_representation_after_from_integral {
     use super::*;
-    use crate::{DDigit, QDigit, SDDigit};
+    use crate::QDigit;
+    use crate::{DDigit, SDDigit};
     use alloc::string::ToString;
 
     #[test]
@@ -189,14 +190,17 @@ mod test_internal_representation_after_from_integral {
 
         // QDigit
         for i in 0 as Digit..u16::MAX as Digit {
-            let a = Arbi::from(QDigit::MAX - i as QDigit);
+            let a = Arbi::from(QDigit::MAX - QDigit::from(i));
             assert_eq!(a.size(), 4);
             assert_eq!(a.vec[0], Digit::MAX - i);
             assert_eq!(a.vec[1], Digit::MAX);
             assert_eq!(a.vec[2], Digit::MAX);
             assert_eq!(a.vec[3], Digit::MAX);
-            assert_eq!(a.to_string(), (QDigit::MAX - i as QDigit).to_string());
-            assert_eq!(a, QDigit::MAX - i as QDigit);
+            assert_eq!(
+                a.to_string(),
+                (QDigit::MAX - QDigit::from(i)).to_string()
+            );
+            assert_eq!(a, QDigit::MAX - QDigit::from(i));
         }
 
         // Signed ints, small absolute value

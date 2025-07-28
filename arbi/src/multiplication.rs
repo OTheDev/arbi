@@ -67,11 +67,12 @@ impl Arbi {
     }
 
     fn dmul_algo_square(w: &mut [Digit], a: &[Digit], t: usize) {
-        use crate::{uints::UnsignedUtilities, QDigit};
+        use crate::uints::UnsignedUtilities;
         w.fill(0);
         let mut c: DDigit;
         for i in 0..t {
             if Digit::BITS == 32 {
+                type QDigit = u128;
                 let uv: QDigit =
                     w[2 * i] as QDigit + a[i] as QDigit * a[i] as QDigit;
                 w[2 * i] = uv as Digit; // set w[2 * i] <- v
@@ -256,11 +257,13 @@ impl MulAssign<&Arbi> for Arbi {
 mod tests {
     use super::*;
 
-    use crate::{SDDigit, SDigit, SQDigit};
-    use alloc::string::ToString;
+    use crate::{SDDigit, SDigit};
+    // use alloc::string::ToString;
+    use crate::SQDigit;
     use rand::distributions::Distribution;
     use rand::distributions::Uniform;
 
+    #[cfg(not(target_pointer_width = "64"))]
     #[test]
     fn test_mul_misc() {
         let a = Arbi::from(DDigit::MAX);
@@ -333,8 +336,10 @@ mod tests {
         // Large, multi-digit
         let distribution = Uniform::new_inclusive(SDDigit::MIN, SDDigit::MAX);
         for _ in 0..i16::MAX {
-            let mut a_in: SQDigit = distribution.sample(&mut rng) as SQDigit;
-            let b_in: SQDigit = distribution.sample(&mut rng) as SQDigit;
+            let mut a_in: SQDigit =
+                SQDigit::try_from(distribution.sample(&mut rng)).unwrap();
+            let b_in: SQDigit =
+                SQDigit::try_from(distribution.sample(&mut rng)).unwrap();
 
             let mut a = Arbi::from(a_in);
             let b = Arbi::from(b_in);
@@ -370,9 +375,15 @@ mod tests {
         a *= &b;
         assert_eq!(a, -50);
 
-        let mut a = Arbi::from(DDigit::MAX);
-        a *= Arbi::from(SDDigit::MIN);
-        assert_eq!(a.to_string(), "-170141183460469231722463931679029329920");
+        #[cfg(not(target_pointer_width = "64"))]
+        {
+            let mut a = Arbi::from(DDigit::MAX);
+            a *= Arbi::from(SDDigit::MIN);
+            assert_eq!(
+                a.to_string(),
+                "-170141183460469231722463931679029329920"
+            );
+        }
     }
 
     // Can't do a *= &a.
@@ -382,13 +393,19 @@ mod tests {
         a *= a.clone();
         assert_eq!(a, 49);
 
-        let mut a = Arbi::from(DDigit::MAX);
-        a *= a.clone();
-        assert_eq!(a.to_string(), "340282366920938463426481119284349108225");
+        #[cfg(not(target_pointer_width = "64"))]
+        {
+            let mut a = Arbi::from(DDigit::MAX);
+            a *= a.clone();
+            assert_eq!(
+                a.to_string(),
+                "340282366920938463426481119284349108225"
+            );
 
-        let mut a = Arbi::from(SDDigit::MIN);
-        a *= a.clone();
-        assert_eq!(a.to_string(), "85070591730234615865843651857942052864");
+            let mut a = Arbi::from(SDDigit::MIN);
+            a *= a.clone();
+            assert_eq!(a.to_string(), "85070591730234615865843651857942052864");
+        }
     }
 }
 
@@ -568,13 +585,15 @@ mod square {
     #[test]
     fn test_squares_of_digit_boundaries() {
         for x in [
-            SDigit::MIN as SQDigit,
-            SDigit::MAX as SQDigit,
-            SDDigit::MIN as SQDigit,
-            SDDigit::MAX as SQDigit,
-            Digit::MAX as SQDigit - 1,
-            Digit::MAX as SQDigit,
-            Digit::MAX as SQDigit + 1,
+            SQDigit::try_from(SDigit::MIN).unwrap(),
+            SQDigit::try_from(SDigit::MAX).unwrap(),
+            SQDigit::try_from(SDDigit::MIN).unwrap(),
+            SQDigit::try_from(SDDigit::MAX).unwrap(),
+            SQDigit::try_from(Digit::MAX).unwrap()
+                - SQDigit::try_from(1).unwrap(),
+            SQDigit::try_from(Digit::MAX).unwrap(),
+            SQDigit::try_from(Digit::MAX).unwrap()
+                + SQDigit::try_from(1).unwrap(),
         ] {
             let s = Arbi::from(x);
             assert_eq!(
@@ -587,7 +606,10 @@ mod square {
         }
 
         let s = Arbi::from(DDigit::MAX);
-        assert_eq!(&s * &s, DDigit::MAX as QDigit * DDigit::MAX as QDigit)
+        assert_eq!(
+            &s * &s,
+            QDigit::from(DDigit::MAX) * QDigit::from(DDigit::MAX)
+        );
     }
 
     #[test]
@@ -637,7 +659,8 @@ mod square {
             let a_doub = Arbi::from(r_doub);
             assert_eq!(
                 &a_doub + &a_doub,
-                r_doub as SQDigit + r_doub as SQDigit
+                SQDigit::try_from(r_doub).unwrap()
+                    + SQDigit::try_from(r_doub).unwrap()
             );
 
             assert_eq!(
@@ -766,7 +789,7 @@ impl_arbi_mul_for_primitive![
 mod test_mul_with_integral {
     use super::*;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{SDDigit, SDigit, SQDigit};
+    use crate::{SDDigit, SDigit};
 
     #[test]
     fn test_mul_zero() {
@@ -815,67 +838,81 @@ mod test_mul_with_integral {
     fn smoke() {
         let (mut rng, _) = get_seedable_rng();
         let die_sdigit = get_uniform_die(SDigit::MIN, SDigit::MAX);
+        #[cfg(not(target_pointer_width = "64"))]
         let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
 
         for _ in 0..i16::MAX {
-            let lhs = die_sddigit.sample(&mut rng);
-            let mut lhs_arbi = Arbi::from(lhs);
-            let rhs = die_sddigit.sample(&mut rng);
-            let expected = lhs as SQDigit * rhs as SQDigit;
-            assert_eq!(&lhs_arbi * rhs, expected);
-            let mut lhs_clone = lhs_arbi.clone();
-            lhs_clone *= rhs;
-            assert_eq!(lhs_clone, expected);
-            let rhs = die_sdigit.sample(&mut rng);
-            let expected = lhs as SQDigit * rhs as SQDigit;
-            assert_eq!(lhs_arbi.clone() * rhs, expected);
-            lhs_arbi *= rhs;
-            assert_eq!(lhs_arbi, expected);
+            #[cfg(not(target_pointer_width = "64"))]
+            {
+                let lhs = die_sddigit.sample(&mut rng);
+                let mut lhs_arbi = Arbi::from(lhs);
+                let rhs = die_sddigit.sample(&mut rng);
+                let expected = lhs as SQDigit * rhs as SQDigit;
+                assert_eq!(&lhs_arbi * rhs, expected);
+                let mut lhs_clone = lhs_arbi.clone();
+                lhs_clone *= rhs;
+                assert_eq!(lhs_clone, expected);
+                let rhs = die_sdigit.sample(&mut rng);
+                let expected = lhs as SQDigit * rhs as SQDigit;
+                assert_eq!(lhs_arbi.clone() * rhs, expected);
+                lhs_arbi *= rhs;
+                assert_eq!(lhs_arbi, expected);
+            }
 
             let lhs = die_sdigit.sample(&mut rng);
-            let mut lhs_arbi = Arbi::from(lhs);
+            let lhs_arbi = Arbi::from(lhs);
             let rhs = die_sdigit.sample(&mut rng);
             let expected = lhs as SDDigit * rhs as SDDigit;
             assert_eq!(&lhs_arbi * rhs, expected);
             let mut lhs_clone = lhs_arbi.clone();
             lhs_clone *= rhs;
             assert_eq!(lhs_clone, expected);
-            let rhs = die_sddigit.sample(&mut rng);
-            let expected = lhs as SQDigit * rhs as SQDigit;
-            assert_eq!(lhs_arbi.clone() * rhs, expected);
-            lhs_arbi *= rhs;
-            assert_eq!(lhs_arbi, expected);
+            #[cfg(not(target_pointer_width = "64"))]
+            {
+                let rhs = die_sddigit.sample(&mut rng);
+                let expected = lhs as SQDigit * rhs as SQDigit;
+                assert_eq!(lhs_arbi.clone() * rhs, expected);
+                lhs_arbi *= rhs;
+                assert_eq!(lhs_arbi, expected);
+            }
 
-            let lhs = die_sddigit.sample(&mut rng);
-            let mut lhs_arbi = Arbi::from(lhs);
-            let rhs = die_sddigit.sample(&mut rng);
-            let expected = rhs as SQDigit * lhs as SQDigit;
-            assert_eq!(rhs * &lhs_arbi, expected);
-            let mut lhs_clone = lhs_arbi.clone();
-            lhs_clone *= rhs;
-            assert_eq!(lhs_clone, expected);
-            let rhs = die_sdigit.sample(&mut rng);
-            let expected = rhs as SQDigit * lhs as SQDigit;
-            assert_eq!(rhs * lhs_arbi.clone(), expected);
-            lhs_arbi *= rhs;
-            assert_eq!(lhs_arbi, expected);
+            #[cfg(not(target_pointer_width = "64"))]
+            {
+                let lhs = die_sddigit.sample(&mut rng);
+                let mut lhs_arbi = Arbi::from(lhs);
+                let rhs = die_sddigit.sample(&mut rng);
+                let expected = rhs as SQDigit * lhs as SQDigit;
+                assert_eq!(rhs * &lhs_arbi, expected);
+                let mut lhs_clone = lhs_arbi.clone();
+                lhs_clone *= rhs;
+                assert_eq!(lhs_clone, expected);
+                let rhs = die_sdigit.sample(&mut rng);
+                let expected = rhs as SQDigit * lhs as SQDigit;
+                assert_eq!(rhs * lhs_arbi.clone(), expected);
+                lhs_arbi *= rhs;
+                assert_eq!(lhs_arbi, expected);
+            }
 
             let lhs = die_sdigit.sample(&mut rng);
-            let mut lhs_arbi = Arbi::from(lhs);
+            let lhs_arbi = Arbi::from(lhs);
             let rhs = die_sdigit.sample(&mut rng);
             let expected = rhs as SDDigit * lhs as SDDigit;
             assert_eq!(rhs * &lhs_arbi, expected);
             let mut lhs_clone = lhs_arbi.clone();
             lhs_clone *= rhs;
             assert_eq!(lhs_clone, expected);
-            let rhs = die_sddigit.sample(&mut rng);
-            let expected = rhs as SQDigit * lhs as SQDigit;
-            assert_eq!(rhs * lhs_arbi.clone(), expected);
-            lhs_arbi *= rhs;
-            assert_eq!(lhs_arbi, expected);
+            #[cfg(not(target_pointer_width = "64"))]
+            {
+                let rhs = die_sddigit.sample(&mut rng);
+                let expected = rhs as SQDigit * lhs as SQDigit;
+                assert_eq!(rhs * lhs_arbi.clone(), expected);
+                lhs_arbi *= rhs;
+                assert_eq!(lhs_arbi, expected);
+            }
         }
     }
 
+    #[cfg(not(target_pointer_width = "64"))]
     #[test]
     fn smoke_3_to_4_digits() {
         let (mut rng, _) = get_seedable_rng();
