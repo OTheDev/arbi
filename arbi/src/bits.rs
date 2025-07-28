@@ -338,6 +338,9 @@ mod tests {
     use crate::Arbi;
     use crate::{BitCount, DDigit, Digit, SDDigit, SDigit};
 
+    #[cfg(not(target_pointer_width = "64"))]
+    use crate::{QDigit, SQDigit};
+
     fn test_i128_bit(v: i128, i: u32) -> bool {
         assert!(i < 128);
         let m = 1_i128 << i;
@@ -426,19 +429,25 @@ mod tests {
             let die_digit = get_uniform_die(0, Digit::MAX);
             let die_ddigit =
                 get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-            // let die_qdigit =
-            //     get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
             let die_sdigit = get_uniform_die(SDigit::MIN, SDigit::MAX);
             let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
-            // let die_sqdigit = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+
+            #[cfg(not(target_pointer_width = "64"))]
+            let die_qdigit =
+                get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+            #[cfg(not(target_pointer_width = "64"))]
+            let die_sqdigit = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
 
             for _ in 0..i16::MAX {
                 test_bit_ops_for_type!(rng, die_digit);
                 test_bit_ops_for_type!(rng, die_ddigit);
-                // test_bit_ops_for_type!(rng, die_qdigit);
                 test_bit_ops_for_type!(rng, die_sdigit);
                 test_bit_ops_for_type!(rng, die_sddigit);
-                // test_bit_ops_for_type!(rng, die_sqdigit);
+
+                #[cfg(not(target_pointer_width = "64"))]
+                test_bit_ops_for_type!(rng, die_qdigit);
+                #[cfg(not(target_pointer_width = "64"))]
+                test_bit_ops_for_type!(rng, die_sqdigit);
             }
         }
 

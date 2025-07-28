@@ -934,7 +934,9 @@ impl_arbi_add_for_primitive![
 #[cfg(test)]
 mod test_add_with_integral {
     use super::*;
+    #[cfg(not(target_pointer_width = "64"))]
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
+    #[cfg(not(target_pointer_width = "64"))]
     use crate::{SDDigit, SDigit};
 
     #[test]
@@ -980,40 +982,41 @@ mod test_add_with_integral {
         assert_eq!(rhs + a, expected);
     }
 
+    #[cfg(not(target_pointer_width = "64"))]
     #[test]
     fn smoke() {
         let (mut rng, _) = get_seedable_rng();
         let die_sdigit = get_uniform_die(SDigit::MIN, SDigit::MAX);
-        // let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
+        let die_sddigit = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
 
         for _ in 0..i16::MAX {
-            // let lhs = die_sddigit.sample(&mut rng);
-            // let lhs_arbi = Arbi::from(lhs);
-            // let rhs = die_sddigit.sample(&mut rng);
-            // assert_eq!(&lhs_arbi + rhs, lhs as SQDigit + rhs as SQDigit);
-            // let rhs = die_sdigit.sample(&mut rng);
-            // assert_eq!(lhs_arbi + rhs, lhs as SQDigit + rhs as SQDigit);
+            let lhs = die_sddigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(&lhs_arbi + rhs, lhs as SQDigit + rhs as SQDigit);
+            let rhs = die_sdigit.sample(&mut rng);
+            assert_eq!(lhs_arbi + rhs, lhs as SQDigit + rhs as SQDigit);
 
             let lhs = die_sdigit.sample(&mut rng);
             let lhs_arbi = Arbi::from(lhs);
             let rhs = die_sdigit.sample(&mut rng);
             assert_eq!(&lhs_arbi + rhs, lhs as SDDigit + rhs as SDDigit);
-            // let rhs = die_sddigit.sample(&mut rng);
-            // assert_eq!(lhs_arbi + rhs, lhs as SQDigit + rhs as SQDigit);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(lhs_arbi + rhs, lhs as SQDigit + rhs as SQDigit);
 
-            // let lhs = die_sddigit.sample(&mut rng);
-            // let lhs_arbi = Arbi::from(lhs);
-            // let rhs = die_sddigit.sample(&mut rng);
-            // assert_eq!(rhs + &lhs_arbi, lhs as SQDigit + rhs as SQDigit);
-            // let rhs = die_sdigit.sample(&mut rng);
-            // assert_eq!(rhs + lhs_arbi, lhs as SQDigit + rhs as SQDigit);
+            let lhs = die_sddigit.sample(&mut rng);
+            let lhs_arbi = Arbi::from(lhs);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(rhs + &lhs_arbi, lhs as SQDigit + rhs as SQDigit);
+            let rhs = die_sdigit.sample(&mut rng);
+            assert_eq!(rhs + lhs_arbi, lhs as SQDigit + rhs as SQDigit);
 
             let lhs = die_sdigit.sample(&mut rng);
             let lhs_arbi = Arbi::from(lhs);
             let rhs = die_sdigit.sample(&mut rng);
             assert_eq!(rhs + &lhs_arbi, lhs as SDDigit + rhs as SDDigit);
-            // let rhs = die_sddigit.sample(&mut rng);
-            // assert_eq!(rhs + lhs_arbi, lhs as SQDigit + rhs as SQDigit);
+            let rhs = die_sddigit.sample(&mut rng);
+            assert_eq!(rhs + lhs_arbi, lhs as SQDigit + rhs as SQDigit);
         }
     }
 

@@ -93,6 +93,9 @@ mod tests {
     use super::*;
     use crate::DDigit;
 
+    #[cfg(not(target_pointer_width = "64"))]
+    use crate::QDigit;
+
     #[test]
     fn test_assign_from_primitive() {
         let mut arbi = Arbi::new();
@@ -164,8 +167,12 @@ mod tests {
         assert_eq!(arbi, DDigit::MAX - 1);
         arbi.assign(DDigit::MAX);
         assert_eq!(arbi, DDigit::MAX);
-        // arbi.assign(DDigit::MAX as QDigit + 1);
-        // assert_eq!(arbi, DDigit::MAX as QDigit + 1);
+
+        #[cfg(not(target_pointer_width = "64"))]
+        {
+            arbi.assign(DDigit::MAX as QDigit + 1);
+            assert_eq!(arbi, DDigit::MAX as QDigit + 1);
+        }
     }
 }
 

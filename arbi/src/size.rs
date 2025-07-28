@@ -194,6 +194,8 @@ impl Arbi {
 #[cfg(test)]
 mod tests {
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
+    #[cfg(not(target_pointer_width = "64"))]
+    use crate::QDigit;
     use crate::{Arbi, BitCount, DDigit, Digit};
     use alloc::string::ToString;
 
@@ -209,11 +211,15 @@ mod tests {
 
         let a = Arbi::from(DDigit::MAX);
         assert_eq!(a.size_base(10), DDigit::MAX.to_string().len() as BitCount);
-        // let a = Arbi::from(DDigit::MAX as QDigit + 1);
-        // assert_eq!(
-        //     a.size_base(10),
-        //     (DDigit::MAX as QDigit + 1).to_string().len() as BitCount
-        // );
+
+        #[cfg(not(target_pointer_width = "64"))]
+        {
+            let a = Arbi::from(DDigit::MAX as QDigit + 1);
+            assert_eq!(
+                a.size_base(10),
+                (DDigit::MAX as QDigit + 1).to_string().len() as BitCount
+            );
+        }
     }
 
     #[test]
@@ -234,8 +240,9 @@ mod tests {
         let (mut rng, _) = get_seedable_rng();
         let die_digit = get_uniform_die(Digit::MIN, Digit::MAX);
         let die_ddigit = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        // let die_qdigit =
-        //     get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+        #[cfg(not(target_pointer_width = "64"))]
+        let die_qdigit =
+            get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
 
         for base in 2..=36 {
             for _ in 0..i16::MAX {
@@ -256,12 +263,15 @@ mod tests {
                     a.to_string_radix(base).len() as BitCount
                 );
 
-                // let r = die_qdigit.sample(&mut rng);
-                // let a = Arbi::from(r);
-                // assert_eq!(
-                //     a.size_base_ref(base),
-                //     a.to_string_radix(base).len() as BitCount
-                // );
+                #[cfg(not(target_pointer_width = "64"))]
+                {
+                    let r = die_qdigit.sample(&mut rng);
+                    let a = Arbi::from(r);
+                    assert_eq!(
+                        a.size_base_ref(base),
+                        a.to_string_radix(base).len() as BitCount
+                    );
+                }
             }
         }
     }
@@ -270,8 +280,10 @@ mod tests {
 #[cfg(test)]
 mod tests_size_bits {
     use super::*;
+    use crate::util::qdigit::get_uniform_qdigit_die;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
     use crate::DDigit;
+    use crate::QDigit;
 
     #[test]
     fn test_size_bits_returns_0_for_0() {
@@ -288,7 +300,10 @@ mod tests_size_bits {
 
         let die_s = get_uniform_die(Digit::MIN, Digit::MAX);
         let die_l = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        // let die_e = get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
+        let die_e = get_uniform_qdigit_die(
+            QDigit::from(DDigit::MAX) + QDigit::from(1),
+            QDigit::MAX,
+        );
 
         for i in 1..u16::MAX {
             assert_eq!(
@@ -298,7 +313,7 @@ mod tests_size_bits {
 
             let rs = die_s.sample(&mut rng);
             let rl = die_l.sample(&mut rng);
-            // let re = die_e.sample(&mut rng);
+            let re = die_e.sample(&mut rng);
 
             assert_eq!(
                 Arbi::from(rs).size_bits(),
@@ -308,10 +323,10 @@ mod tests_size_bits {
                 Arbi::from(rl).size_bits(),
                 (DDigit::BITS - rl.leading_zeros()) as BitCount
             );
-            // assert_eq!(
-            //     Arbi::from(re).size_bits(),
-            //     (QDigit::BITS - re.leading_zeros()) as BitCount
-            // );
+            assert_eq!(
+                Arbi::from(re).size_bits(),
+                (QDigit::BITS - re.leading_zeros()) as BitCount
+            );
         }
     }
 

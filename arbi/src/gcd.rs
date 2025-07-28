@@ -258,6 +258,8 @@ impl Arbi {
 mod tests {
     use super::*;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
+    #[cfg(not(target_pointer_width = "64"))]
+    use crate::SQDigit;
     use crate::{SDDigit, SDigit};
 
     fn gcd_primitive<T>(mut a: T, mut b: T) -> T
@@ -290,7 +292,9 @@ mod tests {
         let small = get_uniform_die(-100i16, 100i16);
         let sd = get_uniform_die(SDigit::MIN, SDigit::MAX); // i32
         let sdd = get_uniform_die(SDDigit::MIN, SDDigit::MAX); // i64
-                                                               // let sqd = get_uniform_die(SQDigit::MIN, SQDigit::MAX); // i128
+
+        #[cfg(not(target_pointer_width = "64"))]
+        let sqd = get_uniform_die(SQDigit::MIN, SQDigit::MAX); // i128
 
         for _ in 0..20000 {
             // (i32,i32)
@@ -319,19 +323,6 @@ mod tests {
             let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
             assert_eq!(actual, actual_2);
 
-            // (i128,i28)
-            // let (a, b) = (sqd.sample(&mut rng), sqd.sample(&mut rng));
-            // let (arbi_a, arbi_b) = (Arbi::from(a), Arbi::from(b));
-            // let expected = abs_primitive(gcd_primitive(a, b));
-            // let actual = Arbi::gcd_ref(&arbi_a, &arbi_b);
-            // assert_eq!(
-            //     actual, expected,
-            //     "GCD mismatch: gcd({}, {}) expected {} got {}",
-            //     a, b, expected, actual
-            // );
-            // let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
-            // assert_eq!(actual, actual_2);
-
             // (i32,i64)
             let (a, b) = (sd.sample(&mut rng), sdd.sample(&mut rng));
             let (arbi_a, arbi_b) = (Arbi::from(a), Arbi::from(b));
@@ -344,32 +335,6 @@ mod tests {
             );
             let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
             assert_eq!(actual, actual_2);
-
-            // (i32,i128)
-            // let (a, b) = (sd.sample(&mut rng), sqd.sample(&mut rng));
-            // let (arbi_a, arbi_b) = (Arbi::from(a), Arbi::from(b));
-            // let expected = abs_primitive(gcd_primitive(a as SQDigit, b));
-            // let actual = Arbi::gcd_ref(&arbi_a, &arbi_b);
-            // assert_eq!(
-            //     actual, expected,
-            //     "GCD mismatch: gcd({}, {}) expected {} got {}",
-            //     a, b, expected, actual
-            // );
-            // let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
-            // assert_eq!(actual, actual_2);
-
-            // (i64, i128)
-            // let (a, b) = (sdd.sample(&mut rng), sqd.sample(&mut rng));
-            // let (arbi_a, arbi_b) = (Arbi::from(a), Arbi::from(b));
-            // let expected = abs_primitive(gcd_primitive(a as SQDigit, b));
-            // let actual = Arbi::gcd_ref(&arbi_a, &arbi_b);
-            // assert_eq!(
-            //     actual, expected,
-            //     "GCD mismatch: gcd({}, {}) expected {} got {}",
-            //     a, b, expected, actual
-            // );
-            // let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
-            // assert_eq!(actual, actual_2);
 
             // (small,small)
             let (a, b) = (small.sample(&mut rng), small.sample(&mut rng));
@@ -397,18 +362,60 @@ mod tests {
             let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
             assert_eq!(actual, actual_2);
 
-            // (small,i128)
-            // let (a, b) = (small.sample(&mut rng), sqd.sample(&mut rng));
-            // let (arbi_a, arbi_b) = (Arbi::from(a), Arbi::from(b));
-            // let expected = abs_primitive(gcd_primitive(a as SQDigit, b));
-            // let actual = Arbi::gcd_ref(&arbi_a, &arbi_b);
-            // assert_eq!(
-            //     actual, expected,
-            //     "GCD mismatch: gcd({}, {}) expected {} got {}",
-            //     a, b, expected, actual
-            // );
-            // let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
-            // assert_eq!(actual, actual_2);
+            #[cfg(not(target_pointer_width = "64"))]
+            {
+                // (i128,i28)
+                let (a, b) = (sqd.sample(&mut rng), sqd.sample(&mut rng));
+                let (arbi_a, arbi_b) = (Arbi::from(a), Arbi::from(b));
+                let expected = abs_primitive(gcd_primitive(a, b));
+                let actual = Arbi::gcd_ref(&arbi_a, &arbi_b);
+                assert_eq!(
+                    actual, expected,
+                    "GCD mismatch: gcd({}, {}) expected {} got {}",
+                    a, b, expected, actual
+                );
+                let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
+                assert_eq!(actual, actual_2);
+
+                // (small,i128)
+                let (a, b) = (small.sample(&mut rng), sqd.sample(&mut rng));
+                let (arbi_a, arbi_b) = (Arbi::from(a), Arbi::from(b));
+                let expected = abs_primitive(gcd_primitive(a as SQDigit, b));
+                let actual = Arbi::gcd_ref(&arbi_a, &arbi_b);
+                assert_eq!(
+                    actual, expected,
+                    "GCD mismatch: gcd({}, {}) expected {} got {}",
+                    a, b, expected, actual
+                );
+                let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
+                assert_eq!(actual, actual_2);
+
+                // (i32,i128)
+                let (a, b) = (sd.sample(&mut rng), sqd.sample(&mut rng));
+                let (arbi_a, arbi_b) = (Arbi::from(a), Arbi::from(b));
+                let expected = abs_primitive(gcd_primitive(a as SQDigit, b));
+                let actual = Arbi::gcd_ref(&arbi_a, &arbi_b);
+                assert_eq!(
+                    actual, expected,
+                    "GCD mismatch: gcd({}, {}) expected {} got {}",
+                    a, b, expected, actual
+                );
+                let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
+                assert_eq!(actual, actual_2);
+
+                // (i64, i128)
+                let (a, b) = (sdd.sample(&mut rng), sqd.sample(&mut rng));
+                let (arbi_a, arbi_b) = (Arbi::from(a), Arbi::from(b));
+                let expected = abs_primitive(gcd_primitive(a as SQDigit, b));
+                let actual = Arbi::gcd_ref(&arbi_a, &arbi_b);
+                assert_eq!(
+                    actual, expected,
+                    "GCD mismatch: gcd({}, {}) expected {} got {}",
+                    a, b, expected, actual
+                );
+                let actual_2 = Arbi::gcd_ref_l(&arbi_a, &arbi_b);
+                assert_eq!(actual, actual_2);
+            }
         }
     }
 

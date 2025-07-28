@@ -97,6 +97,8 @@ impl Arbi {
 mod tests {
     use super::*;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
+    #[cfg(not(target_pointer_width = "64"))]
+    use crate::SQDigit;
     use crate::{SDDigit, SDigit};
 
     pub fn gcdext(a: i128, b: i128) -> (i128, i128, i128) {
@@ -177,7 +179,9 @@ mod tests {
         let small = get_uniform_die(i8::MIN, i8::MAX);
         let sd = get_uniform_die(SDigit::MIN, SDigit::MAX);
         let sdd = get_uniform_die(SDDigit::MIN, SDDigit::MAX);
-        // let sqd = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
+
+        #[cfg(not(target_pointer_width = "64"))]
+        let sqd = get_uniform_die(SQDigit::MIN, SQDigit::MAX);
 
         let num_samples = 5000 as usize;
         let mut samples: Vec<(i128, i128)> =
@@ -196,24 +200,6 @@ mod tests {
             if m != 0 {
                 samples.push((a, m))
             };
-            // (i128, i128)
-            // let a = sqd.sample(&mut rng) as i128;
-            // let m = sqd.sample(&mut rng) as i128;
-            // if m != 0 {
-            //     samples.push((a, m))
-            // };
-            // (i32, i128)
-            // let a = sd.sample(&mut rng) as i128;
-            // let m = sqd.sample(&mut rng) as i128;
-            // if m != 0 {
-            //     samples.push((a, m))
-            // };
-            // (i128, i32)
-            // let a = sqd.sample(&mut rng) as i128;
-            // let m = sd.sample(&mut rng) as i128;
-            // if m != 0 {
-            //     samples.push((a, m))
-            // };
             // (i32, i64)
             let a = sd.sample(&mut rng) as i128;
             let m = sdd.sample(&mut rng) as i128;
@@ -238,6 +224,27 @@ mod tests {
             if m != 0 {
                 samples.push((a, m))
             };
+            #[cfg(not(target_pointer_width = "64"))]
+            {
+                // (i128, i128)
+                let a = sqd.sample(&mut rng) as i128;
+                let m = sqd.sample(&mut rng) as i128;
+                if m != 0 {
+                    samples.push((a, m))
+                };
+                // (i32, i128)
+                let a = sd.sample(&mut rng) as i128;
+                let m = sqd.sample(&mut rng) as i128;
+                if m != 0 {
+                    samples.push((a, m))
+                };
+                // (i128, i32)
+                let a = sqd.sample(&mut rng) as i128;
+                let m = sd.sample(&mut rng) as i128;
+                if m != 0 {
+                    samples.push((a, m))
+                };
+            }
         }
 
         for (a, m) in samples {

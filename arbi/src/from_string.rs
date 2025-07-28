@@ -217,6 +217,7 @@ mod tests {
         }
     }
 
+    #[cfg(not(target_pointer_width = "64"))]
     fn test_construct_from_string(base: Base) {
         use crate::to_string::tests::ToStringBase;
         use crate::util::test::{
@@ -232,8 +233,8 @@ mod tests {
             SDDigit::MIN as SDDigit,
             SDigit::MAX as SDDigit,
             SDDigit::MAX as SDDigit,
-            // SQDigit::MIN,
-            // SQDigit::MAX,
+            SQDigit::MIN,
+            SQDigit::MAX,
         ] {
             assert_eq!(
                 Arbi::from_str_base(&x.to_string_base(base), base).unwrap(),
@@ -241,11 +242,11 @@ mod tests {
             );
         }
 
-        // assert_eq!(
-        //     Arbi::from_str_base(&QDigit::MAX.to_string_base(base), base)
-        //         .unwrap(),
-        //     QDigit::MAX
-        // );
+        assert_eq!(
+            Arbi::from_str_base(&QDigit::MAX.to_string_base(base), base)
+                .unwrap(),
+            QDigit::MAX
+        );
 
         let (mut rng, _) = get_seedable_rng();
 
@@ -262,6 +263,7 @@ mod tests {
         }
     }
 
+    #[cfg(not(target_pointer_width = "64"))]
     #[test]
     fn test_construct_from_string_() {
         for i in 2..=36 {

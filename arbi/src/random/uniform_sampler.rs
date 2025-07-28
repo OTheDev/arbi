@@ -78,7 +78,7 @@ impl SampleUniform for Arbi {
 
 #[cfg(test)]
 mod test_uniform_sampler {
-    use crate::{Arbi, DDigit};
+    use crate::{Arbi, DDigit, QDigit};
     use rand::distributions::uniform::Uniform;
     use rand::distributions::Distribution;
     use rand::rngs::StdRng;
@@ -91,15 +91,15 @@ mod test_uniform_sampler {
         let _ = Uniform::new(&low, &high);
     }
 
-    // #[test]
-    // #[should_panic]
-    // fn test_new_inclusive_panics_on_invalid_range() {
-    //     let (low, high) = (
-    //         Arbi::from(DDigit::MAX as QDigit + 1),
-    //         Arbi::from(DDigit::MAX),
-    //     );
-    //     let _ = Uniform::new_inclusive(&low, &high);
-    // }
+    #[test]
+    #[should_panic]
+    fn test_new_inclusive_panics_on_invalid_range() {
+        let (low, high) = (
+            Arbi::from(QDigit::from(DDigit::MAX) + QDigit::from(1)),
+            Arbi::from(DDigit::MAX),
+        );
+        let _ = Uniform::new_inclusive(&low, &high);
+    }
 
     #[test]
     fn test_uniform_repeated() {
