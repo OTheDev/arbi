@@ -247,7 +247,7 @@ impl Arbi {
 mod tests_size_base_with_size_bits {
     use super::*;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{DDigit, Digit};
+    use crate::{DDigit, Digit, QDigit};
 
     fn size_base(mut x: u128, base: u32) -> BitCount {
         if x == 0 {
@@ -265,20 +265,33 @@ mod tests_size_base_with_size_bits {
         (u128::BITS - x.leading_zeros()).into()
     }
 
+    fn size_base_big(mut x: QDigit, base: u32) -> BitCount {
+        let base = QDigit::from(base);
+        if x == QDigit::from(0) {
+            return 0;
+        }
+        let mut count: BitCount = 0;
+        while x > QDigit::from(0) {
+            x /= base;
+            count += 1;
+        }
+        count
+    }
+
+    fn size_bits_big(x: QDigit) -> BitCount {
+        (QDigit::BITS as u32 - x.leading_zeros() as u32).into()
+    }
+
     #[test]
     fn test_random_integers() {
         let (mut rng, _) = get_seedable_rng();
         let d1 = get_uniform_die(0, Digit::MAX);
         let d2 = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        // let d3 = get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
-
         for _ in 0..i16::MAX {
             let nums = [
                 d1.sample(&mut rng) as u128,
                 d2.sample(&mut rng) as u128,
-                // d3.sample(&mut rng) as u128,
             ];
-
             for num in nums {
                 let bits = size_bits(num);
                 for base in 3..=36 {
@@ -299,20 +312,14 @@ mod tests_size_base_with_size_bits {
 
     #[test]
     fn smoke_size_with_size_base() {
-        use crate::Arbi;
-
         let (mut rng, _) = get_seedable_rng();
         let d1 = get_uniform_die(0, Digit::MAX);
         let d2 = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
-        // let d3 = get_uniform_die(DDigit::MAX as QDigit + 1, QDigit::MAX);
-
         for _ in 0..i16::MAX {
             let nums = [
                 d1.sample(&mut rng) as u128,
                 d2.sample(&mut rng) as u128,
-                // d3.sample(&mut rng) as u128,
             ];
-
             for num in nums {
                 if num == 0 {
                     continue;
@@ -321,6 +328,66 @@ mod tests_size_base_with_size_bits {
                 let actual = arbi.size();
                 for base in 2..=36 {
                     let sz_base = size_base(num, base) as usize;
+                    let estimated = Arbi::size_with_size_base_maybe_over_by_one(
+                        base, sz_base,
+                    );
+                    assert!(
+                        estimated == actual || estimated == actual + 1,
+                        "arbi = {}, estimate = {}, actual = {}, base = {}",
+                        arbi,
+                        estimated,
+                        actual,
+                        base
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_random_integers_big() {
+        let (mut rng, _) = get_seedable_rng();
+        let d3 = crate::util::qdigit::get_uniform_qdigit_die(
+            QDigit::from(DDigit::MAX) + QDigit::from(1),
+            QDigit::MAX,
+        );
+        for _ in 0..i16::MAX {
+            let nums = [d3.sample(&mut rng)];
+            for num in nums {
+                let bits = size_bits_big(num);
+                for base in 3..=36 {
+                    let estimated =
+                        Arbi::size_base_with_size_bits_maybe_over_by_one(
+                            base, bits,
+                        );
+                    let actual = size_base_big(num, base);
+                    assert!(
+                        estimated == actual || estimated == actual + 1,
+                        "Failed for num={}, base={}: estimated={}, actual={}, bits={}",
+                        num, base, estimated, actual, bits
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn smoke_size_with_size_base_big() {
+        let (mut rng, _) = get_seedable_rng();
+        let d3 = crate::util::qdigit::get_uniform_qdigit_die(
+            QDigit::from(DDigit::MAX) + QDigit::from(1),
+            QDigit::MAX,
+        );
+        for _ in 0..i16::MAX {
+            let nums = [d3.sample(&mut rng)];
+            for num in nums {
+                if num == QDigit::from(0) {
+                    continue;
+                }
+                let arbi = Arbi::from(num);
+                let actual = arbi.size();
+                for base in 2..=36 {
+                    let sz_base = size_base_big(num, base) as usize;
                     let estimated = Arbi::size_with_size_base_maybe_over_by_one(
                         base, sz_base,
                     );
