@@ -288,10 +288,8 @@ mod tests_size_base_with_size_bits {
         let d1 = get_uniform_die(0, Digit::MAX);
         let d2 = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
         for _ in 0..i16::MAX {
-            let nums = [
-                d1.sample(&mut rng) as u128,
-                d2.sample(&mut rng) as u128,
-            ];
+            let nums =
+                [d1.sample(&mut rng) as u128, d2.sample(&mut rng) as u128];
             for num in nums {
                 let bits = size_bits(num);
                 for base in 3..=36 {
@@ -316,10 +314,8 @@ mod tests_size_base_with_size_bits {
         let d1 = get_uniform_die(0, Digit::MAX);
         let d2 = get_uniform_die(Digit::MAX as DDigit + 1, DDigit::MAX);
         for _ in 0..i16::MAX {
-            let nums = [
-                d1.sample(&mut rng) as u128,
-                d2.sample(&mut rng) as u128,
-            ];
+            let nums =
+                [d1.sample(&mut rng) as u128, d2.sample(&mut rng) as u128];
             for num in nums {
                 if num == 0 {
                     continue;
