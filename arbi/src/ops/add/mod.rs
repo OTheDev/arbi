@@ -3,5 +3,8 @@ Copyright 2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-mod add;
-mod bit;
+mod arbi_x_arbi;
+mod arbi_x_int;
+mod impls;
+mod test;
+mod util;
