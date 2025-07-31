@@ -15,7 +15,6 @@ extern crate test;
 
 use alloc::vec::Vec;
 
-mod add;
 mod assign;
 mod assign_double;
 mod assign_integral;

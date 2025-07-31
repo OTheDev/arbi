@@ -1,9 +1,10 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
 use crate::util::to_digits::{length_digits, ToDigits};
+use crate::util::ArbiLikeView;
 use crate::{Arbi, BitCount, DDigit, Digit, SDDigit};
 use core::ops::{Div, DivAssign, Rem, RemAssign};
 
@@ -72,8 +73,8 @@ impl Arbi {
             if Arbi::cmp_abs(r, v) != core::cmp::Ordering::Less {
                 // (3)(III)(a)
                 // *r = &(*r) - v;
-                Arbi::sub_abs_inplace(r, v, false);
-                // (3)(III)(b)
+                r.isub_with_arbi_like_view(v.into()); // previously, Arbi::sub_abs_inplace(r, v, false); r = |r| - |v|
+                                                      // (3)(III)(b)
                 q.set_bit(i);
             }
         }
@@ -265,7 +266,10 @@ impl Arbi {
                     q.negate_mut();
                     *q -= 1;
                     r.negate_mut();
-                    r.dadd_inplace(d, d_sign == -1); // *r += d;
+                    r.iadd_with_arbi_like_view(ArbiLikeView {
+                        vec: d,
+                        neg: d_sign == -1,
+                    }); // *r += d;
                 }
             }
             _ => {}

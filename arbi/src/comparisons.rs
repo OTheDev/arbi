@@ -1,9 +1,10 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
 use crate::Arbi;
+use crate::Digit;
 use core::cmp::Ordering;
 
 impl Ord for Arbi {
@@ -25,6 +26,56 @@ impl PartialEq for Arbi {
 }
 
 impl Eq for Arbi {}
+
+#[inline(always)]
+pub(crate) fn s_size(digits: &[Digit]) -> usize {
+    let mut len = digits.len();
+    while len > 0 && digits[len - 1] == 0 {
+        len -= 1;
+    }
+    len
+}
+
+pub(crate) fn s_cmp_impl(
+    a: &[Digit],
+    b: &[Digit],
+    assume_normalized: bool,
+) -> Ordering {
+    let (a_size, b_size) = if assume_normalized {
+        (a.len(), b.len())
+    } else {
+        (s_size(a), s_size(b))
+    };
+    match a_size.cmp(&b_size) {
+        Ordering::Equal => {
+            for i in (0..a_size).rev() {
+                match a[i].cmp(&b[i]) {
+                    Ordering::Equal => continue,
+                    other => return other,
+                }
+            }
+            Ordering::Equal
+        }
+        other => other,
+    }
+}
+
+#[allow(dead_code)]
+pub(crate) fn s_cmp(a: &[Digit], b: &[Digit]) -> Ordering {
+    s_cmp_impl(a, b, false)
+}
+
+pub(crate) fn s_cmp_normalized(a: &[Digit], b: &[Digit]) -> Ordering {
+    debug_assert!(
+        a.is_empty() || a.last() != Some(&0),
+        "slice a not normalized"
+    );
+    debug_assert!(
+        b.is_empty() || b.last() != Some(&0),
+        "slice b not normalized"
+    );
+    s_cmp_impl(a, b, true)
+}
 
 impl Arbi {
     // Assumes x, y >= 0
