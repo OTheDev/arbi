@@ -1,134 +1,16 @@
 /*
-Copyright 2024 Owain Davies
+Copyright 2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
-use crate::util::to_digits::{length_digits, ToDigits};
-use crate::{Arbi, DDigit, Digit};
-use core::ops::{Mul, MulAssign};
+/* TODO: clean up, and move what we can to integration tests */
+
+use crate::ops::mul::impls::s_mul_gradeschool;
+use crate::ops::mul::square::s_square;
+use crate::ops::mul::MUL_KARATSUBA_CUTOFF;
+use crate::{Arbi, Digit};
 
 impl Arbi {
-    #[allow(dead_code)]
-    /// If one of the operands has size greater than or equal to this value,
-    /// then we use Karatsuba multiplication.
-    const KARATSUBA_THRESHOLD: usize = 74;
-
-    /// Multiply this integer in place by a digit and optionally, add a digit
-    /// to this integer.
-    ///
-    /// This function does not trim trailing zeros in the digit vector.
-    ///
-    /// Knuth Algorithm M, but recognizing
-    /// 1. \\( j \\) is always 0
-    /// 2. \\( w\_{i + j} = w\_{i} \\) is always zero when forming \\( t \\).
-    /// 3. We can safely make the initial carry nonzero to implement adding a
-    ///    digit.
-    ///
-    /// ## Complexity
-    /// \\( O(n) \\)
-    #[inline(always)]
-    pub(crate) fn imul1add1(x: &mut Self, v: Digit, k: Option<Digit>) {
-        let mut k: Digit = k.unwrap_or(0);
-        for d in &mut x.vec {
-            let t: DDigit = (*d as DDigit) * (v as DDigit) + (k as DDigit);
-            k = (t >> Digit::BITS) as Digit; // floor(t / 2^{Digit::BITS})
-            *d = t as Digit; // t mod 2^{Digit::BITS}
-        }
-        if k != 0 {
-            x.vec.push(k);
-        }
-    }
-
-    /// Grade School Multiplication Algorithm
-    fn dmul_algo_knuth(
-        w: &mut [Digit],
-        a: &[Digit],
-        b: &[Digit],
-        m: usize,
-        n: usize,
-    ) {
-        w[..m].fill(0);
-        for j in 0..n {
-            let mut k: Digit = 0;
-            for i in 0..m {
-                let t: DDigit = a[i] as DDigit * b[j] as DDigit
-                    + w[i + j] as DDigit
-                    + k as DDigit;
-                k = (t >> Digit::BITS) as Digit; // floor(t / 2^{Digit::BITS})
-                w[i + j] = t as Digit; // t mod 2^{Digit::BITS}
-            }
-            w[j + m] = k;
-        }
-    }
-
-    #[allow(dead_code)]
-    fn mul_algo_knuth(w: &mut Self, a: &Self, b: &Self, m: usize, n: usize) {
-        Arbi::dmul_algo_knuth(&mut w.vec, &a.vec, &b.vec, m, n);
-    }
-
-    fn dmul_algo_square(w: &mut [Digit], a: &[Digit], t: usize) {
-        use crate::uints::UnsignedUtilities;
-        w.fill(0);
-        let mut c: DDigit;
-        for i in 0..t {
-            if Digit::BITS == 32 {
-                type QDigit = u128;
-                let uv: QDigit =
-                    w[2 * i] as QDigit + a[i] as QDigit * a[i] as QDigit;
-                w[2 * i] = uv as Digit; // set w[2 * i] <- v
-                c = (uv >> Digit::BITS) as DDigit; // set c <- u
-                for j in (i + 1)..t {
-                    let uv: QDigit = 2 * a[j] as QDigit * a[i] as QDigit
-                        + w[i + j] as QDigit
-                        + c as QDigit;
-                    w[i + j] = uv as Digit; // set w[i + j] <- v
-                    c = (uv >> Digit::BITS) as DDigit; // set c <- u
-                }
-            } else if Digit::BITS == 64 {
-                // This works for the 32-bit case as well.
-                let uv: DDigit =
-                    w[2 * i] as DDigit + a[i] as DDigit * a[i] as DDigit;
-                w[2 * i] = uv as Digit; // set w[2 * i] <- v
-                c = uv >> Digit::BITS; // set c <- u
-                for j in (i + 1)..t {
-                    // (hi, lo) represents a quadruple digit
-                    let mut lo: DDigit = a[j] as DDigit * a[i] as DDigit;
-                    // Multiply product by two
-                    let mut hi = lo >> (DDigit::BITS - 1);
-                    lo <<= 1;
-                    // Now add w[i + j] and c to (hi, lo)
-                    let mut lo_clone = lo;
-                    let overflow = DDigit::uadd_overflow(
-                        &mut lo,
-                        lo_clone,
-                        w[i + j] as DDigit,
-                    );
-                    hi += DDigit::from(overflow);
-                    lo_clone = lo;
-                    let overflow = DDigit::uadd_overflow(&mut lo, lo_clone, c);
-                    hi += DDigit::from(overflow);
-                    // Collect
-                    w[i + j] = lo as Digit; // set w[i + j] <- v
-                    c = (hi << Digit::BITS) | (lo >> Digit::BITS); // set c <- u
-                }
-            } else {
-                unreachable!("Digit::BITS must be 32 or 64.");
-            }
-            let mut k = i + t;
-            while c > 0 {
-                c += w[k] as DDigit;
-                w[k] = c as Digit;
-                c >>= Digit::BITS;
-                k += 1;
-            }
-        }
-    }
-
-    #[allow(dead_code)]
-    fn mul_algo_square(w: &mut Self, a: &Self, t: usize) {
-        Arbi::dmul_algo_square(&mut w.vec, &a.vec, t);
-    }
-
     // Performs `result = |a| * |b|`.
     fn dmul_standard(result: &mut Self, a: &[Digit], b: &[Digit]) {
         let m = a.len();
@@ -139,14 +21,17 @@ impl Arbi {
         }
         result.vec.resize(m + n, 0);
         if core::ptr::eq(a, b) {
-            Self::dmul_algo_square(&mut result.vec, a, m);
+            s_square(&mut result.vec, a, &mut []);
         } else {
-            Self::dmul_algo_knuth(&mut result.vec, a, b, m, n);
+            if m >= n {
+                s_mul_gradeschool(&mut result.vec, a, b);
+            } else {
+                s_mul_gradeschool(&mut result.vec, b, a);
+            }
         }
         result.trim();
     }
 
-    #[allow(dead_code)]
     // Performs `result = |a| * |b|`.
     fn mul_standard(result: &mut Self, a: &Self, b: &Self) {
         Arbi::dmul_standard(result, &a.vec, &b.vec);
@@ -159,9 +44,7 @@ impl Arbi {
         u_is_neg: bool,
         v_is_neg: bool,
     ) {
-        if u.len() < Self::KARATSUBA_THRESHOLD
-            || v.len() < Self::KARATSUBA_THRESHOLD
-        {
+        if u.len() < MUL_KARATSUBA_CUTOFF || v.len() < MUL_KARATSUBA_CUTOFF {
             Self::dmul_standard(w, u, v);
         } else {
             Self::dmul_karatsuba(w, u, v);
@@ -169,87 +52,54 @@ impl Arbi {
         w.neg = u_is_neg != v_is_neg;
     }
 
-    fn mul_(w: &mut Self, u: &Self, v: &Self) {
-        Self::dmul_(w, &u.vec, &v.vec, u.is_negative(), v.is_negative());
+    fn dbisect(x: &[Digit], lower: &mut Self, upper: &mut Self, n: usize) {
+        let bisect_point = core::cmp::min(n, x.len());
+        lower.vec = x[..bisect_point].to_vec();
+        upper.vec = x[bisect_point..].to_vec();
+        lower.trim();
+        upper.trim();
     }
-}
 
-// TODO: any inplace potential?
-
-/// See [`impl<'a, 'b> Mul<&'b Arbi> for &'a Arbi`](#impl-Mul<%26Arbi>-for-%26Arbi).
-impl Mul<Arbi> for Arbi {
-    type Output = Self;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        let mut ret = Arbi::zero();
-        Self::mul_(&mut ret, &self, &rhs);
-        ret
+    fn dmul_karatsuba(w: &mut Self, u: &[Digit], v: &[Digit]) {
+        let n: usize = core::cmp::min(u.len(), v.len()) >> 1;
+        let (mut u0, mut u1, mut v0, mut v1) =
+            (Arbi::zero(), Arbi::zero(), Arbi::zero(), Arbi::zero());
+        Self::dbisect(u, &mut u0, &mut u1, n);
+        Self::dbisect(v, &mut v0, &mut v1, n);
+        let (mut a, mut b, mut c) = (Arbi::zero(), Arbi::zero(), Arbi::zero());
+        Self::dmul_(
+            &mut a,
+            &u1.vec,
+            &v1.vec,
+            u1.is_negative(),
+            v1.is_negative(),
+        ); // a = u1 * v1
+        Self::dmul_(
+            &mut b,
+            &u0.vec,
+            &v0.vec,
+            u0.is_negative(),
+            v0.is_negative(),
+        ); // b = u0 * v0
+        u1 += u0;
+        v1 += v0;
+        Self::dmul_(
+            &mut c,
+            &u1.vec,
+            &v1.vec,
+            u1.is_negative(),
+            v1.is_negative(),
+        );
+        // c -= &a + &b; // c = (u1 + u0)(v1 + v0) - (u0v0 + u1v1)
+        c.sub_sum_of_abs_gt(&a, &b);
+        a <<= 2 * n * Digit::BITS as usize;
+        c <<= n * Digit::BITS as usize;
+        // *w = &a + &c + &b; // w = (Arbi::BASE ** 2n) * a + (Arbi::BASE ** n) * c + b
+        w.add3_abs_assign(&a, &b, &c);
     }
-}
 
-/// See [`impl<'a, 'b> Mul<&'b Arbi> for &'a Arbi`](#impl-Mul<%26Arbi>-for-%26Arbi).
-impl<'a> Mul<&'a Arbi> for Arbi {
-    type Output = Self;
-
-    fn mul(self, rhs: &'a Arbi) -> Self {
-        let mut ret = Arbi::zero();
-        Self::mul_(&mut ret, &self, rhs);
-        ret
-    }
-}
-
-/// Multiply an `Arbi` integer by another `Arbi` integer.
-///
-/// # Examples
-/// ```
-/// use arbi::Arbi;
-///
-/// let mut a = Arbi::from(i16::MIN);
-/// let mut b = a.clone();
-///
-/// a = &a * &b;
-/// assert_eq!(a, (i16::MIN as i128).pow(2));
-///
-/// a = a * &b;
-/// assert_eq!(a, (i16::MIN as i128).pow(3));
-///
-/// a *= &b;
-/// assert_eq!(a, (i16::MIN as i128).pow(4));
-///
-/// a *= b;
-/// assert_eq!(a, (i16::MIN as i128).pow(5));
-///
-/// a = &a * &a;
-/// assert_eq!(
-///     a,
-///     Arbi::from_str_radix("40000000000000000000000000000000000000", 16)
-///         .unwrap()
-/// );
-/// ```
-///
-/// ## Complexity
-/// \\( O(n^{\log\_{2}(3)}) \approx O(n^{1.58}) \\)
-impl<'b> Mul<&'b Arbi> for &Arbi {
-    type Output = Arbi;
-
-    fn mul(self, rhs: &'b Arbi) -> Self::Output {
-        let mut ret = Arbi::zero();
-        Arbi::mul_(&mut ret, self, rhs);
-        ret
-    }
-}
-
-/// See [`impl<'a, 'b> Mul<&'b Arbi> for &'a Arbi`](#impl-Mul<%26Arbi>-for-%26Arbi).
-impl MulAssign<Arbi> for Arbi {
-    fn mul_assign(&mut self, rhs: Arbi) {
-        *self = &*self * &rhs;
-    }
-}
-
-/// See [`impl<'a, 'b> Mul<&'b Arbi> for &'a Arbi`](#impl-Mul<%26Arbi>-for-%26Arbi).
-impl MulAssign<&Arbi> for Arbi {
-    fn mul_assign(&mut self, rhs: &Arbi) {
-        *self = &*self * rhs;
+    fn mul_karatsuba(w: &mut Self, u: &Self, v: &Self) {
+        Self::dmul_karatsuba(w, &u.vec, &v.vec);
     }
 }
 
@@ -257,7 +107,7 @@ impl MulAssign<&Arbi> for Arbi {
 mod tests {
     use super::*;
 
-    use crate::{SDDigit, SDigit};
+    use crate::{DDigit, SDDigit, SDigit};
     // use alloc::string::ToString;
     use crate::SQDigit;
     use rand::distributions::Distribution;
@@ -409,107 +259,6 @@ mod tests {
     }
 }
 
-impl Arbi {
-    fn dbisect(x: &[Digit], lower: &mut Self, upper: &mut Self, n: usize) {
-        let bisect_point = core::cmp::min(n, x.len());
-        lower.vec = x[..bisect_point].to_vec();
-        upper.vec = x[bisect_point..].to_vec();
-        lower.trim();
-        upper.trim();
-    }
-
-    #[allow(dead_code)]
-    fn bisect(x: &Self, lower: &mut Self, upper: &mut Self, n: usize) {
-        Self::dbisect(&x.vec, lower, upper, n);
-    }
-
-    // TODO: optimize
-    fn dmul_karatsuba(w: &mut Self, u: &[Digit], v: &[Digit]) {
-        let n: usize = core::cmp::min(u.len(), v.len()) >> 1;
-        let (mut u0, mut u1, mut v0, mut v1) =
-            (Arbi::zero(), Arbi::zero(), Arbi::zero(), Arbi::zero());
-        Self::dbisect(u, &mut u0, &mut u1, n);
-        Self::dbisect(v, &mut v0, &mut v1, n);
-        let (mut a, mut b, mut c) = (Arbi::zero(), Arbi::zero(), Arbi::zero());
-        Self::dmul_(
-            &mut a,
-            &u1.vec,
-            &v1.vec,
-            u1.is_negative(),
-            v1.is_negative(),
-        ); // a = u1 * v1
-        Self::dmul_(
-            &mut b,
-            &u0.vec,
-            &v0.vec,
-            u0.is_negative(),
-            v0.is_negative(),
-        ); // b = u0 * v0
-        u1 += u0;
-        v1 += v0;
-        Self::dmul_(
-            &mut c,
-            &u1.vec,
-            &v1.vec,
-            u1.is_negative(),
-            v1.is_negative(),
-        );
-        // c -= &a + &b; // c = (u1 + u0)(v1 + v0) - (u0v0 + u1v1)
-        c.sub_sum_of_abs_gt(&a, &b);
-        a <<= 2 * n * Digit::BITS as usize;
-        c <<= n * Digit::BITS as usize;
-        // *w = &a + &c + &b; // w = (Arbi::BASE ** 2n) * a + (Arbi::BASE ** n) * c + b
-        w.add3_abs_assign(&a, &b, &c);
-    }
-
-    #[allow(dead_code)]
-    fn mul_karatsuba(w: &mut Self, u: &Self, v: &Self) {
-        Self::dmul_karatsuba(w, &u.vec, &v.vec);
-    }
-}
-
-#[cfg(all(feature = "nightly", test))]
-mod benches_karatsuba {
-    use test::Bencher;
-
-    use super::*;
-    use crate::util::test::{
-        get_seedable_rng, get_uniform_die, random_arbi, Distribution,
-    };
-
-    #[bench]
-    fn bench_karatsuba(b: &mut Bencher) {
-        let (mut rng, _) = get_seedable_rng();
-        let die = get_uniform_die(
-            Arbi::KARATSUBA_THRESHOLD,
-            Arbi::KARATSUBA_THRESHOLD * 4,
-        );
-        b.iter(|| {
-            let random_size = Digit::BITS as usize * die.sample(&mut rng);
-            let r_1 = random_arbi(random_size);
-            let r_2 = random_arbi(random_size);
-            let mut x_k = Arbi::zero();
-            Arbi::mul_karatsuba(&mut x_k, &r_1, &r_2);
-        });
-    }
-
-    #[bench]
-    fn bench_standard(b: &mut Bencher) {
-        let (mut rng, _) = get_seedable_rng();
-        let die = get_uniform_die(
-            Arbi::KARATSUBA_THRESHOLD,
-            Arbi::KARATSUBA_THRESHOLD * 4,
-        );
-        b.iter(|| {
-            let random_size = Digit::BITS as usize * die.sample(&mut rng);
-            let r_1 = random_arbi(random_size);
-            let r_2 = random_arbi(random_size);
-            let mut x_k = Arbi::zero();
-            Arbi::mul_standard(&mut x_k, &r_1, &r_2);
-        });
-    }
-}
-
 #[cfg(test)]
 mod karatsuba {
     use super::*;
@@ -520,10 +269,8 @@ mod karatsuba {
     #[test]
     fn test_karatsuba() {
         let (mut rng, _) = get_seedable_rng();
-        let die = get_uniform_die(
-            Arbi::KARATSUBA_THRESHOLD,
-            Arbi::KARATSUBA_THRESHOLD * 4,
-        );
+        let die =
+            get_uniform_die(MUL_KARATSUBA_CUTOFF * 3, MUL_KARATSUBA_CUTOFF * 3);
 
         let num_iterations = 1000;
 
@@ -566,7 +313,7 @@ mod karatsuba {
                 x_standard.negate_mut();
             }
 
-            assert_eq!(x_karatsuba, x_standard);
+            assert_eq!(x_karatsuba, x_standard, "Test failed with {r_1} * {r_2}, right is correct, left is wrong");
         }
     }
 }
@@ -575,7 +322,7 @@ mod karatsuba {
 mod square {
     use super::*;
     use crate::util::test::{get_seedable_rng, get_uniform_die, Distribution};
-    use crate::{QDigit, SDDigit, SDigit, SQDigit};
+    use crate::{DDigit, QDigit, SDDigit, SDigit, SQDigit};
 
     #[test]
     fn test_square_zero() {
@@ -670,120 +417,6 @@ mod square {
         }
     }
 }
-
-/* !impl_arbi_mul_for_primitive */
-macro_rules! impl_arbi_mul_for_primitive {
-    ($($signed_type:ty),* ) => {
-        $(
-
-impl Mul<$signed_type> for Arbi {
-    type Output = Self;
-    #[allow(unused_comparisons)]
-    fn mul(mut self, other: $signed_type) -> Self {
-        match other.to_digits() {
-            None => {
-                self.make_zero();
-                self
-            }
-            Some(v) => {
-                let mut ret = Arbi::zero();
-                let v_len: usize = length_digits(&v);
-                Self::dmul_(
-                    &mut ret,
-                    &self.vec,
-                    &v[..v_len],
-                    self.is_negative(),
-                    other < 0,
-                );
-                ret
-            }
-        }
-    }
-}
-
-impl Mul<&$signed_type> for Arbi {
-    type Output = Self;
-    fn mul(self, other: &$signed_type) -> Self {
-        self * (*other)
-    }
-}
-
-impl Mul<$signed_type> for &Arbi {
-    type Output = Arbi;
-    fn mul(self, other: $signed_type) -> Arbi {
-        self.clone() * other
-    }
-}
-
-impl Mul<&$signed_type> for &Arbi {
-    type Output = Arbi;
-    fn mul(self, other: &$signed_type) -> Arbi {
-        self.clone() * (*other)
-    }
-}
-
-impl Mul<Arbi> for $signed_type {
-    type Output = Arbi;
-    fn mul(self, other: Arbi) -> Arbi {
-        other * self
-    }
-}
-
-impl Mul<&Arbi> for $signed_type {
-    type Output = Arbi;
-    fn mul(self, other: &Arbi) -> Arbi {
-        other.clone() * self
-    }
-}
-
-impl Mul<Arbi> for &$signed_type {
-    type Output = Arbi;
-    fn mul(self, other: Arbi) -> Arbi {
-        other * (*self)
-    }
-}
-
-impl Mul<&Arbi> for &$signed_type {
-    type Output = Arbi;
-    fn mul(self, other: &Arbi) -> Arbi {
-        other.clone() * (*self)
-    }
-}
-
-impl MulAssign<&$signed_type> for Arbi {
-    fn mul_assign(&mut self, other: &$signed_type) {
-        self.mul_assign(*other);
-    }
-}
-
-impl MulAssign<$signed_type> for Arbi {
-    #[allow(unused_comparisons)]
-    fn mul_assign(&mut self, other: $signed_type) {
-        match other.to_digits() {
-            None => self.make_zero(),
-            Some(v) => {
-                let self_clone = self.clone();
-                let v_len: usize = length_digits(&v);
-                Self::dmul_(
-                    self,
-                    &self_clone.vec,
-                    &v[..v_len],
-                    self_clone.is_negative(),
-                    other < 0,
-                );
-            }
-        }
-    }
-}
-
-        )*
-    }
-}
-/* impl_arbi_mul_for_primitive! */
-
-impl_arbi_mul_for_primitive![
-    i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize
-];
 
 #[cfg(test)]
 mod test_mul_with_integral {
