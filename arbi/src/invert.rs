@@ -111,11 +111,11 @@ mod tests {
         while r != 0 {
             let quotient = old_r / r;
             old_r = old_r - quotient * r;
-            std::mem::swap(&mut old_r, &mut r);
+            core::mem::swap(&mut old_r, &mut r);
             old_s = old_s - quotient * s;
-            std::mem::swap(&mut old_s, &mut s);
+            core::mem::swap(&mut old_s, &mut s);
             old_t = old_t - quotient * t;
-            std::mem::swap(&mut old_t, &mut t);
+            core::mem::swap(&mut old_t, &mut t);
         }
         if old_r < 0 {
             (-old_r, -old_s, -old_t)
