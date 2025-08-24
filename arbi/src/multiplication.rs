@@ -152,7 +152,7 @@ impl Arbi {
         Arbi::dmul_standard(result, &a.vec, &b.vec);
     }
 
-    fn dmul_(
+    pub(crate) fn dmul_(
         w: &mut Self,
         u: &[Digit],
         v: &[Digit],
