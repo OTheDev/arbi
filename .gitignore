@@ -1,3 +1,6 @@
 /target
 
+# Dependencies not pinned, except for the MSRV job in CI (Cargo-msrv.lock)
+Cargo.lock
+
 .DS_Store
