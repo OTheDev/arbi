@@ -1,5 +1,5 @@
 /*
-Copyright 2024-2025 Owain Davies
+Copyright 2024-2026 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
@@ -16,7 +16,11 @@ const BASE_DIGITS_UPPER_BYTES: &[u8; 36] =
     b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 impl Arbi {
-    fn to_string_base_pow2(&self, base: Base, lowercase: bool) -> String {
+    pub(crate) fn to_string_base_pow2(
+        &self,
+        base: Base,
+        lowercase: bool,
+    ) -> String {
         debug_assert!(base.value().is_power_of_two());
 
         let base_digits = if lowercase {
