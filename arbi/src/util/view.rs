@@ -42,7 +42,7 @@ impl Assign<ArbiLikeView<'_>> for Arbi {
 impl Arbi {
     #[allow(dead_code)]
     #[inline(always)]
-    pub(crate) fn as_arbi_like_view(&self) -> ArbiLikeView {
+    pub(crate) fn as_arbi_like_view(&self) -> ArbiLikeView<'_> {
         ArbiLikeView {
             vec: &self.vec,
             neg: self.neg,

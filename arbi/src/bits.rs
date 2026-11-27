@@ -209,9 +209,7 @@ impl Arbi {
                         self.vec[digit_idx] |= (f_mask - 1) & !(m - 1);
                     } else {
                         self.vec[f_digit_idx] |= f_mask - 1;
-                        for idx in (digit_idx + 1)..f_digit_idx {
-                            self.vec[idx] = Digit::MAX;
-                        }
+                        self.vec[(digit_idx + 1)..f_digit_idx].fill(Digit::MAX);
                         self.vec[digit_idx] |= !(m - 1);
                     }
                 }
