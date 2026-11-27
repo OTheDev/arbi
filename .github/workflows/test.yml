@@ -5,10 +5,14 @@ on:
     branches: [ main ]
     paths:
       - 'arbi/**'
+      - 'Cargo-msrv.lock'
+      - '.github/workflows/test.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'arbi/**'
+      - 'Cargo-msrv.lock'
+      - '.github/workflows/test.yml'
   workflow_dispatch:
 
 jobs:
@@ -31,5 +35,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - run: rustup toolchain install 1.65.0 && rustup override set 1.65.0
-    - run: cargo build --verbose
-    - run: cargo test --verbose --features "std,rand"
+    # To regenerate Cargo-msrv.lock:
+    #
+    #   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback \
+    #     cargo +stable generate-lockfile
+    #   cargo +stable update -p proc-macro-crate --precise 3.1.0
+    #   cargo +stable update -p indexmap --precise 2.2.6
+    #   cargo +stable update -p wasip2 --precise 1.0.0+wasi-0.2.4
+    #   mv Cargo.lock Cargo-msrv.lock
+    #
+    # then check `cargo +1.65.0 test --locked` passes.
+    - run: cp Cargo-msrv.lock Cargo.lock
+    - run: cargo build --verbose --locked
+    - run: cargo test --verbose --locked --features "std,rand"

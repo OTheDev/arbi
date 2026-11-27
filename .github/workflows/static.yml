@@ -5,10 +5,12 @@ on:
     branches: [ main ]
     paths:
       - 'arbi/**'
+      - '.github/workflows/static.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'arbi/**'
+      - '.github/workflows/static.yml'
   workflow_dispatch:
 
 jobs:
