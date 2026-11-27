@@ -33,3 +33,11 @@ jobs:
     - run: rustup toolchain install 1.65.0 && rustup override set 1.65.0
     - run: cargo build --verbose
     - run: cargo test --verbose --features "std,rand"
+
+  rust-stable-latest-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: rustup update stable && rustup override set stable
+    - run: cargo update
+    - run: cargo test --verbose --features "std,rand"
