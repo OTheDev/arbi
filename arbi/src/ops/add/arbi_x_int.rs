@@ -8,7 +8,7 @@ use crate::util::IntoArbiLikeArray;
 use crate::Arbi;
 use core::ops::{Add, AddAssign, Sub, SubAssign};
 
-/* !impl_bit_with_int */
+/* !impl_add_with_int */
 macro_rules! impl_add_with_int {
     ($($int:ty),*) => {
         $(
@@ -98,12 +98,11 @@ impl Sub<&Arbi> for $int {
         )*
     };
 }
-/* impl_bit_with_int! */
+/* impl_add_with_int! */
 
 for_all_ints!(impl_add_with_int);
 
-// Implements the same combinations as impl_add_with_int but with &i instead of
-// i, using the above implementations.
+/* !impl_add_with_int_ref */
 macro_rules! impl_add_with_int_ref {
     ($($int:ty),*) => {
         $(
@@ -189,6 +188,6 @@ impl Sub<&Arbi> for &$int {
         )*
     };
 }
-/* impl_bit_with_int_ref! */
+/* impl_add_with_int_ref! */
 
 for_all_ints!(impl_add_with_int_ref);

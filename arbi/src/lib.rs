@@ -45,7 +45,6 @@ mod is_signed;
 mod is_zero;
 mod left_shift;
 mod macros;
-mod multiplication;
 mod negate;
 mod new;
 mod ops;

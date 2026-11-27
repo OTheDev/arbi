@@ -60,7 +60,6 @@ pub(crate) fn s_cmp_impl(
     }
 }
 
-#[allow(dead_code)]
 pub(crate) fn s_cmp(a: &[Digit], b: &[Digit]) -> Ordering {
     s_cmp_impl(a, b, false)
 }
@@ -75,6 +74,18 @@ pub(crate) fn s_cmp_normalized(a: &[Digit], b: &[Digit]) -> Ordering {
         "slice b not normalized"
     );
     s_cmp_impl(a, b, true)
+}
+
+#[allow(dead_code)]
+pub(crate) fn s_cmp_aligned(a: &[Digit], b: &[Digit]) -> Ordering {
+    debug_assert_eq!(a.len(), b.len());
+    for i in (0..a.len()).rev() {
+        match a[i].cmp(&b[i]) {
+            Ordering::Equal => continue,
+            other => return other,
+        }
+    }
+    Ordering::Equal
 }
 
 impl Arbi {

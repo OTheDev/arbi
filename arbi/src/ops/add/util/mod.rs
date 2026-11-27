@@ -3,8 +3,10 @@ Copyright 2024-2025 Owain Davies
 SPDX-License-Identifier: Apache-2.0 OR MIT
 */
 
+#[cfg(test)]
 use crate::{Arbi, DDigit, Digit};
 
+#[cfg(test)]
 impl Arbi {
     //  A nonnegative integer with n digits in base-B >= 2 has maximum value
     //  B^{n} - 1.

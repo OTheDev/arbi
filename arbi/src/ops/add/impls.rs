@@ -32,7 +32,6 @@ pub(crate) fn s_inc(a: &mut [Digit]) -> bool {
 }
 
 /// a[0:n] += b, true if overflow
-#[allow(dead_code)]
 pub(crate) fn s_iadd_digit(a: &mut [Digit], b: Digit) -> bool {
     let (first, rest) = match a.split_first_mut() {
         Some(s) => s,
@@ -70,12 +69,71 @@ pub(crate) fn s_iadd(a: &mut [Digit], b: &[Digit]) -> bool {
     }
 }
 
+/// r[0:n] = a[0:n] + b, returns carry
+pub(crate) fn s_add_digit(r: &mut [Digit], a: &[Digit], b: Digit) -> bool {
+    debug_assert_eq!(r.len(), a.len());
+    debug_assert!(!a.is_empty());
+    let mut carry = b;
+    for (r_digit, &a_digit) in r.iter_mut().zip(a.iter()) {
+        let sum = a_digit.wrapping_add(carry);
+        carry = (sum < carry) as Digit;
+        *r_digit = sum;
+    }
+    carry != 0
+}
+
+/// r[0:n] = a[0:n] + b[0:n], returns carry
+pub(crate) fn s_add_aligned(r: &mut [Digit], a: &[Digit], b: &[Digit]) -> bool {
+    debug_assert_eq!(r.len(), a.len());
+    debug_assert_eq!(r.len(), b.len());
+    let mut carry = 0;
+    for ((r_digit, &a_digit), &b_digit) in
+        r.iter_mut().zip(a.iter()).zip(b.iter())
+    {
+        let tmp = a_digit.wrapping_add(carry);
+        carry = (tmp < carry) as Digit;
+        let sum = tmp.wrapping_add(b_digit);
+        carry += (sum < b_digit) as Digit;
+        *r_digit = sum;
+    }
+    carry != 0
+}
+
+/// r[0:m] = a[0:m] + b[0:n], assumes m >= n, returns carry
+#[allow(dead_code)]
+pub(crate) fn s_add(r: &mut [Digit], a: &[Digit], b: &[Digit]) -> bool {
+    debug_assert!(a.len() >= b.len());
+    debug_assert_eq!(r.len(), a.len());
+    let carry = s_add_aligned(&mut r[..b.len()], &a[..b.len()], b);
+    if a.len() > b.len() {
+        s_add_digit(&mut r[b.len()..], &a[b.len()..], carry as Digit)
+    } else {
+        carry
+    }
+}
+
+/// r[0:n] = a[0:n] + b[0:n] + carry_in, returns carry_out
+#[allow(dead_code)]
+pub(crate) fn s_add_aligned_carry(
+    r: &mut [Digit],
+    a: &[Digit],
+    b: &[Digit],
+    carry_in: Digit,
+) -> Digit {
+    debug_assert_eq!(r.len(), a.len());
+    debug_assert_eq!(r.len(), b.len());
+    debug_assert!(carry_in <= 1, "carry_in must be 0 or 1");
+    let mut carry = s_add_aligned(r, a, b) as Digit;
+    carry += s_iadd_digit(r, carry_in) as Digit;
+    carry
+}
+
 /* Low-Level Subtraction Routines */
 
 fn usubb(r: &mut Digit, a: Digit, b: Digit, borrow: &mut bool) {
-    let temp = a.wrapping_sub(b);
-    *r = temp.wrapping_sub(*borrow as Digit);
-    *borrow = *r > temp || temp > a;
+    let tmp = a.wrapping_sub(b);
+    *r = tmp.wrapping_sub(*borrow as Digit);
+    *borrow = *r > tmp || tmp > a;
 }
 
 /// a[0:n] -= 1, true if borrow
@@ -93,7 +151,6 @@ pub(crate) fn s_dec(a: &mut [Digit]) -> bool {
 }
 
 /// a[0:n] -= b, true if borrow
-#[allow(dead_code)]
 pub(crate) fn s_isub_digit(a: &mut [Digit], b: Digit) -> bool {
     let (first, rest) = match a.split_first_mut() {
         Some(s) => s,
@@ -133,6 +190,7 @@ pub(crate) fn s_isub_aligned_from_other(a: &mut [Digit], b: &[Digit]) -> bool {
     borrow
 }
 
+// TODO: rename.
 /// Assuming m >= n, a[0:m] -= b[0:n], true if borrow (which implies b > a)
 pub(crate) fn s_isub(a: &mut [Digit], b: &[Digit]) -> bool {
     assert!(a.len() >= b.len());
@@ -141,6 +199,63 @@ pub(crate) fn s_isub(a: &mut [Digit], b: &[Digit]) -> bool {
     } else {
         false
     }
+}
+
+// r[0:n] = a[0:n] - b, returns borrow
+pub(crate) fn s_sub_digit(r: &mut [Digit], a: &[Digit], b: Digit) -> bool {
+    debug_assert_eq!(r.len(), a.len());
+    debug_assert!(!a.is_empty());
+    let mut borrow = b;
+    for (r_digit, &a_digit) in r.iter_mut().zip(a.iter()) {
+        let cy = (a_digit < borrow) as Digit;
+        *r_digit = a_digit.wrapping_sub(borrow);
+        borrow = cy;
+    }
+    borrow != 0
+}
+
+/// r[0:n] = a[0:n] - b[0:n], returns borrow
+pub(crate) fn s_sub_aligned(r: &mut [Digit], a: &[Digit], b: &[Digit]) -> bool {
+    debug_assert_eq!(r.len(), a.len());
+    debug_assert_eq!(r.len(), b.len());
+    let mut borrow = 0;
+    for ((r_digit, &a_digit), &b_digit) in
+        r.iter_mut().zip(a.iter()).zip(b.iter())
+    {
+        let tmp = b_digit.wrapping_add(borrow);
+        borrow = (tmp < borrow) as Digit;
+        borrow += (a_digit < tmp) as Digit;
+        *r_digit = a_digit.wrapping_sub(tmp);
+    }
+    borrow != 0
+}
+
+/// r[0:m] = a[0:m] - b[0:n], assumes m >= n, returns borrow
+pub(crate) fn s_sub(r: &mut [Digit], a: &[Digit], b: &[Digit]) -> bool {
+    debug_assert!(a.len() >= b.len());
+    debug_assert_eq!(r.len(), a.len());
+    let borrow = s_sub_aligned(&mut r[..b.len()], &a[..b.len()], b);
+    if a.len() > b.len() {
+        s_sub_digit(&mut r[b.len()..], &a[b.len()..], borrow as Digit)
+    } else {
+        borrow
+    }
+}
+
+/// r[0:n] = a[0:n] - b[0:n] - borrow_in, returns borrow_out
+#[allow(dead_code)]
+pub(crate) fn s_sub_aligned_borrow(
+    r: &mut [Digit],
+    a: &[Digit],
+    b: &[Digit],
+    borrow_in: Digit,
+) -> Digit {
+    debug_assert_eq!(r.len(), a.len());
+    debug_assert_eq!(r.len(), b.len());
+    debug_assert!(borrow_in <= 1, "borrow_in must be 0 or 1");
+    let mut borrow = s_sub_aligned(r, a, b) as Digit;
+    borrow += s_isub_digit(r, borrow_in) as Digit;
+    borrow
 }
 
 impl Arbi {
